@@ -1,4 +1,4 @@
-package dbus
+package firewalld
 
 import (
 	"errors"
@@ -7,18 +7,19 @@ import (
 	"sort"
 	"sync"
 
-	"firewall-api/config"
-	"firewall-api/log"
-	"firewall-api/object"
+	"k8s.io/klog/v2"
+
+	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalldGateway/config"
+	"github.com/cylonchau/firewalldGateway/log"
 
 	"github.com/godbus/dbus/v5"
 )
 
 var (
-	dbusClient          *DbusClientSerivce
-	remotelyBusLck      sync.Mutex
-	PORT                = "55557"
-	DEFAULT_ZONE_TARGET = "{chain}_{zone}"
+	dbusClient     *DbusClientSerivce
+	remotelyBusLck sync.Mutex
+	PORT           = "55557"
 )
 
 type DbusClientSerivce struct {
@@ -29,38 +30,37 @@ type DbusClientSerivce struct {
 }
 
 func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
-	if config.CONFIG.Port == "" {
-		log.Debug(fmt.Sprintf("Start Connect Dbus Service: %s:%s", addr, PORT))
-	} else {
-		PORT = config.CONFIG.Port
-		log.Debug(fmt.Sprintf("Start Connect Dbus Service: %s:%s", addr, PORT))
-	}
-
 	remotelyBusLck.Lock()
 	defer remotelyBusLck.Unlock()
+	var (
+		encounterError error
+		conn           *dbus.Conn
+	)
+	if config.CONFIG.Port == "" {
+		klog.V(5).Infof("Start Connect to D-Bus Service: %s:%s", addr, PORT)
+	} else {
+		PORT = config.CONFIG.Port
+		klog.V(5).Infof("Start Connect to D-Bus Service: %s:%s", addr, PORT)
+	}
+
 	if dbusClient != nil && dbusClient.client.Connected() {
 		return dbusClient, nil
 	}
-	conn, err := dbus.Connect("tcp:host="+addr+",port="+PORT, dbus.WithAuth(dbus.AuthAnonymous()))
-	if err != nil {
-		log.Error("Connect to dbus client fail:", err.Error())
-		return nil, err
+	if conn, encounterError = dbus.Connect("tcp:host="+addr+",port="+PORT, dbus.WithAuth(dbus.AuthAnonymous())); encounterError != nil {
+		obj := conn.Object(apis.INTERFACE, apis.PATH)
+		call := obj.Call(apis.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
+		encounterError = call.Err
+		if encounterError == nil {
+			return &DbusClientSerivce{
+				conn,
+				call.Body[0].(string),
+				addr,
+				PORT,
+			}, encounterError
+		}
 	}
-
-	obj := conn.Object(object.INTERFACE, object.PATH)
-	call := obj.Call(object.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
-
-	if call.Err != nil {
-		log.Error("Connect to dbus remotely call failed:", call.Err.Error())
-		return nil, call.Err
-	}
-
-	return &DbusClientSerivce{
-		conn,
-		call.Body[0].(string),
-		addr,
-		PORT,
-	}, err
+	klog.Errorf("Connect to firewalld client failed:", encounterError)
+	return nil, encounterError
 }
 
 // @title         Reload
@@ -68,14 +68,13 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 // @auth      	  author           2021-10-05
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
 func (c *DbusClientSerivce) generatePath(zone, interface_path string) (path dbus.ObjectPath, err error) {
-
 	zoneid := c.getZoneId(zone)
 	if zoneid < 0 {
-		log.Error("invalid zone:", zone)
-		return "", errors.New("invalid zone.")
+		klog.Errorf("invalid zone:", zone)
+		return "", errors.New("invalid zone " + interface_path + zone)
 	}
 	p := fmt.Sprintf("%s/%d", interface_path, zoneid)
-	log.Debug("Dbus PATH:", p)
+	klog.V(5).Infof("Dbus PATH:", p)
 	return dbus.ObjectPath(p), nil
 }
 
@@ -89,17 +88,19 @@ func (c *DbusClientSerivce) GetDefaultZone() string {
 // @param 		  zone			   zone name
 // @return        error            error          ""
 func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
-
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.INTERFACE_SETDEFAULTZONE)
-	log.Info(fmt.Printf("try set default zone to %s", zone))
-	call := obj.Call(object.INTERFACE_SETDEFAULTZONE, dbus.FlagNoAutoStart, zone)
-	if call.Err != nil {
-		log.Error(fmt.Sprintf("set default zone to %s failed:", zone), call.Err.Error())
-		return call.Err
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	klog.V(5).Infof("Call Remotely Dbus:", apis.PATH, apis.INTERFACE_SETDEFAULTZONE)
+	klog.V(4).Infof("Try set default zone to %s", zone)
+	var enconnterError error
+	currentDefaultZone := c.GetDefaultZone()
+	call := obj.Call(apis.INTERFACE_SETDEFAULTZONE, dbus.FlagNoAutoStart, zone)
+	enconnterError = call.Err
+	if enconnterError == nil {
+		klog.V(4).Infof("changed zone %s to %s", currentDefaultZone, zone)
+		return nil
 	}
-	log.Info(fmt.Sprintf("changed zone %s to %s", c.GetDefaultZone(), zone))
-	return nil
+	klog.Errorf("set default zone to %s failed: %v", zone, enconnterError)
+	return enconnterError
 }
 
 // @title         GetZones
@@ -108,17 +109,17 @@ func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
 // @return        zones            []string       "Return array of names (s) of predefined zones known to current runtime environment."
 // @return        error            error          ""
 func (c *DbusClientSerivce) GetZones() (zones []string, err error) {
-
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_GETZONES)
-	call := obj.Call(object.ZONE_GETZONES, dbus.FlagNoAutoStart)
-
-	if call.Err != nil || len(call.Body) < 0 {
-		log.Error("Get Zones failed:", err.Error())
-		return nil, call.Err
+	var enconterError error
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	klog.V(5).Infof("Call Remotely D-Bus: ", apis.PATH, apis.ZONE_GETZONES)
+	call := obj.Call(apis.ZONE_GETZONES, dbus.FlagNoAutoStart)
+	enconterError = call.Err
+	if enconterError == nil || len(call.Body) > 0 {
+		klog.V(5).Infof("Get zones: ", call.Body[0])
+		return call.Body[0].([]string), nil
 	}
-	log.Debug("zone list is ", call.Body[0])
-	return call.Body[0].([]string), nil
+	klog.Errorf("Get Zones failed: %v", enconterError)
+	return nil, call.Err
 }
 
 // @title         getZoneId
@@ -132,16 +133,15 @@ func (c *DbusClientSerivce) getZoneId(zone string) int {
 		err       error
 	)
 	if zoneArray, err = c.GetZones(); err != nil {
-		log.Error("invail zone id:", zone)
+		klog.Errorf("Invailed zone id:", zone)
 		return -1
 	}
 	index := sort.SearchStrings(zoneArray, zone)
-
 	if index < len(zoneArray) && zoneArray[index] == zone {
-		log.Debug("zone id is:", index)
+		klog.V(5).Infof("Zone id is: ", index)
 		return index
 	} else {
-		log.Error("Not Found Zone:", zone)
+		klog.Warningf("Not Found Zone:", zone)
 		return -1
 	}
 }
@@ -151,21 +151,18 @@ func (c *DbusClientSerivce) getZoneId(zone string) int {
 // @auth      	  author           2021-09-26
 // @param         zone		       string         "zone name."
 // @return        error            error          "Possible errors: INVALID_ZONE"
-func (c *DbusClientSerivce) GetZoneSettings(zone string) (err error) {
-	if err = c.checkZoneName(zone); err != nil {
-		log.Error("invail zone name:", zone)
-		return err
+func (c *DbusClientSerivce) GetZoneSettings(zone string) (enconterError error) {
+	if enconterError = c.checkZoneName(zone); enconterError == nil {
+		obj := c.client.Object(apis.INTERFACE, apis.PATH)
+		klog.V(5).Infof("Call remote D-Bus:", apis.PATH, apis.INTERFACE_GETZONESETTINGS)
+		call := obj.Call(apis.INTERFACE_GETZONESETTINGS, dbus.FlagNoAutoStart, zone)
+		enconterError = call.Err
+		if enconterError == nil {
+			return enconterError
+		}
 	}
-
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.INTERFACE_GETZONESETTINGS)
-	call := obj.Call(object.INTERFACE_GETZONESETTINGS, dbus.FlagNoAutoStart, zone)
-	if call.Err != nil {
-		log.Error("invail zone name:", zone)
-		return call.Err
-	}
-
-	return
+	klog.Errorf("Invailed zone name: %s, error: %v", zone, enconterError)
+	return enconterError
 }
 
 // @title         RemoveZone
@@ -180,13 +177,13 @@ func (c *DbusClientSerivce) RemoveZone(zone string) (err error) {
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_REMOVEZONE)
+	obj := c.client.Object(apis.INTERFACE, path)
+
 	log.Info(fmt.Sprintf("Try to delete zone %s.", zone))
-	call := obj.Call(object.CONFIG_REMOVEZONE, dbus.FlagNoAutoStart)
+	call := obj.Call(apis.CONFIG_REMOVEZONE, dbus.FlagNoAutoStart)
 	if call.Err != nil {
 		log.Error("delete zone %s.", zone)
 		return call.Err
@@ -201,16 +198,16 @@ func (c *DbusClientSerivce) RemoveZone(zone string) (err error) {
 // @param         name		       string         "Is an optional start and end tag and is used to give a more readable name."
 // @return        error            error          "Possible errors: NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
 
-func (c *DbusClientSerivce) AddZone(setting *Settings) (err error) {
+func (c *DbusClientSerivce) AddZone(setting *apis.Settings) (err error) {
 	if err = c.checkZoneName(setting.Short); err != nil {
 		return err
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.CONFIG_PATH)
+	obj := c.client.Object(apis.INTERFACE, apis.CONFIG_PATH)
 
-	log.Debug("Call Remotely Dbus:", object.CONFIG_PATH, object.CONFIG_ADDZONE)
+	log.Debug("Call remote D-Bus:", apis.CONFIG_PATH, apis.CONFIG_ADDZONE)
 	log.Info(fmt.Printf("Call ZoneSetting is: %#v", setting))
-	call := obj.Call(object.CONFIG_ADDZONE, dbus.FlagNoAutoStart, setting.Short, setting)
+	call := obj.Call(apis.CONFIG_ADDZONE, dbus.FlagNoAutoStart, setting.Short, setting)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("Create ZoneSettiings %s failed:", setting.Short), call.Err.Error())
@@ -226,10 +223,10 @@ func (c *DbusClientSerivce) AddZone(setting *Settings) (err error) {
 // @param         iface    		   string         "e.g. eth0, iface is device name."
 // @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
 func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_GETZONEOFINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_GETZONEOFINTERFACE)
 	log.Info("Get ZoneOfInterface:", iface)
-	call := obj.Call(object.ZONE_GETZONEOFINTERFACE, dbus.FlagNoAutoStart, iface)
+	call := obj.Call(apis.ZONE_GETZONEOFINTERFACE, dbus.FlagNoAutoStart, iface)
 	return call.Body[0].(string)
 }
 
@@ -244,16 +241,16 @@ func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
 // @return        zoneName         string         "Returns name of zone to which the protocol was added."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_PORT, MISSING_PROTOCOL, INVALID_PROTOCOL, ALREADY_ENABLED, INVALID_COMMAND."
 
-func (c *DbusClientSerivce) AddPort(port *Port, zone string, timeout int) (err error) {
+func (c *DbusClientSerivce) AddPort(port *apis.Port, zone string, timeout int) (err error) {
 
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDPORT)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_ADDPORT)
 	log.Info(fmt.Sprintf("Try To Add Port Rule in Zone %s, %s/%s, life cycle is %d", zone, port.Port, port.Protocol, timeout))
-	call := obj.Call(object.ZONE_ADDPORT, dbus.FlagNoAutoStart, zone, port.Port, port.Protocol, timeout)
+	call := obj.Call(apis.ZONE_ADDPORT, dbus.FlagNoAutoStart, zone, port.Port, port.Protocol, timeout)
 
 	if call.Err != nil || len(call.Body) <= 0 {
 		log.Error("Create a Port Rule Failed:", call.Err.Error())
@@ -280,13 +277,13 @@ func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (err error) {
 
 	port, protocol := splitPortProtocol(port)
 
-	if path, err := c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err := c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	} else {
-		obj := c.client.Object(object.INTERFACE, path)
-		log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDPORT)
+		obj := c.client.Object(apis.INTERFACE, path)
+		log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_ADDPORT)
 		log.Info(fmt.Sprintf("Try To Add Port Permanently Rule in Zone %s, %s/%s.", zone, port, protocol))
-		call := obj.Call(object.CONFIG_ZONE_ADDPORT, dbus.FlagNoAutoStart, port, protocol)
+		call := obj.Call(apis.CONFIG_ZONE_ADDPORT, dbus.FlagNoAutoStart, port, protocol)
 		if call.Err != nil {
 			log.Error("Create a Port Permanently Rule Failed:", call.Err.Error())
 			return call.Err
@@ -305,16 +302,16 @@ func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (err error) {
  * @return        error            error          "Possible errors:
  *                                                      INVALID_ZONE"
  */
-func (c *DbusClientSerivce) GetPort(zone string) (list []*Port, err error) {
+func (c *DbusClientSerivce) GetPort(zone string) (list []*apis.Port, err error) {
 
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
 
-	call := obj.Call(object.ZONE_GETPORTS, dbus.FlagNoAutoStart, zone)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_GETPORTS)
+	call := obj.Call(apis.ZONE_GETPORTS, dbus.FlagNoAutoStart, zone)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_GETPORTS)
 	log.Info(fmt.Sprintf("Try to get port Rule in Zone %s.", zone))
 	if call.Err != nil || len(call.Body) <= 0 {
 		log.Error("Get a port Rule failed, not found rule or:", call.Err.Error())
@@ -322,7 +319,7 @@ func (c *DbusClientSerivce) GetPort(zone string) (list []*Port, err error) {
 	}
 	portList := call.Body[0].([][]string)
 	for _, value := range portList {
-		list = append(list, &Port{
+		list = append(list, &apis.Port{
 			Port:     value[0],
 			Protocol: value[1],
 		})
@@ -340,19 +337,19 @@ func (c *DbusClientSerivce) GetPort(zone string) (list []*Port, err error) {
  * @return        error            error          "Possible errors:"
  * 														INVALID_ZONE
  */
-func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []*Port, err error) {
+func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []*apis.Port, err error) {
 
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return nil, err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", object.ZONE_PATH, object.CONFIG_ZONE_GETPORTS)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", apis.ZONE_PATH, apis.CONFIG_ZONE_GETPORTS)
 	log.Info(fmt.Sprintf("Try to get permanently port Rule in Zone %s.", zone))
-	call := obj.Call(object.CONFIG_ZONE_GETPORTS, dbus.FlagNoAutoStart)
+	call := obj.Call(apis.CONFIG_ZONE_GETPORTS, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
 		log.Error("get permanently port Rule error:", call.Err.Error())
@@ -361,7 +358,7 @@ func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []*Port, err err
 	portList := call.Body[0].([][]interface{})
 
 	for _, value := range portList {
-		list = append(list, &Port{
+		list = append(list, &apis.Port{
 			Port:     value[0].(string),
 			Protocol: value[1].(string),
 		})
@@ -384,22 +381,21 @@ func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []*Port, err err
  *                                                      NOT_ENABLED,
  *                                                      INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) RemovePort(port *Port, zone string) (b bool, err error) {
-
+func (c *DbusClientSerivce) RemovePort(port *apis.Port, zone string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_REMOVEPORT)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_REMOVEPORT)
 	log.Info(fmt.Sprintf("Try to delete port Rule in Zone %s, port rule is: %s/%s", zone, port.Port, port.Protocol))
-	call := obj.Call(object.ZONE_REMOVEPORT, dbus.FlagNoAutoStart, zone, port.Port, port.Protocol)
+	call := obj.Call(apis.ZONE_REMOVEPORT, dbus.FlagNoAutoStart, zone, port.Port, port.Protocol)
 
 	if call.Err != nil {
 		log.Error("remove port rule failed:", call.Err.Error())
-		return false, call.Err
+		return call.Err
 	}
-	return true, nil
+	return nil
 }
 
 /*
@@ -424,13 +420,13 @@ func (c *DbusClientSerivce) PermanentRemovePort(port, zone string) (b bool, err 
 	port, protocol := splitPortProtocol(port)
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return false, err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_REMOVEPORT)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_REMOVEPORT)
 	log.Info(fmt.Sprintf("try to remove permanently port rule in Zone %s, %s/%s.", zone, port, protocol))
-	call := obj.Call(object.CONFIG_ZONE_REMOVEPORT, dbus.FlagNoAutoStart, port, protocol)
+	call := obj.Call(apis.CONFIG_ZONE_REMOVEPORT, dbus.FlagNoAutoStart, port, protocol)
 
 	if call.Err != nil {
 		log.Error("remove permanently port rule failed:", call.Err.Error())
@@ -454,10 +450,10 @@ func (c *DbusClientSerivce) AddProtocol(zone, protocol string, timeout int) (lis
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDPROTOCOL)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_ADDPROTOCOL)
 	log.Info(fmt.Sprintf("try to add protocol rule in Zone %s, timeout is %s.", zone, protocol))
-	call := obj.Call(object.ZONE_ADDPROTOCOL, dbus.FlagNoAutoStart, zone, protocol, timeout)
+	call := obj.Call(apis.ZONE_ADDPROTOCOL, dbus.FlagNoAutoStart, zone, protocol, timeout)
 
 	if call.Err != nil {
 		log.Error("add protocol rule failed:", call.Err.Error())
@@ -479,10 +475,10 @@ func (c *DbusClientSerivce) AddProtocol(zone, protocol string, timeout int) (lis
 //													INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) ListServices() (list []string, err error) {
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.INTERFACE_LISTSERVICES)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.INTERFACE_LISTSERVICES)
 	log.Info(fmt.Sprintf("try to list of available services in %s.", c.ip))
-	call := obj.Call(object.INTERFACE_LISTSERVICES, dbus.FlagNoAutoStart)
+	call := obj.Call(apis.INTERFACE_LISTSERVICES, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
 		log.Error("list of available services failed:", call.Err.Error())
@@ -500,13 +496,13 @@ func (c *DbusClientSerivce) ListServices() (list []string, err error) {
 // @param         setting          *ServiceSetting      "service configruate"
 // @return        error            error          		"Possible errors:
 //															NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
-func (c *DbusClientSerivce) NewService(name string, setting *ServiceSetting) (err error) {
+func (c *DbusClientSerivce) NewService(name string, setting *apis.ServiceSetting) (err error) {
 
-	obj := c.client.Object(object.INTERFACE, object.CONFIG_PATH)
-	log.Debug("Call Remotely Dbus:", object.CONFIG_PATH, object.CONFIG_ADDSERVICE)
+	obj := c.client.Object(apis.INTERFACE, apis.CONFIG_PATH)
+	log.Debug("Call remote D-Bus:", apis.CONFIG_PATH, apis.CONFIG_ADDSERVICE)
 	log.Info(fmt.Sprintf("try to create a new service in %s.", c.ip))
 	log.Debug(fmt.Sprintf("service setting is: %+v", setting))
-	call := obj.Call(object.CONFIG_ADDSERVICE, dbus.FlagNoAutoStart, name, &setting)
+	call := obj.Call(apis.CONFIG_ADDSERVICE, dbus.FlagNoAutoStart, name, &setting)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("create a new service %s failed:.", name), call.Err.Error())
@@ -524,21 +520,24 @@ func (c *DbusClientSerivce) NewService(name string, setting *ServiceSetting) (er
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
 // @return        zoneName         string         "Returns name of zone to which the service was added."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) AddService(zone, service string, timeout int) (list string, err error) {
+func (c *DbusClientSerivce) AddService(zone, service string, timeout int) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDSERVICE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_ADDSERVICE)
 	log.Info(fmt.Sprintf("try to add serivce rule in %s Zone %s, timeout is %s.", service, zone, timeout))
-	call := obj.Call(object.ZONE_ADDSERVICE, dbus.FlagNoAutoStart, zone, service, timeout)
+	call := obj.Call(apis.ZONE_ADDSERVICE, dbus.FlagNoAutoStart, zone, service, timeout)
 
-	if call.Err != nil {
-		log.Error("add service failed:", call.Err.Error())
-		return "", call.Err
+	var incurredError error
+	incurredError = call.Err
+	if incurredError == nil {
+		return nil
 	}
-	return call.Body[0].(string), nil
+
+	log.Error("add service failed:", call.Err.Error())
+	return incurredError
 }
 
 // @title         PermanentAddService
@@ -553,13 +552,13 @@ func (c *DbusClientSerivce) PermanentAddService(zone, service string) (err error
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDSERVICE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_ADDSERVICE)
 	log.Info(fmt.Sprintf("try to add permanent serivce rule %s in %s Zone %s.", service, zone))
-	call := obj.Call(object.CONFIG_ZONE_ADDSERVICE, dbus.FlagNoAutoStart, service)
+	call := obj.Call(apis.CONFIG_ZONE_ADDSERVICE, dbus.FlagNoAutoStart, service)
 
 	if call.Err != nil {
 		log.Error("add permanent service rule failed:", call.Err.Error())
@@ -579,10 +578,10 @@ func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_QUERYSERVICE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_QUERYSERVICE)
 	log.Info(fmt.Sprintf("try to query serivce rule %s in %s Zone %s.", service, zone))
-	call := obj.Call(object.ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, zone, service)
+	call := obj.Call(apis.ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, zone, service)
 	if !call.Body[0].(bool) {
 		log.Error("Can not found serivce rule:", service)
 		return false
@@ -603,14 +602,14 @@ func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 
 	var path dbus.ObjectPath
 	var err error
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return false
 	}
 
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.CONFIG_ZONE_QUERYSERVICE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.CONFIG_ZONE_QUERYSERVICE)
 	log.Info(fmt.Sprintf("try to query permanent serivce rule %s in %s Zone %s.", service, zone))
-	call := obj.Call(object.CONFIG_ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, service)
+	call := obj.Call(apis.CONFIG_ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, service)
 	if !call.Body[0].(bool) {
 		log.Error("Can not found permanent service rule:", service)
 		return false
@@ -629,10 +628,10 @@ func (c *DbusClientSerivce) RemoveService(zone, service string) (err error) {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_REMOVESERVICE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_REMOVESERVICE)
 	log.Info(fmt.Sprintf("try to remove serivce rule %s in %s Zone %s.", service, zone))
-	call := obj.Call(object.ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, zone, service)
+	call := obj.Call(apis.ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, zone, service)
 
 	if call.Err != nil {
 		log.Error("remove service rule failed:", call.Err.Error())
@@ -653,13 +652,13 @@ func (c *DbusClientSerivce) PermanentRemoveService(zone, service string) (err er
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_REMOVESERVICE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_REMOVESERVICE)
 	log.Info(fmt.Sprintf("try to remove permanent serivce rule %s in %s Zone %s.", service, zone))
-	call := obj.Call(object.CONFIG_ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, service)
+	call := obj.Call(apis.CONFIG_ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, service)
 
 	if call.Err != nil {
 		log.Error("remove permanent serivce rule failed:", call.Err.Error())
@@ -679,10 +678,10 @@ func (c *DbusClientSerivce) GetService(zone string) (services []string, err erro
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_GETSERVICES)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_GETSERVICES)
 	log.Info(fmt.Sprintf("try to get serivces in zone %s.", zone))
-	call := obj.Call(object.ZONE_GETSERVICES, dbus.FlagNoAutoStart, zone)
+	call := obj.Call(apis.ZONE_GETSERVICES, dbus.FlagNoAutoStart, zone)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("get serivces in zone %s failed:", zone), call.Err.Error())
@@ -705,13 +704,13 @@ func (c *DbusClientSerivce) PermanentGetServices(zone, service string) (err erro
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_GETSERVICES)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_GETSERVICES)
 	log.Info(fmt.Sprintf("try to get permanently serivces in zone %s.", zone))
-	call := obj.Call(object.CONFIG_ZONE_GETSERVICES, dbus.FlagNoAutoStart, service)
+	call := obj.Call(apis.CONFIG_ZONE_GETSERVICES, dbus.FlagNoAutoStart, service)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("get permanently serivces in zone %s failed:", zone), call.Err.Error())
@@ -737,10 +736,10 @@ func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout int) (err erro
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDMASQUERADE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_ADDMASQUERADE)
 	log.Info(fmt.Sprintf("try to enable network masquerade in zone %s .", zone))
-	call := obj.Call(object.ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart, zone, timeout)
+	call := obj.Call(apis.ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart, zone, timeout)
 
 	if call.Err != nil && len(call.Body) <= 0 {
 		log.Error("enable network masquerade failed:", call.Err.Error())
@@ -765,13 +764,13 @@ func (c *DbusClientSerivce) PermanentEnableMasquerade(zone string) (err error) {
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDMASQUERADE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_ADDMASQUERADE)
 	log.Info(fmt.Sprintf("try to permanent enable network masquerade in zone %s .", zone))
-	call := obj.Call(object.CONFIG_ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart)
+	call := obj.Call(apis.CONFIG_ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
 		log.Error("permanent enable network masquerade failed:", call.Err.Error())
@@ -796,10 +795,10 @@ func (c *DbusClientSerivce) DisableMasquerade(zone string) (err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_REMOVEMASQUERADE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_REMOVEMASQUERADE)
 	log.Info(fmt.Sprintf("try to disable network masquerade in zone %s .", zone))
-	call := obj.Call(object.ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart, zone)
+	call := obj.Call(apis.ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart, zone)
 
 	if call.Err != nil && len(call.Body) <= 0 {
 		log.Error("disable network masquerade failed:", call.Err.Error())
@@ -823,14 +822,14 @@ func (c *DbusClientSerivce) PermanentDisableMasquerade(zone string) (err error) 
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_REMOVEMASQUERADE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_REMOVEMASQUERADE)
 	log.Info(fmt.Sprintf("try to disable network masquerade in zone %s .", zone))
 
-	call := obj.Call(object.CONFIG_ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart)
+	call := obj.Call(apis.CONFIG_ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart)
 
 	if call.Err != nil && len(call.Body) <= 0 {
 		log.Error("disable network masquerade failed:", call.Err.Error())
@@ -854,13 +853,13 @@ func (c *DbusClientSerivce) PermanentQueryMasquerade(zone string) (b bool, err e
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return false, err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_QUERYMASQUERADE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_QUERYMASQUERADE)
 	log.Info(fmt.Sprintf("try to query permanent network masquerade in zone %s .", zone))
-	call := obj.Call(object.CONFIG_ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart)
+	call := obj.Call(apis.CONFIG_ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
 		log.Error("query permanent network masquerade is failed:", call.Err)
@@ -888,10 +887,10 @@ func (c *DbusClientSerivce) QueryMasquerade(zone string) (b bool, err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_QUERYMASQUERADE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_QUERYMASQUERADE)
 	log.Info(fmt.Sprintf("try to query permanent network masquerade in zone %s .", zone))
-	call := obj.Call(object.ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart, zone)
+	call := obj.Call(apis.ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart, zone)
 	if len(call.Body) <= 0 || !call.Body[0].(bool) {
 		log.Error("query network masquerade is disabled.")
 		return false, call.Err
@@ -919,10 +918,10 @@ func (c *DbusClientSerivce) BindInterface(zone, interface_name string) (list str
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_ADDINTERFACE)
 	log.Info(fmt.Sprintf("try to bind interface %s to rule in zone %s .", interface_name, zone))
-	call := obj.Call(object.ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
+	call := obj.Call(apis.ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("bind interface %s failed:", interface_name), call.Err.Error())
@@ -945,13 +944,13 @@ func (c *DbusClientSerivce) PermanentBindInterface(zone, interface_name string) 
 		zone = c.GetDefaultZone()
 	}
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_ADDINTERFACE)
 	log.Info(fmt.Sprintf("try to permanent bind interface %s to rule in zone %s .", interface_name, zone))
-	call := obj.Call(object.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interface_name)
+	call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interface_name)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("permanent bind interface %s. failed", interface_name))
@@ -976,10 +975,10 @@ func (c *DbusClientSerivce) QueryInterface(zone, interface_name string) (b bool,
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_QUERYINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_QUERYINTERFACE)
 	log.Info(fmt.Sprintf("try to query interface %s bind in zone %s .", interface_name, zone))
-	call := obj.Call(object.ZONE_QUERYINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
+	call := obj.Call(apis.ZONE_QUERYINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
 
 	if len(call.Body) <= 0 || !call.Body[0].(bool) {
 		log.Error(fmt.Sprintf("query interface %s bind failed.", interface_name))
@@ -1001,13 +1000,13 @@ func (c *DbusClientSerivce) PermanentQueryInterface(zone, interface_name string)
 		zone = c.GetDefaultZone()
 	}
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_ADDINTERFACE)
 	log.Info(fmt.Sprintf("try to query permanent interface %s bind in zone %s .", interface_name, zone))
-	call := obj.Call(object.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interface_name)
+	call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interface_name)
 
 	if call.Err != nil {
 		log.Error(fmt.Sprintf("query permanent interface %s bind failed.", interface_name))
@@ -1029,10 +1028,10 @@ func (c *DbusClientSerivce) RemoveInterface(zone, interface_name string) (err er
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_REMOVEINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_REMOVEINTERFACE)
 	log.Info(fmt.Sprintf("try to remove interface %s bind in zone %s.", interface_name, zone))
-	call := obj.Call(object.ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
+	call := obj.Call(apis.ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
 	if call.Err != nil && len(call.Body) <= 0 {
 		log.Error(fmt.Sprintf("remove interface %s bind failed.", interface_name))
 		return call.Err
@@ -1054,14 +1053,14 @@ func (c *DbusClientSerivce) PermanentRemoveInterface(zone, interface_name string
 		zone = c.GetDefaultZone()
 	}
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
 		return err
 	}
 
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_REMOVEINTERFACE)
+	obj := c.client.Object(apis.INTERFACE, path)
+	log.Debug("Call remote D-Bus:", path, apis.CONFIG_ZONE_REMOVEINTERFACE)
 	log.Info(fmt.Sprintf("try to remove permanent interface %s bind in zone %s.", interface_name, zone))
-	call := obj.Call(object.CONFIG_ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, interface_name)
+	call := obj.Call(apis.CONFIG_ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, interface_name)
 	if call.Err != nil {
 		log.Info(fmt.Sprintf("remove permanent interface %s bind failed.", interface_name))
 		return call.Err
@@ -1080,27 +1079,27 @@ func (c *DbusClientSerivce) PermanentRemoveInterface(zone, interface_name string
  * @return        error            error          	"Possible errors:
  * 														INVALID_ZONE
  */
-func (c *DbusClientSerivce) GetForwardPort(zone string) (forwards []*ForwardPort, err error) {
+func (c *DbusClientSerivce) GetForwardPort(zone string) (forwards []*apis.ForwardPort, err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_GETFORWARDPORT)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	log.Debug("Call remote D-Bus:", apis.PATH, apis.ZONE_GETFORWARDPORT)
 	log.Info(fmt.Sprintf("try to get ipv4 forward port rule in zone: %s.", zone))
-	call := obj.Call(object.ZONE_GETFORWARDPORT, dbus.FlagNoAutoStart, zone)
+	call := obj.Call(apis.ZONE_GETFORWARDPORT, dbus.FlagNoAutoStart, zone)
 	if call.Err != nil && len(call.Body) <= 0 {
 		log.Error(fmt.Sprintf("get ipv4 forward port rule in zone %s failed:", zone), call.Err.Error())
 		return nil, call.Err
 	}
 
 	for _, value := range call.Body[0].([][]string) {
-		forword, err := SliceToStruct(value)
+		forword, err := apis.SliceToStruct(value)
 		if err != nil {
 			log.Error("convert ipv4 forward port string rule to struct rule failed:", err)
 			return nil, err
 		}
-		forwards = append(forwards, forword)
+		forwards = append(forwards, &forword)
 
 	}
 	return forwards, nil
@@ -1115,34 +1114,34 @@ func (c *DbusClientSerivce) GetForwardPort(zone string) (forwards []*ForwardPort
  * @return        error            error          	"Possible errors:
  * 														INVALID_ZONE
  */
-func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) (forwards []*ForwardPort, err error) {
+func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.ForwardPort, error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+	var forwards []apis.ForwardPort
+	path, encounterError := c.generatePath(zone, apis.ZONE_PATH)
+	if encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		printPath(path, apis.CONFIG_GETFORWARDPORT)
+		klog.V(4).Infof("Try to get forward port rule in zone: %s.", zone)
 
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return nil, err
-	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_GETFORWARDPORT)
-	log.Info(fmt.Sprintf("try to get forward port rule in zone: %s.", zone))
-	call := obj.Call(object.CONFIG_GETFORWARDPORT, dbus.FlagNoAutoStart)
-	if call.Err != nil && len(call.Body) <= 0 {
-		log.Error(fmt.Sprintf("add forward port in zone %s failed:", zone), call.Err.Error())
-		return nil, call.Err
-	}
-	fmt.Println(call.Body[0])
-	for _, value := range call.Body[0].([][]interface{}) {
-		forword, err := SliceToStruct(value)
-		if err != nil {
-			log.Error("convert ipv4 forward port string rule to struct rule failed:", err)
-			return nil, err
+		call := obj.Call(apis.CONFIG_GETFORWARDPORT, dbus.FlagNoAutoStart)
+		encounterError = call.Err
+		if encounterError == nil && len(call.Body) >= 0 {
+			for _, value := range call.Body[0].([][]interface{}) {
+				fmt.Printf("%+v\n", value)
+				//forword, err := apis.SliceToStruct(value)
+				//if err != nil {
+				//	log.Error("convert ipv4 forward port string rule to struct rule failed:", err)
+				//	return nil, err
+				//}
+				//forwards = append(forwards, forword)
+			}
+			return forwards, nil
 		}
-		forwards = append(forwards, forword)
-
 	}
-	return forwards, nil
+	log.Error(fmt.Sprintf("add forward port in zone %s failed:", zone), encounterError)
+	return forwards, encounterError
 }
 
 /*
@@ -1164,17 +1163,19 @@ func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) (forwards []*Fo
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) AddForwardPort(zone string, timeout int, forward *ForwardPort) (err error) {
+func (c *DbusClientSerivce) AddForwardPort(zone string, timeout int, forward *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDFORWARDPORT)
-	log.Info(fmt.Sprintf("try to add forward port %s to %s:%s.", forward.Port, forward.ToAddr, forward.ToPort))
-	call := obj.Call(object.ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr, timeout)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	printPath(apis.PATH, apis.ZONE_ADDFORWARDPORT)
+	klog.V(4).Infof("Try to add forward port %s to %s:%s.", forward.Port, forward.ToAddr, forward.ToPort)
+
+	call := obj.Call(apis.ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr, timeout)
 	if call.Err != nil && len(call.Body) <= 0 {
-		log.Error(fmt.Sprintf("add forward port in zone %s failed:", zone), call.Err.Error())
+		klog.Errorf("Add forward port in zone %s failed: %v", zone, call.Err)
 		return call.Err
 	}
 	return nil
@@ -1191,24 +1192,25 @@ func (c *DbusClientSerivce) AddForwardPort(zone string, timeout int, forward *Fo
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentAddForwardPort(zone string, forwardPort *ForwardPort) (err error) {
+func (c *DbusClientSerivce) PermanentAddForwardPort(zone string, forwardPort *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+	path, encounterError := c.generatePath(zone, apis.ZONE_PATH)
+	if encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
 
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return err
+		printPath(path, apis.CONFIG_ZONE_ADDFORWARDPORT)
+		klog.V(4).Infof("try to add permanent forward port %s to %s:%s.", forwardPort.Port, forwardPort.ToAddr, forwardPort.ToPort)
+
+		call := obj.Call(apis.CONFIG_ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, forwardPort.Port, forwardPort.Protocol, forwardPort.ToPort, forwardPort.ToAddr)
+		encounterError = call.Err
+		if encounterError == nil && len(call.Body) >= 0 {
+			return nil
+		}
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDFORWARDPORT)
-	log.Info(fmt.Sprintf("try to add permanent forward port %s to %s:%s.", forwardPort.Port, forwardPort.ToAddr, forwardPort.ToPort))
-	call := obj.Call(object.CONFIG_ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, forwardPort.Port, forwardPort.Protocol, forwardPort.ToPort, forwardPort.ToAddr)
-	if call.Err != nil && len(call.Body) <= 0 {
-		log.Error(fmt.Sprintf("add permanent forward port in zone %s failed:", zone), call.Err.Error())
-		return call.Err
-	}
-	return nil
+	klog.Errorf("Add permanent forward port in zone %s failed: %v", zone, encounterError)
+	return encounterError
 }
 
 /*
@@ -1229,15 +1231,15 @@ func (c *DbusClientSerivce) PermanentAddForwardPort(zone string, forwardPort *Fo
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) RemoveForwardPort(zone string, forword *ForwardPort) (err error) {
+func (c *DbusClientSerivce) RemoveForwardPort(zone string, forword *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	printPath(apis.PATH, apis.ZONE_REMOVEFORWARDPORT)
+	klog.V(4).Infof("Try to remove forward port %s to %s:%s.", forword.Port, forword.ToAddr, forword.ToPort)
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_REMOVEFORWARDPORT)
-	log.Info(fmt.Sprintf("try to remove forward port %s to %s:%s.", forword.Port, forword.ToAddr, forword.ToPort))
-	call := obj.Call(object.ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, zone, forword.Port, forword.Protocol, forword.ToPort, forword.ToAddr)
+	call := obj.Call(apis.ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, zone, forword.Port, forword.Protocol, forword.ToPort, forword.ToAddr)
 	if call.Err != nil && len(call.Body) <= 0 {
 		log.Error(fmt.Sprintf("remove forward port %s to %s:%s at runtime zone failed:", forword.Port, forword.Protocol, forword.ToPort), call.Err.Error())
 		return call.Err
@@ -1256,24 +1258,24 @@ func (c *DbusClientSerivce) RemoveForwardPort(zone string, forword *ForwardPort)
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentRemoveForwardPort(zone string, forword *ForwardPort) (err error) {
+func (c *DbusClientSerivce) PermanentRemoveForwardPort(zone string, forword *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return err
+	path, enconterError := c.generatePath(zone, apis.ZONE_PATH)
+	if enconterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		printPath(path, apis.CONFIG_ZONE_REMOVEFORWARDPORT)
+		klog.V(4).Infof("Try to remove permanent forward port %s to %s:%s.", forword.Port, forword.ToAddr, forword.ToPort)
+		call := obj.Call(apis.CONFIG_ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, forword.Port, forword.Protocol, forword.ToPort, forword.ToAddr)
+		enconterError = call.Err
+		if enconterError == nil && len(call.Body) >= 0 {
+			return nil
+		}
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_REMOVEFORWARDPORT)
-	log.Info(fmt.Sprintf("try to remove permanent forward port %s to %s:%s.", forword.Port, forword.ToAddr, forword.ToPort))
-	call := obj.Call(object.CONFIG_ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, forword.Port, forword.Protocol, forword.ToPort, forword.ToAddr)
-	if call.Err != nil && len(call.Body) <= 0 {
-		log.Error(fmt.Sprintf("try to remove permanent forward port  %s to %s:%s failed:", forword.Port, forword.ToAddr, forword.ToPort), call.Err.Error())
-		return call.Err
-	}
-	return nil
+	klog.Errorf("Try to remove permanent forward port  %s to %s:%s failed: %v", forword.Port, forword.ToAddr, forword.ToPort, enconterError)
+	return enconterError
 }
 
 /*
@@ -1298,20 +1300,21 @@ func (c *DbusClientSerivce) QueryForwardPort(zone string, portProtocol, toHostPo
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+	var enconterError error
 	port, protocol := splitPortProtocol(portProtocol)
-	toAddr, toPort, err := net.SplitHostPort(toHostPort)
-	if err != nil {
-		return false
+	toAddr, toPort, enconterError := net.SplitHostPort(toHostPort)
+	if enconterError == nil {
+		obj := c.client.Object(apis.INTERFACE, apis.PATH)
+		printPath(apis.PATH, apis.ZONE_QUERYFORWARDPORT)
+		klog.V(4).Infof("Try to query forward port %s to %s.", portProtocol, toHostPort)
+		call := obj.Call(apis.ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, zone, port, protocol, toPort, toAddr)
+		enconterError = call.Err
+		if enconterError == nil || call.Body[0].(bool) {
+			return true
+		}
 	}
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_QUERYFORWARDPORT)
-	log.Info(fmt.Sprintf("try to query forward port %s to %s.", portProtocol, toHostPort))
-	call := obj.Call(object.ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, zone, port, protocol, toPort, toAddr)
-	if call.Err != nil || !call.Body[0].(bool) {
-		log.Error(fmt.Sprintf("query forward port %s to %s failed", portProtocol, toHostPort), call.Err.Error())
-		return false
-	}
-	return true
+	klog.Errorf("Query forward port %s to %s failed: %v", portProtocol, toHostPort, enconterError)
+	return false
 }
 
 /*
@@ -1325,28 +1328,28 @@ func (c *DbusClientSerivce) QueryForwardPort(zone string, portProtocol, toHostPo
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentQueryForwardPort(zone string, portProtocol, toHostPort string) (b bool, err error) {
+func (c *DbusClientSerivce) PermanentQueryForwardPort(zone string, portProtocol, toHostPort string) (b bool) {
+	var enconterError error
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 	port, protocol := splitPortProtocol(portProtocol)
-	toAddr, toPort, err := net.SplitHostPort(toHostPort)
-	if err != nil {
-		return false, err
+	toAddr, toPort, enconterError := net.SplitHostPort(toHostPort)
+	if enconterError == nil {
+		var path dbus.ObjectPath
+		if path, enconterError = c.generatePath(zone, apis.ZONE_PATH); enconterError == nil {
+			obj := c.client.Object(apis.INTERFACE, path)
+			printPath(path, apis.CONFIG_ZONE_QUERYFORWARDPORT)
+			klog.V(4).Infof("Try to query permanent forward port %s to %s.", portProtocol, toHostPort)
+			call := obj.Call(apis.CONFIG_ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, port, protocol, toPort, toAddr)
+			enconterError = call.Err
+			if enconterError == nil || (len(call.Body) >= 0 || call.Body[0].(bool)) {
+				return true
+			}
+		}
 	}
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return false, err
-	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_QUERYFORWARDPORT)
-	log.Info(fmt.Sprintf("try to query permanent forward port %s to %s.", portProtocol, toHostPort))
-	call := obj.Call(object.CONFIG_ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, port, protocol, toPort, toAddr)
-	if call.Err != nil || (len(call.Body) <= 0 || !call.Body[0].(bool)) {
-		log.Info(fmt.Sprintf("permanent forward port %s to %s failed:", portProtocol, toHostPort), call.Err.Error())
-		return false, call.Err
-	}
-	return true, nil
+	klog.Errorf("Query permanent forward port %s to %s failed: %v", portProtocol, toHostPort, enconterError)
+	return false
 }
 
 /************************************************** rich rule area ***********************************************************/
@@ -1357,24 +1360,24 @@ func (c *DbusClientSerivce) PermanentQueryForwardPort(zone string, portProtocol,
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @return        zoneName         string         "Returns name of zone to which the interface was bound."
 // @return        error            error          "Possible errors: INVALID_ZONE"
-func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*Rule, err error) {
+func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_GETRICHRULES)
-	log.Info(fmt.Sprintf("try to get all rich rule in zone %s.", zone))
-	call := obj.Call(object.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	printPath(apis.PATH, apis.ZONE_GETRICHRULES)
+	klog.V(4).Infof("Try to get all rich rule in zone %s.", zone)
+	call := obj.Call(apis.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
 
 	if call.Err != nil {
-		log.Error(fmt.Sprintf("cannot get rich rules in zone %s:", zone), call.Err.Error())
+		klog.Errorf("Cannot get rich rules in zone %s:", zone, call.Err)
 		return nil, call.Err
 	}
 	for _, value := range call.Body[0].([]string) {
-		ruleList = append(ruleList, StringToRule(value))
+		ruleList = append(ruleList, apis.StringToRule(value))
 	}
-	log.Debug(" rich rules:", ruleList)
+	klog.V(5).Infof("rich rules: %v", ruleList)
 	return
 }
 
@@ -1385,21 +1388,21 @@ func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*Rule, err err
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) AddRichRule(zone string, rule *Rule, timeout int) (err error) {
+func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout int) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_ADDRICHRULE)
-	log.Info(fmt.Sprintf("try to add rich rule in zone %s.", zone), rule.ToString())
-	call := obj.Call(object.ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString(), timeout)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	printPath(apis.PATH, apis.ZONE_ADDRICHRULE)
+	klog.V(4).Infof("Try to add rich rule in zone %s.", rule.ToString(), zone)
+	call := obj.Call(apis.ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString(), timeout)
 
 	if call.Err != nil {
-		log.Error("add rich rule failed:", call.Err.Error())
+		klog.Errorf("Add rich rule failed:", call.Err)
 		return call.Err
 	}
-	log.Debug(fmt.Sprintf("add rich %s rule in zone %s success.", zone, rule.ToString()))
+	klog.V(5).Infof("Add rich %s rule in zone %s success.", rule.ToString(), zone)
 	return nil
 }
 
@@ -1409,20 +1412,19 @@ func (c *DbusClientSerivce) AddRichRule(zone string, rule *Rule, timeout int) (e
 // @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) PermanentAddRichRule(zone string, rule *Rule) (err error) {
+func (c *DbusClientSerivce) PermanentAddRichRule(zone string, rule *apis.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	if err != nil {
 		return err
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_ADDRICHRULE)
-	log.Info(fmt.Sprintf("try to add permanent rich rule %s in zone %s.", zone), rule.ToString())
-	call := obj.Call(object.CONFIG_ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+	obj := c.client.Object(apis.INTERFACE, path)
+	printPath(path, apis.CONFIG_ZONE_ADDRICHRULE)
+	klog.V(4).Infof("Try to add permanent rich rule %s in zone %s.", rule.ToString(), zone)
 
+	call := obj.Call(apis.CONFIG_ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
 	if call.Err != nil {
 		log.Error("add permanent rich rule failed:", call.Err.Error())
 		return call.Err
@@ -1436,17 +1438,17 @@ func (c *DbusClientSerivce) PermanentAddRichRule(zone string, rule *Rule) (err e
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_RULE, NOT_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *Rule) (err error) {
+func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_REOMVERICHRULE)
-	log.Info(fmt.Sprintf("try to remove rich rule %s in zone %s.", zone), rule.ToString())
-	call := obj.Call(object.ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	printPath(apis.PATH, apis.ZONE_REOMVERICHRULE)
+	klog.V(4).Infof("Try to remove rich rule %s in zone %s.", rule.ToString(), zone)
 
+	call := obj.Call(apis.ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
 	if call.Err != nil {
-		log.Error("remove rich rule failed:", call.Err.Error())
+		klog.Errorf("remove rich rule failed: %v", call.Err)
 		return call.Err
 	}
 	return nil
@@ -1458,24 +1460,22 @@ func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *Rule) (err error) 
 // @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) PermanentRemoveRichRule(zone string, rule *Rule) (err error) {
+func (c *DbusClientSerivce) PermanentRemoveRichRule(zone string, rule *apis.Rule) (encounterError error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return err
+	if path, encounterError = c.generatePath(zone, apis.ZONE_PATH); encounterError != nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		printPath(apis.PATH, apis.CONFIG_ZONE_REOMVERICHRULE)
+		klog.V(4).Infof("Try to remove permanent rich rule %s in zone %s.", rule.ToString(), zone)
+		call := obj.Call(apis.CONFIG_ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart)
+		if encounterError = call.Err; encounterError == nil {
+			return nil
+		}
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.CONFIG_ZONE_REOMVERICHRULE)
-	log.Info(fmt.Sprintf("try to remove permanent rich rule %s in zone %s.", zone), rule.ToString())
-	call := obj.Call(object.CONFIG_ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, rule.ToString())
-
-	if call.Err != nil {
-		log.Error(fmt.Sprintf("remove rich rule %s in zone %s failed:", zone), call.Err.Error())
-		return call.Err
-	}
-	return nil
+	klog.Errorf("remove rich rule %s in zone %s failed:", rule.ToString(), zone, encounterError)
+	return encounterError
 }
 
 // @title         PermanentQueryRichRule
@@ -1484,45 +1484,46 @@ func (c *DbusClientSerivce) PermanentRemoveRichRule(zone string, rule *Rule) (er
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"
-func (c *DbusClientSerivce) PermanentQueryRichRule(zone string, rule *Rule) bool {
+func (c *DbusClientSerivce) PermanentQueryRichRule(zone string, rule *apis.Rule) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+	var (
+		path           dbus.ObjectPath
+		encounterError error
+	)
 
-	var path dbus.ObjectPath
-	var err error
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return false
+	if path, encounterError = c.generatePath(zone, apis.ZONE_PATH); encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		printPath(path, apis.CONFIG_ZONE_QUERYRICHRULE)
+		klog.V(4).Infof("Try to query permanent rich rule %s in zone %s.", rule.ToString(), zone)
+		call := obj.Call(apis.CONFIG_ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+		encounterError = call.Err
+		if len(call.Body) == 0 || call.Body[0].(bool) {
+			return true
+		}
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_ZONE_QUERYRICHRULE)
-	log.Info(fmt.Sprintf("try to query permanent rich rule %s in zone %s.", zone), rule.ToString())
-	call := obj.Call(object.CONFIG_ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
-
-	if len(call.Body) <= 0 || !call.Body[0].(bool) {
-		log.Error(fmt.Sprintf("query permanent rich rule %s in zone %s failed:", zone), call.Err.Error())
-		return false
-	}
-	return true
+	log.Warnf("Query permanent rich rule %s in zone %s failed: %v", rule.ToString(), zone, encounterError)
+	return false
 }
 
 // @title         QueryRichRule
-// @description   Check whether rich rule rule has been added in zone.
+// @description   Check whether rich rule is already has.
 // @auth      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"
-func (c *DbusClientSerivce) QueryRichRule(zone string, rule *Rule) bool {
+func (c *DbusClientSerivce) QueryRichRule(zone string, rule *apis.Rule) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.ZONE_QUERYRICHRULE)
-	log.Info(fmt.Sprintf("try to query rich rule %s in zone %s.", zone), rule.ToString())
-	call := obj.Call(object.ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	println(apis.PATH, apis.ZONE_QUERYRICHRULE)
+	klog.V(4).Infof("Try to query rich rule %s in zone %s.", rule.ToString, zone)
 
+	call := obj.Call(apis.ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
 	if len(call.Body) <= 0 || !call.Body[0].(bool) {
-		log.Error(fmt.Sprintf("query rich rule %s in zone %s failed:", zone), call.Err.Error())
+		log.Warnf("query rich rule %s in zone %s failed: %v", rule.ToString(), zone, call.Err.Error())
 		return false
 	}
 	return true
@@ -1537,11 +1538,11 @@ func (c *DbusClientSerivce) QueryRichRule(zone string, rule *Rule) bool {
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) Reload() (err error) {
-	obj := c.client.Object(object.INTERFACE, object.PATH)
-	log.Debug("Call Remotely Dbus:", object.PATH, object.INTERFACE_RELOAD)
-	log.Info("try to reload firewalld runtime.")
-	call := obj.Call(object.INTERFACE_RELOAD, dbus.FlagNoAutoStart)
+func (c *DbusClientSerivce) Reload() error {
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	println(apis.PATH, apis.INTERFACE_RELOAD)
+	klog.V(4).Infof("Try to reload firewalld runtime.")
+	call := obj.Call(apis.INTERFACE_RELOAD, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
 		log.Info("reload firewalld failed:", call.Err.Error())
@@ -1557,48 +1558,56 @@ func (c *DbusClientSerivce) Reload() (err error) {
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) RuntimeFlush(zone string) (err error) {
+func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	zoneSettings := &Settings{
+
+	defaultZoneSetting := apis.Settings{
 		Target:      "default",
-		Description: "reset to firewall-api",
+		Description: "reset by " + config.CONFIG.AppName,
 		Short:       "public",
 		Interface:   nil,
 		Service: []string{
 			"ssh",
 			"dhcpv6-client",
 		},
-		Port: []*Port{
-			&Port{
-				Port:     fmt.Sprintf("%s", c.port),
+		Port: []*apis.Port{
+			&apis.Port{
+				Port:     config.CONFIG.Dbus_Port,
 				Protocol: "tcp",
 			},
 		},
 	}
 
 	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, object.ZONE_PATH); err != nil {
-		return err
+	if path, encounterError = c.generatePath(zone, apis.ZONE_PATH); encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		printPath(path, apis.CONFIG_UPDATE)
+		klog.V(4).Infof("Try to flush current active zone (%s).", zone)
+		call := obj.Call(apis.CONFIG_UPDATE, dbus.FlagNoAutoStart, defaultZoneSetting)
+		encounterError = call.Err
+		if encounterError == nil || len(call.Body) <= 0 {
+			return nil
+		}
 	}
-	obj := c.client.Object(object.INTERFACE, path)
-	log.Debug("Call Remotely Dbus:", path, object.CONFIG_UPDATE)
-	log.Info(fmt.Sprintf("try to flush current zone (%s).", zone))
-	call := obj.Call(object.CONFIG_UPDATE, dbus.FlagNoAutoStart, zoneSettings)
 
-	if call.Err != nil || len(call.Body) > 0 {
-		log.Error(fmt.Sprintf("flush current zone (%s) failed", zone), call.Err.Error())
-		return call.Err
-	}
-	return nil
+	klog.Errorf("Flush current zone (%s) failed: %v", zone, encounterError)
+	return encounterError
 }
 
 /*
  * @title         destroy
- * @description   off dbus connection.
+ * @description   off firewalld connection.
  * @auth          author    2021-10-31
  */
 func (c *DbusClientSerivce) Destroy() {
-	c.client.Close()
+	err := c.client.Close()
+	if err != nil {
+		klog.Errorf("Close D-Bus connection failed, %v", err)
+	}
+}
+
+func printPath(pathName dbus.ObjectPath, interfaceName string) {
+	klog.V(5).Infof("Call remote D-Bus:", pathName, interfaceName)
 }

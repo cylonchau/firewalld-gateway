@@ -1,9 +1,10 @@
-package v2
+package v1
 
 import (
-	"firewall-api/code"
-	"firewall-api/utils/dbus"
-	q "firewall-api/utils/query"
+	q "github.com/cylonchau/firewalldGateway/apis"
+	code "github.com/cylonchau/firewalldGateway/server/apis"
+	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,17 +13,17 @@ type NatRouter struct{}
 func (this *NatRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/nat")
 
-	portGroup.POST("/add", this.addForwardAtPermanent)
-	portGroup.GET("/get", this.getForwardAtPermanent)
-	portGroup.DELETE("/delete", this.delForwardAtPermanent)
+	portGroup.POST("/add", this.addForwardInRuntime)
+	portGroup.GET("/get", this.getForwardInRuntime)
+	portGroup.DELETE("/delete", this.delForwardInRuntime)
 }
 
-// addForwardAtPermanent ...
-// @Summary addForwardAtPermanent
+// addForward ...
+// @Summary addForward
 // @Produce  json
 // @Success 200 {object} internal.Response
-// @Router /fw/v2/port/add [POST]
-func (this *NatRouter) addForwardAtPermanent(c *gin.Context) {
+// @Router /fw/v1/port/add [POST]
+func (this *NatRouter) addForwardInRuntime(c *gin.Context) {
 
 	var query = &q.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
@@ -33,26 +34,25 @@ func (this *NatRouter) addForwardAtPermanent(c *gin.Context) {
 		query.Zone = "public"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
 
-	if err = dbusClient.PermanentAddForwardPort(query.Zone, query.Forward); err != nil {
+	if err = dbusClient.AddForwardPort(query.Zone, query.Timeout, query.Forward); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}
 	q.SuccessResponse(c, code.OK, query)
 }
 
-// getForwardAtPermanent ...
-// @Summary getForwardAtPermanent
+// GetPort ...
+// @Summary GetPort
 // @Produce  json
 // @Success 200 {object} internal.Response
 // @Router /fw/v1/port/get [GET]
-func (this *NatRouter) getForwardAtPermanent(c *gin.Context) {
+func (this *NatRouter) getForwardInRuntime(c *gin.Context) {
 
 	var query = &q.Query{}
 	err := c.Bind(query)
@@ -62,14 +62,13 @@ func (this *NatRouter) getForwardAtPermanent(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
 
-	forwards, err := dbusClient.PermanentGetForwardPort(query.Zone)
+	forwards, err := dbusClient.GetForwardPort(query.Zone)
 
 	if err != nil {
 		q.APIResponse(c, err, nil)
@@ -80,16 +79,15 @@ func (this *NatRouter) getForwardAtPermanent(c *gin.Context) {
 		q.NotFount(c, code.ErrForwardNotFount, nil)
 		return
 	}
-
 	q.SuccessResponse(c, code.OK, forwards)
 }
 
-// delForwardAtPermanent ...
-// @Summary delForwardAtPermanent
+// delForwardInRuntime ...
+// @Summary delForwardInRuntime
 // @Produce  json
 // @Success 200 {object} internal.Response
-// @Router /fw/v1/port/delete [DELETE]
-func (this *NatRouter) delForwardAtPermanent(c *gin.Context) {
+// @Router /fw/v1/port/add [DELETE]
+func (this *NatRouter) delForwardInRuntime(c *gin.Context) {
 
 	var query = &q.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
@@ -100,14 +98,13 @@ func (this *NatRouter) delForwardAtPermanent(c *gin.Context) {
 		query.Zone = "public"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
 
-	if err = dbusClient.PermanentRemoveForwardPort(query.Zone, query.Forward); err != nil {
+	if err = dbusClient.RemoveForwardPort(query.Zone, query.Forward); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}

@@ -1,10 +1,12 @@
 package v2
 
 import (
-	"firewall-api/code"
-	"firewall-api/utils/dbus"
-	q "firewall-api/utils/query"
 	"fmt"
+
+	q "github.com/cylonchau/firewalldGateway/apis"
+	code "github.com/cylonchau/firewalldGateway/server/apis"
+	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ulule/deepcopier"
 )
@@ -37,7 +39,7 @@ func (this *SettingRouter) reload(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -63,7 +65,7 @@ func (this *SettingRouter) addZoneSetting(c *gin.Context) {
 		q.APIResponse(c, err, nil)
 		return
 	}
-	var setting = &dbus.Settings{}
+	var setting = &q.Settings{}
 	var richs []string
 	for _, n := range query.Setting.Rule {
 		richs = append(richs, n.ToString())
@@ -73,7 +75,7 @@ func (this *SettingRouter) addZoneSetting(c *gin.Context) {
 	setting.Rule = richs
 	fmt.Printf("%#v", setting)
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -100,7 +102,7 @@ func (this *SettingRouter) removeZone(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -127,7 +129,7 @@ func (this *SettingRouter) listZone(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -155,7 +157,7 @@ func (this *SettingRouter) defaultZone(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -183,7 +185,7 @@ func (this *SettingRouter) flush(c *gin.Context) {
 		query.Zone = "public"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -213,7 +215,7 @@ func (this *SettingRouter) setDefaultZone(c *gin.Context) {
 		query.Zone = "public"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)

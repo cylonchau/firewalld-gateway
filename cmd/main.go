@@ -1,12 +1,14 @@
 package main
 
 import (
-	"firewall-api/cmd/app"
-	"firewall-api/config"
-	"firewall-api/log"
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/spf13/pflag"
+	"k8s.io/klog/v2"
+
+	"github.com/cylonchau/firewalldGateway/server"
 )
 
 var (
@@ -14,10 +16,12 @@ var (
 	h             bool
 )
 
-func init() {
-	flag.StringVar(&configuration, "f", "./firewalld.conf", "set configuration file.")
-	flag.BoolVar(&h, "h", false, "Prints a short help text and exists.")
-	flag.Usage = usage
+func BuildInitFlags() {
+	flagset := flag.CommandLine
+	flagset.StringVar(&configuration, "f", "./firewalld-gateway.conf", "set configuration file.")
+	flagset.BoolVar(&h, "h", false, "Prints a short help text and exists.")
+	flagset.Usage = usage
+	klog.InitFlags(flagset)
 	flag.Parse()
 }
 
@@ -26,7 +30,7 @@ func cmdPrompt(str string) {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `Usage: firewall-api [-f configfile] [-h help]
+	fmt.Fprintf(os.Stderr, `Usage: firewalld-gateway [-f configfile] [-h help]
 
 Options
 `)
@@ -34,16 +38,11 @@ Options
 }
 
 func main() {
-	if h {
-		flag.Usage()
-		return
+	command := server.NewProxyCommand()
+	flagset := flag.CommandLine
+	klog.InitFlags(flagset)
+	pflag.CommandLine.AddGoFlagSet(flagset)
+	if err := command.Execute(); err != nil {
+		os.Exit(1)
 	}
-
-	if err := config.InitConfiguration(configuration); err != nil {
-		cmdPrompt(err.Error())
-		flag.Usage()
-		return
-	}
-	log.New(config.CONFIG.LogLevel)
-	app.NewAPIController()
 }

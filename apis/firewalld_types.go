@@ -1,4 +1,4 @@
-package dbus
+package apis
 
 import (
 	"errors"
@@ -477,15 +477,15 @@ func (this *Rule) ToString() (ruleString string) {
 	return
 }
 
-func SliceToStruct(array interface{}) (forwardPort *ForwardPort, err error) {
-	forwardPort = &ForwardPort{}
+func SliceToStruct(array interface{}) (forwardPort ForwardPort, err error) {
+	forwardPort = ForwardPort{}
 	valueOf := reflect.ValueOf(forwardPort)
 	if valueOf.Kind() != reflect.Ptr {
-		return nil, errors.New("must ptr")
+		return ForwardPort{}, errors.New("must ptr")
 	}
 	valueOf = valueOf.Elem()
 	if valueOf.Kind() != reflect.Struct {
-		return nil, errors.New("must struct")
+		return ForwardPort{}, errors.New("must struct")
 	}
 
 	switch array.(type) {
@@ -742,4 +742,8 @@ Label:
 		}
 	}
 	return rule
+}
+
+func removeSliceElement(s []string, index int) []string {
+	return append(s[:index], s[index+1:]...)
 }

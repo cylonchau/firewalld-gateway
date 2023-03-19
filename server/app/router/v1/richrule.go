@@ -1,9 +1,9 @@
 package v1
 
 import (
-	"firewall-api/code"
-	"firewall-api/utils/dbus"
-	q "firewall-api/utils/query"
+	q "github.com/cylonchau/firewalldGateway/apis"
+	code "github.com/cylonchau/firewalldGateway/server/apis"
+	"github.com/cylonchau/firewalldGateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +31,7 @@ func (this *RichRuleRouter) getRichRulesAtRuntime(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(rich.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(rich.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -71,7 +71,7 @@ func (this *RichRuleRouter) addRichRuleAtRuntime(c *gin.Context) {
 		query.Rich.Family = "ipv4"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -102,7 +102,7 @@ func (this *RichRuleRouter) delRichRuleAtRuntime(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)

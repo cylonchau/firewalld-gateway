@@ -1,4 +1,4 @@
-package dbus
+package firewalld
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"firewall-api/log"
+	"github.com/cylonchau/firewalldGateway/log"
 )
 
 func (c *DbusClientSerivce) checkZoneName(name string) error {
@@ -23,10 +23,6 @@ func splitPortProtocol(portProtocol string) (port, protocol string) {
 		return slices[0], slices[1]
 	}
 	return portProtocol, "tcp"
-}
-
-func removeSliceElement(s []string, index int) []string {
-	return append(s[:index], s[index+1:]...)
 }
 
 func checkPort(portProtocol string) (err error) {

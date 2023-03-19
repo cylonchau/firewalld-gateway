@@ -1,4 +1,4 @@
-package code
+package apis
 
 import "fmt"
 
@@ -8,7 +8,7 @@ var (
 	OK                         = &Errno{Code: 0, Message: "operation succeeded."}
 	NETWORK_MASQUERADE_ENABLE  = &Errno{Code: 0, Message: "network masquerade is enabled."}
 	NETWORK_MASQUERADE_DISABLE = &Errno{Code: 0, Message: "network masquerade is disable."}
-	ErrDBus                    = "connect to remote dbus server failed."
+	ErrDBus                    = "connect to remote firewalld server failed."
 	InternalServerError        = &Errno{Code: 10001, Message: "Internal server error."}
 	ErrBind                    = &Errno{Code: 10002, Message: "Error occurred while binding the request body to the struct."}
 	ErrParam                   = &Errno{Code: 10003, Message: "参数有误"}
@@ -58,7 +58,7 @@ type Err struct {
 }
 
 func (err *Err) Error() string {
-	return fmt.Sprintf("Err - code: %d, message: %s, error: %s", err.Code, err.Message, err.Err)
+	return fmt.Sprintf("Err - apis: %d, message: %s, error: %s", err.Code, err.Message, err.Err)
 }
 
 // DecodeErr ...

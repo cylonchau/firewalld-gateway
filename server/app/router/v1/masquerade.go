@@ -1,9 +1,10 @@
 package v1
 
 import (
-	"firewall-api/code"
-	"firewall-api/utils/dbus"
-	q "firewall-api/utils/query"
+	q "github.com/cylonchau/firewalldGateway/apis"
+	code "github.com/cylonchau/firewalldGateway/server/apis"
+	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +36,7 @@ func (this *MasqueradeRouter) enableInRuntime(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -65,7 +66,7 @@ func (this *MasqueradeRouter) disableInRuntime(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -95,7 +96,7 @@ func (this *MasqueradeRouter) queryInRuntime(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -132,7 +133,7 @@ func (this *MasqueradeRouter) enableInPermanent(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -162,7 +163,7 @@ func (this *MasqueradeRouter) disableInPermanent(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -192,7 +193,7 @@ func (this *MasqueradeRouter) queryInPermanent(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)

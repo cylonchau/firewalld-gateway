@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"firewall-api/code"
-	q "firewall-api/utils/query"
+	q "github.com/cylonchau/firewalldGateway/apis"
+	code "github.com/cylonchau/firewalldGateway/server/apis"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,7 +10,7 @@ import (
 type StoageRouter struct{}
 
 func (this *StoageRouter) RegisterStoageAPI(g *gin.RouterGroup) {
-	storeGroup := g.Group("/stoage")
+	storeGroup := g.Group("/stroage")
 	storeGroup.GET("/get", this.get)
 }
 

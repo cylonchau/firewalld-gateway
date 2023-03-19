@@ -1,8 +1,8 @@
-package object
+package apis
 
 const (
-	PATH           = "/org/fedoraproject/FirewallD1"
 	INTERFACE      = "org.fedoraproject.FirewallD1"
+	PATH           = "/org/fedoraproject/FirewallD1"
 	DIRECT         = INTERFACE + ".direct"
 	IPSET          = INTERFACE + ".ipset"
 	POLICIES       = INTERFACE + ".policies"

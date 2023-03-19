@@ -1,13 +1,14 @@
 package router
 
 import (
-	v1 "firewall-api/cmd/app/router/v1"
-	v2 "firewall-api/cmd/app/router/v2"
-	"firewall-api/config"
 	"github.com/gin-gonic/gin"
+
+	"github.com/cylonchau/firewalldGateway/config"
+	v1 "github.com/cylonchau/firewalldGateway/server/app/router/v1"
+	v2 "github.com/cylonchau/firewalldGateway/server/app/router/v2"
 )
 
-func RegisterRouter(e *gin.Engine) {
+func RegisteredRouter(e *gin.Engine) {
 	firewall_api := e.Group("/fw")
 	v1Group := firewall_api.Group("/v1")
 	v2Group := firewall_api.Group("/v2")

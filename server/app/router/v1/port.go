@@ -1,9 +1,10 @@
 package v1
 
 import (
-	"firewall-api/code"
-	"firewall-api/utils/dbus"
-	q "firewall-api/utils/query"
+	q "github.com/cylonchau/firewalldGateway/apis"
+	code "github.com/cylonchau/firewalldGateway/server/apis"
+	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,7 +32,7 @@ func (this *PortRouter) getInRuntime(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -72,7 +73,7 @@ func (this *PortRouter) addInRuntime(c *gin.Context) {
 		query.Port.Protocol = "tcp"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
@@ -105,14 +106,14 @@ func (this *PortRouter) removeInRuntime(c *gin.Context) {
 		query.Port.Protocol = "tcp"
 	}
 
-	dbusClient, err := dbus.NewDbusClientService(query.Ip)
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
 
-	if _, err = dbusClient.RemovePort(query.Port, query.Zone); err != nil {
+	if err = dbusClient.RemovePort(query.Port, query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}
