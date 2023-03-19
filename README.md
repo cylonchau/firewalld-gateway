@@ -14,7 +14,7 @@ fiewall gateway is a firewall central controller as firewalld
 - Async batch task (only add).
 - Can control thousands of linux machine via firewall gateway remotely.
 - Support change tempate of thousands of machine fastly.
-- Support wrong operation.
+- Support wrong operation backoff.
 - Support delay command effect.
 - Support IPtables NAT
 - Support template (only enable db).
@@ -38,6 +38,10 @@ make
 ## use
 
 [HTTP API DOC](https://documenter.getpostman.com/view/12796679/UV5agGNr)
+
+- v1 runtime.
+- v2 permanent.
+- v3 async task.
 
 ## FAQ
 

@@ -9,6 +9,7 @@ import (
 )
 
 func RegisteredRouter(e *gin.Engine) {
+	e.Handle("GET", "ping", ping)
 	firewall_api := e.Group("/fw")
 	v1Group := firewall_api.Group("/v1")
 	v2Group := firewall_api.Group("/v2")

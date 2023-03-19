@@ -37,12 +37,12 @@ func (this *MasqueradeRouter) enableInRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
-
+	defer dbusClient.Destroy()
 	if err := dbusClient.EnableMasquerade(query.Zone, query.Timeout); err != nil {
 		q.APIResponse(c, err, nil)
 		return
@@ -67,12 +67,12 @@ func (this *MasqueradeRouter) disableInRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
-
+	defer dbusClient.Destroy()
 	if err := dbusClient.DisableMasquerade(query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
 		return
@@ -97,11 +97,11 @@ func (this *MasqueradeRouter) queryInRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	isenable, err := dbusClient.QueryMasquerade(query.Zone)
 
@@ -134,11 +134,12 @@ func (this *MasqueradeRouter) enableInPermanent(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	if err := dbusClient.PermanentEnableMasquerade(query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
@@ -164,11 +165,12 @@ func (this *MasqueradeRouter) disableInPermanent(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	if err := dbusClient.PermanentDisableMasquerade(query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
@@ -194,11 +196,12 @@ func (this *MasqueradeRouter) queryInPermanent(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	isenable, err := dbusClient.PermanentQueryMasquerade(query.Zone)
 
