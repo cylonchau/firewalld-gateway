@@ -1,12 +1,15 @@
 package apis
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 //nolint: golint
 var (
 	// Common errors
 	OK                         = &Errno{Code: 0, Message: "operation succeeded."}
-	NETWORK_MASQUERADE_ENABLE  = &Errno{Code: 0, Message: "network masquerade is enabled."}
+	NETWORK_MASQUERADE_ENABLE  = &Errno{Code: 0, Message: "network masquerade is enable."}
 	NETWORK_MASQUERADE_DISABLE = &Errno{Code: 0, Message: "network masquerade is disable."}
 	ErrDBus                    = "connect to remote firewalld server failed."
 	InternalServerError        = &Errno{Code: 10001, Message: "Internal server error."}
@@ -20,10 +23,11 @@ var (
 	ErrInvalidTransaction = &Errno{Code: 20004, Message: "invalid transaction."}
 
 	// NOTFOUNT
-	ErrRichNotFount    = &Errno{Code: 40004, Message: "the rich rules in the zone is empty."}
-	ErrServiceNotFount = &Errno{Code: 40004, Message: "the service in the zone is empty."}
-	ErrPortNotFount    = &Errno{Code: 40004, Message: "the port in the zone is empty."}
-	ErrForwardNotFount = &Errno{Code: 40004, Message: "the Forward in the zone is empty."}
+	ErrRichNotFount    = &Errno{Code: 40004, Message: "The rich rules in the zone is empty."}
+	ErrServiceNotFount = &Errno{Code: 40004, Message: "The service in the zone is empty."}
+	ErrPortNotFount    = &Errno{Code: 40004, Message: "The port in the zone is empty."}
+	ErrZoneNotFount    = &Errno{Code: 40004, Message: "Not found the zone."}
+	ErrForwardNotFount = &Errno{Code: 40004, Message: "The Forward in the zone is empty."}
 
 	// user errors
 	ErrEncrypt               = &Errno{Code: 20101, Message: "密码加密错误"}
@@ -38,6 +42,9 @@ var (
 	ErrTwicePasswordNotMatch = &Errno{Code: 20112, Message: "两次密码输入不一致"}
 	ErrRegisterFailed        = &Errno{Code: 20113, Message: "注册失败"}
 	ErrCreatedUser           = &Errno{Code: 20114, Message: "用户创建失败"}
+
+	BatchSuccessCreated = &Errno{Code: 60000, Message: "The batch mission has created."}
+	BatchErrCreated     = &Errno{Code: 60005, Message: "The batch mission create failed."}
 )
 
 // Errno ...
@@ -76,4 +83,25 @@ func DecodeErr(err error) (int, string) {
 	}
 
 	return InternalServerError.Code, err.Error()
+}
+
+func DecodeErrSlice(err ...error) (int, []string) {
+	var returnStr []string
+	for _, n := range err {
+		if n == nil {
+			returnStr = append(returnStr, OK.Message)
+			continue
+		}
+		switch typed := n.(type) {
+		case *Err:
+			returnStr = append(returnStr, typed.Message)
+			continue
+		case *Errno:
+			returnStr = append(returnStr, typed.Message)
+			continue
+		default:
+		}
+		returnStr = append(returnStr, n.Error())
+	}
+	return http.StatusAccepted, returnStr
 }

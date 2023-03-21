@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/godbus/dbus/v5"
-	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalldGateway/apis"
 )
@@ -21,27 +20,46 @@ import (
  * @return        error            error          	"Possible errors:
  * 														INVALID_ZONE
  */
-func (c *DbusClientSerivce) GetForwardPort(zone string) (forwards []apis.ForwardPort, err error) {
+func (c *DbusClientSerivce) Listforwards(zone string) ([]apis.ForwardPort, error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_GETFORWARDPORT)
-	klog.V(4).Infof("Trying to get ipv4 forward port rule in zone: %s.", zone)
 
+	//print log
+	c.eventLogFormat.Format = ListResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
+	c.printPath(apis.ZONE_GETFORWARDPORT)
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
 	call := obj.Call(apis.ZONE_GETFORWARDPORT, dbus.FlagNoAutoStart, zone)
-	err = call.Err
-	if err == nil && len(call.Body) >= 0 {
-		for _, value := range call.Body[0].([][]string) {
-			forword, err := apis.SliceToStruct(value)
-			if err == nil {
-				forwards = append(forwards, forword)
-				return forwards, nil
+
+	c.eventLogFormat.encounterError = call.Err
+	var forwards []apis.ForwardPort
+	if c.eventLogFormat.encounterError == nil && len(call.Body) >= 0 {
+		list, ok := call.Body[0].([][]string)
+		if ok {
+			for _, value := range list {
+				var forward apis.ForwardPort
+				forward, c.eventLogFormat.encounterError = apis.SliceToStruct(value)
+				if c.eventLogFormat.encounterError == nil {
+					forwards = append(forwards, forward)
+				} else {
+					break
+				}
 			}
 		}
+
+		c.eventLogFormat.Format = ListResourceSuccessFormat
+		c.eventLogFormat.resource = len(forwards)
+		c.printResourceEventLog()
+		return forwards, nil
 	}
-	klog.Errorf("Get ipv4 forward port rule in zone %s failed: %v", zone, err)
-	return nil, err
+
+	c.eventLogFormat.Format = ListResourceFailedFormat
+	c.printResourceEventLog()
+	return nil, c.eventLogFormat.encounterError
 
 }
 
@@ -58,30 +76,48 @@ func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.Forward
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	var forwards []apis.ForwardPort
-	path, encounterError := c.generatePath(zone, apis.ZONE_PATH)
-	if encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_GETFORWARDPORT)
-		klog.V(4).Infof("Try to get forward port rule in zone: %s.", zone)
 
+	//print log
+	c.eventLogFormat.Format = ListPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+
+	var forwards []apis.ForwardPort
+	var path dbus.ObjectPath
+
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+
+		c.printResourceEventLog()
+
+		c.printPath(apis.CONFIG_GETFORWARDPORT)
 		call := obj.Call(apis.CONFIG_GETFORWARDPORT, dbus.FlagNoAutoStart)
-		encounterError = call.Err
-		if encounterError == nil && len(call.Body) >= 0 {
-			for _, value := range call.Body[0].([][]interface{}) {
-				fmt.Printf("%+v\n", value)
-				//forword, err := apis.SliceToStruct(value)
-				//if err != nil {
-				//	klog.Errorf("convert ipv4 forward port string rule to struct rule failed: %v", err)
-				//	return nil, err
-				//}
-				//forwards = append(forwards, forword)
+
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil && len(call.Body) >= 0 {
+			lists, ok := call.Body[0].([][]interface{})
+			if ok {
+				for _, value := range lists {
+					var forward apis.ForwardPort
+					if forward, c.eventLogFormat.encounterError = apis.SliceToStruct(value); c.eventLogFormat.encounterError == nil {
+						forwards = append(forwards, forward)
+					} else {
+						break
+					}
+				}
+				if c.eventLogFormat.encounterError == nil {
+					c.eventLogFormat.Format = ListPermanentResourceSuccessFormat
+					c.eventLogFormat.resource = len(forwards)
+					c.printResourceEventLog()
+					return forwards, nil
+				}
 			}
-			return forwards, nil
 		}
 	}
-	klog.Errorf("add forward port in zone %s failed: %v", zone, encounterError)
-	return forwards, encounterError
+
+	c.eventLogFormat.Format = ListPermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return nil, c.eventLogFormat.encounterError
 }
 
 /*
@@ -108,17 +144,28 @@ func (c *DbusClientSerivce) AddForwardPort(zone string, timeout int, forward *ap
 		zone = c.GetDefaultZone()
 	}
 
+	// print log
+	c.eventLogFormat.Format = CreateResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
+
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
 
-	printPath(apis.PATH, apis.ZONE_ADDFORWARDPORT)
-	klog.V(4).Infof("Try to add forward port %s to %s:%s.", forward.Port, forward.ToAddr, forward.ToPort)
+	c.printResourceEventLog()
 
+	c.printPath(apis.ZONE_ADDFORWARDPORT)
 	call := obj.Call(apis.ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr, timeout)
-	if call.Err != nil && len(call.Body) <= 0 {
-		klog.Errorf("Add forward port in zone %s failed: %v", zone, call.Err)
-		return call.Err
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
+		c.eventLogFormat.Format = CreateResourceSuccessFormat
+		c.printResourceEventLog()
+		return nil
 	}
-	return nil
+	c.eventLogFormat.Format = CreatePermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -132,25 +179,34 @@ func (c *DbusClientSerivce) AddForwardPort(zone string, timeout int, forward *ap
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentAddForwardPort(zone string, forwardPort *apis.ForwardPort) error {
+func (c *DbusClientSerivce) AddPermanentForwardPort(zone string, forward *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	path, encounterError := c.generatePath(zone, apis.ZONE_PATH)
-	if encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
 
-		printPath(path, apis.CONFIG_ZONE_ADDFORWARDPORT)
-		klog.V(4).Infof("try to add permanent forward port %s to %s:%s.", forwardPort.Port, forwardPort.ToAddr, forwardPort.ToPort)
+	// print log
+	c.eventLogFormat.Format = CreatePermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
 
-		call := obj.Call(apis.CONFIG_ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, forwardPort.Port, forwardPort.Protocol, forwardPort.ToPort, forwardPort.ToAddr)
-		encounterError = call.Err
-		if encounterError == nil && len(call.Body) >= 0 {
-			return nil
-		}
+	path, _ := c.generatePath(zone, apis.ZONE_PATH)
+	obj := c.client.Object(apis.INTERFACE, path)
+	c.printResourceEventLog()
+
+	c.printPath(apis.CONFIG_ZONE_ADDFORWARDPORT)
+	call := obj.Call(apis.CONFIG_ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil {
+		c.eventLogFormat.Format = CreatePermanentResourceSuccessFormat
+		c.printResourceEventLog()
+		return nil
 	}
-	klog.Errorf("Add permanent forward port in zone %s failed: %v", zone, encounterError)
-	return encounterError
+
+	c.eventLogFormat.Format = CreatePermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -171,20 +227,32 @@ func (c *DbusClientSerivce) PermanentAddForwardPort(zone string, forwardPort *ap
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) RemoveForwardPort(zone string, forword *apis.ForwardPort) error {
+func (c *DbusClientSerivce) RemoveForwardPort(zone string, forward *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_REMOVEFORWARDPORT)
-	klog.V(4).Infof("Try to remove forward port %s to %s:%s.", forword.Port, forword.ToAddr, forword.ToPort)
 
-	call := obj.Call(apis.ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, zone, forword.Port, forword.Protocol, forword.ToPort, forword.ToAddr)
-	if call.Err != nil && len(call.Body) <= 0 {
-		klog.Errorf("remove forward port %s to %s:%s at runtime zone failed: %v", forword.Port, forword.Protocol, forword.ToPort, call.Err.Error())
-		return call.Err
+	// print log
+	c.eventLogFormat.Format = RemoveResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
+
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	c.printResourceEventLog()
+
+	c.printPath(apis.ZONE_REMOVEFORWARDPORT)
+	call := obj.Call(apis.ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil {
+		c.eventLogFormat.Format = RemoveResourceSuccessFormat
+		c.printResourceEventLog()
+		return nil
 	}
-	return nil
+	c.eventLogFormat.Format = RemoveResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -198,24 +266,38 @@ func (c *DbusClientSerivce) RemoveForwardPort(zone string, forword *apis.Forward
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentRemoveForwardPort(zone string, forword *apis.ForwardPort) error {
+func (c *DbusClientSerivce) RemovePermanentForwardPort(zone string, forward *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	path, enconterError := c.generatePath(zone, apis.ZONE_PATH)
-	if enconterError == nil {
+	// print log
+	c.eventLogFormat.Format = RemovePermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
+
+	var path dbus.ObjectPath
+	path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH)
+
+	if c.eventLogFormat.encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_REMOVEFORWARDPORT)
-		klog.V(4).Infof("Try to remove permanent forward port %s to %s:%s.", forword.Port, forword.ToAddr, forword.ToPort)
-		call := obj.Call(apis.CONFIG_ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, forword.Port, forword.Protocol, forword.ToPort, forword.ToAddr)
-		enconterError = call.Err
-		if enconterError == nil && len(call.Body) >= 0 {
+
+		c.printResourceEventLog()
+		c.printPath(apis.CONFIG_ZONE_REMOVEFORWARDPORT)
+		call := obj.Call(apis.CONFIG_ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
+
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = RemovePermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("Try to remove permanent forward port  %s to %s:%s failed: %v", forword.Port, forword.ToAddr, forword.ToPort, enconterError)
-	return enconterError
+
+	c.eventLogFormat.Format = RemovePermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -236,24 +318,36 @@ func (c *DbusClientSerivce) PermanentRemoveForwardPort(zone string, forword *api
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) QueryForwardPort(zone string, portProtocol, toHostPort string) (b bool) {
+func (c *DbusClientSerivce) QueryForwardPort(zone, portProtocol, toHostPort string) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	var enconterError error
+
+	// print log
+	c.eventLogFormat.Format = QueryResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.eventLogFormat.resource = fmt.Sprintf("%s/%s", portProtocol, toHostPort)
+
 	port, protocol := splitPortProtocol(portProtocol)
 	toAddr, toPort, enconterError := net.SplitHostPort(toHostPort)
-	if enconterError == nil {
+	c.eventLogFormat.encounterError = enconterError
+
+	if c.eventLogFormat.encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, apis.PATH)
-		printPath(apis.PATH, apis.ZONE_QUERYFORWARDPORT)
-		klog.V(4).Infof("Try to query forward port %s to %s.", portProtocol, toHostPort)
+		c.printResourceEventLog()
+
+		c.printPath(apis.ZONE_QUERYFORWARDPORT)
 		call := obj.Call(apis.ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, zone, port, protocol, toPort, toAddr)
-		enconterError = call.Err
-		if enconterError == nil || call.Body[0].(bool) {
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil || call.Body[0].(bool) {
+			c.eventLogFormat.Format = QueryResourceSuccessFormat
+			c.printResourceEventLog()
 			return true
 		}
 	}
-	klog.Errorf("Query forward port %s to %s failed: %v", portProtocol, toHostPort, enconterError)
+	c.eventLogFormat.Format = QueryResourceFailedFormat
+	c.printResourceEventLog()
 	return false
 }
 
@@ -268,26 +362,40 @@ func (c *DbusClientSerivce) QueryForwardPort(zone string, portProtocol, toHostPo
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentQueryForwardPort(zone string, portProtocol, toHostPort string) (b bool) {
+func (c *DbusClientSerivce) PermanentQueryForwardPort(zone, portProtocol, toHostPort string) (b bool) {
 	var enconterError error
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+
+	// print log
+	c.eventLogFormat.Format = QueryPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NAT forward"
+	c.eventLogFormat.encounterError = nil
+	c.eventLogFormat.resource = fmt.Sprintf("%s/%s", portProtocol, toHostPort)
+
 	port, protocol := splitPortProtocol(portProtocol)
 	toAddr, toPort, enconterError := net.SplitHostPort(toHostPort)
-	if enconterError == nil {
+	c.eventLogFormat.encounterError = enconterError
+
+	if c.eventLogFormat.encounterError == nil {
 		var path dbus.ObjectPath
-		if path, enconterError = c.generatePath(zone, apis.ZONE_PATH); enconterError == nil {
+		if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
 			obj := c.client.Object(apis.INTERFACE, path)
-			printPath(path, apis.CONFIG_ZONE_QUERYFORWARDPORT)
-			klog.V(4).Infof("Try to query permanent forward port %s to %s.", portProtocol, toHostPort)
+
+			c.printResourceEventLog()
+			c.printPath(apis.CONFIG_ZONE_QUERYFORWARDPORT)
 			call := obj.Call(apis.CONFIG_ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, port, protocol, toPort, toAddr)
-			enconterError = call.Err
-			if enconterError == nil || (len(call.Body) >= 0 || call.Body[0].(bool)) {
+			c.eventLogFormat.encounterError = call.Err
+
+			if enconterError == nil || call.Body[0].(bool) {
+				c.eventLogFormat.Format = QueryPermanentResourceSuccessFormat
+				c.printResourceEventLog()
 				return true
 			}
 		}
 	}
-	klog.Errorf("Query permanent forward port %s to %s failed: %v", portProtocol, toHostPort, enconterError)
+	c.eventLogFormat.Format = QueryPermanentResourceFailedFormat
+	c.printResourceEventLog()
 	return false
 }

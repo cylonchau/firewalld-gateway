@@ -12,9 +12,9 @@ type PortRouter struct{}
 
 func (this *PortRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/port")
-	portGroup.GET("/get", this.getInRuntime)
-	portGroup.POST("/add", this.addInRuntime)
-	portGroup.DELETE("/delete", this.removeInRuntime)
+	portGroup.GET("/", this.getInRuntime)
+	portGroup.POST("/", this.addInRuntime)
+	portGroup.DELETE("/", this.removeInRuntime)
 }
 
 // GetPort ...
@@ -33,11 +33,11 @@ func (this *PortRouter) getInRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	port, err := dbusClient.GetPort(query.Zone)
 
@@ -74,13 +74,13 @@ func (this *PortRouter) addInRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
-	if err = dbusClient.AddPort(query.Port, query.Zone, query.Timeout); err != nil {
+	if err = dbusClient.AddPort(&query.Port, query.Zone, query.Timeout); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}
@@ -107,13 +107,13 @@ func (this *PortRouter) removeInRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
-	if err = dbusClient.RemovePort(query.Port, query.Zone); err != nil {
+	if err = dbusClient.RemovePort(&query.Port, query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}

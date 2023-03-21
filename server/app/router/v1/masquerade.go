@@ -13,12 +13,12 @@ type MasqueradeRouter struct{}
 func (this *MasqueradeRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/masquerade")
 
-	portGroup.GET("/enable", this.enableInRuntime)
-	portGroup.GET("/disable", this.disableInRuntime)
-	portGroup.GET("/query", this.queryInRuntime)
-	portGroup.GET("/enablepermanent", this.enableInPermanent)
-	portGroup.GET("/disablepermanent", this.disableInPermanent)
-	portGroup.GET("/querypermanent", this.queryInPermanent)
+	portGroup.PUT("/", this.enableInRuntime)
+	portGroup.DELETE("/", this.disableInRuntime)
+	portGroup.GET("/", this.queryInRuntime)
+	portGroup.PUT("/permanent", this.enableInPermanent)
+	portGroup.DELETE("/permanent", this.disableInPermanent)
+	portGroup.GET("/query", this.queryInPermanent)
 }
 
 // enableInRuntime ...
@@ -141,7 +141,7 @@ func (this *MasqueradeRouter) enableInPermanent(c *gin.Context) {
 	}
 	defer dbusClient.Destroy()
 
-	if err := dbusClient.PermanentEnableMasquerade(query.Zone); err != nil {
+	if err := dbusClient.EnablePermanentMasquerade(query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}
@@ -172,7 +172,7 @@ func (this *MasqueradeRouter) disableInPermanent(c *gin.Context) {
 	}
 	defer dbusClient.Destroy()
 
-	if err := dbusClient.PermanentDisableMasquerade(query.Zone); err != nil {
+	if err := dbusClient.DisablePermanentMasquerade(query.Zone); err != nil {
 		q.APIResponse(c, err, nil)
 		return
 	}
@@ -203,7 +203,7 @@ func (this *MasqueradeRouter) queryInPermanent(c *gin.Context) {
 	}
 	defer dbusClient.Destroy()
 
-	isenable, err := dbusClient.PermanentQueryMasquerade(query.Zone)
+	isenable, err := dbusClient.QueryPermanentMasquerade(query.Zone)
 
 	if err != nil {
 		q.APIResponse(c, err, nil)

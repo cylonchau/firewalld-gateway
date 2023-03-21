@@ -2,7 +2,6 @@ package firewalld
 
 import (
 	"github.com/godbus/dbus/v5"
-	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalldGateway/apis"
 )
@@ -22,16 +21,25 @@ func (c *DbusClientSerivce) AddProtocol(zone, protocol string, timeout int) erro
 		zone = c.GetDefaultZone()
 	}
 
+	//print log
+	c.eventLogFormat.Format = CreateResourceStartFormat
+	c.eventLogFormat.resourceType = "protocol"
+	c.eventLogFormat.resource = protocol
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
 
-	printPath(apis.PATH, apis.ZONE_ADDPROTOCOL)
-
-	klog.V(4).Infof("Trying to create protocol rule in zone %s/%s", zone, protocol)
+	c.printPath(apis.ZONE_ADDPROTOCOL)
 	call := obj.Call(apis.ZONE_ADDPROTOCOL, dbus.FlagNoAutoStart, zone, protocol, timeout)
 
-	if call.Err != nil {
-		klog.Errorf("Create protocol rule failed: %v", call.Err.Error())
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError != nil {
+		c.eventLogFormat.Format = CreateResourceFailedFormat
+		c.printResourceEventLog()
 		return call.Err
 	}
+	c.eventLogFormat.Format = CreateResourceSuccessFormat
+	c.printResourceEventLog()
 	return nil
 }

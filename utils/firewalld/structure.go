@@ -3,7 +3,6 @@ package firewalld
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
@@ -13,21 +12,18 @@ import (
 )
 
 var (
-	dbusClient     *DbusClientSerivce
-	remotelyBusLck sync.Mutex
-	PORT           = "55557"
+	PORT = "55556"
 )
 
 type DbusClientSerivce struct {
-	client      *dbus.Conn
-	defaultZone string
-	ip          string
-	port        string
+	client         *dbus.Conn
+	defaultZone    string
+	ip             string
+	port           string
+	eventLogFormat logFormat
 }
 
 func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
-	remotelyBusLck.Lock()
-	defer remotelyBusLck.Unlock()
 	var (
 		encounterError error
 		conn           *dbus.Conn
@@ -39,9 +35,6 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 		klog.V(5).Infof("Start connect to D-Bus service: %s:%s", addr, PORT)
 	}
 
-	if dbusClient != nil && dbusClient.client.Connected() {
-		return dbusClient, nil
-	}
 	if conn, encounterError = dbus.Connect("tcp:host="+addr+",port="+PORT, dbus.WithAuth(dbus.AuthAnonymous())); encounterError == nil {
 		obj := conn.Object(apis.INTERFACE, apis.PATH)
 		call := obj.Call(apis.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
@@ -52,6 +45,7 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 				call.Body[0].(string),
 				addr,
 				PORT,
+				logFormat{},
 			}, encounterError
 		}
 	}
@@ -60,14 +54,16 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 }
 
 /*
- * @title         destroy
+ * @title         Destroy
  * @description   off firewalld connection.
  * @auth          author    2021-10-31
  */
 func (c *DbusClientSerivce) Destroy() {
-	err := c.client.Close()
-	if err != nil {
-		klog.Errorf("Close D-Bus connection failed, %v", err)
+	if c.client.Connected() {
+		err := c.client.Close()
+		if err != nil {
+			klog.Errorf("Close D-Bus connection failed, %v", err)
+		}
 	}
 }
 
@@ -82,14 +78,15 @@ func (c *DbusClientSerivce) Destroy() {
  */
 func (c *DbusClientSerivce) Reload() error {
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.INTERFACE_RELOAD)
+	c.printPath(apis.INTERFACE_RELOAD)
 	klog.V(4).Infof("Try to reload firewalld runtime.")
 	call := obj.Call(apis.INTERFACE_RELOAD, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
-		klog.Errorf("reload firewalld failed: %v", call.Err.Error())
+		klog.Errorf("Reload firewalld failed: %v", call.Err.Error())
 		return call.Err
 	}
+	klog.V(4).Infof("Reload firewalld success")
 	return nil
 }
 
@@ -125,7 +122,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 	var path dbus.ObjectPath
 	if path, encounterError = c.generatePath(zone, apis.ZONE_PATH); encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_UPDATE)
+		c.printPath(apis.CONFIG_UPDATE)
 		klog.V(4).Infof("Try to flush current active zone (%s).", zone)
 		call := obj.Call(apis.CONFIG_UPDATE, dbus.FlagNoAutoStart, defaultZoneSetting)
 		encounterError = call.Err
@@ -142,17 +139,13 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 // @description   temporary Add rich language rule into zone.
 // @auth      	  author           2021-10-05
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) generatePath(zone, interface_path string) (dbus.ObjectPath, error) {
+func (c *DbusClientSerivce) generatePath(zone, interfacePath string) (dbus.ObjectPath, error) {
 	zoneid := c.getZoneId(zone)
 	if zoneid < 0 {
-		klog.Errorf("invalid zone:", zone)
-		return "", errors.New("invalid zone " + interface_path + zone)
+		klog.Errorf("Invalid zone:", zone)
+		return "", errors.New("Invalid zone " + interfacePath + "/" + zone)
 	}
-	p := fmt.Sprintf("%s/%d", interface_path, zoneid)
-	klog.V(5).Infof("Dbus PATH: %s", p)
+	p := fmt.Sprintf("%s/%d", interfacePath, zoneid)
+	klog.V(5).Infof("D-Bus PATH: %s", p)
 	return dbus.ObjectPath(p), nil
-}
-
-func printPath(pathName dbus.ObjectPath, interfaceName string) {
-	klog.V(5).Infof("Call remote D-Bus: %s/%s", pathName, interfaceName)
 }

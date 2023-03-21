@@ -19,12 +19,14 @@ func (this *MysqlConfig) IsEmpty() bool {
 }
 
 type Config struct { //Config对象和config.toml文件保持一致
-	AppName   string
-	LogLevel  string
-	Address   string
-	Port      string
-	Dbus_Port string
-	Mysql     MysqlConfig //需要定义子类型对应的变量，如果不定义映射不成功
+	AppName              string
+	LogLevel             string
+	Address              string
+	Port                 string
+	Dbus_Port            string
+	Async_Process        bool
+	Mission_Retry_Number int
+	Mysql                MysqlConfig //需要定义子类型对应的变量，如果不定义映射不成功
 }
 
 func InitConfiguration(configFile string) error {

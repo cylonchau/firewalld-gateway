@@ -14,6 +14,12 @@ type Response struct {
 	Data interface{} `form:"data" json:"data,omitempty"`
 }
 
+type ResponseSlice struct {
+	Code int         `form:"apis" json:"apis,omitempty"`
+	Msg  []string    `form:"msg" json:"msg,omitempty"`
+	Data interface{} `form:"data" json:"data,omitempty"`
+}
+
 // APIResponse ....
 func APIResponse(ctx *gin.Context, err error, data interface{}) {
 	returnCode, message := apis.DecodeErr(err)
@@ -51,5 +57,24 @@ func ConnectDbusService(ctx *gin.Context, err error) {
 		Code: returnCode,
 		Msg:  message,
 		Data: apis.ErrDBus,
+	})
+}
+
+// ConnectDbusService ....
+func BacthMissionFailedResponse(ctx *gin.Context, err ...error) {
+	returnCode, message := apis.DecodeErrSlice(err...)
+	ctx.JSON(http.StatusAccepted, ResponseSlice{
+		Code: returnCode,
+		Msg:  message,
+		Data: apis.BatchErrCreated,
+	})
+}
+
+// ConnectDbusService ....
+func BacthMissionSuccessResponse(ctx *gin.Context, err error) {
+	returnCode, _ := apis.DecodeErr(err)
+	ctx.JSON(http.StatusCreated, ResponseSlice{
+		Code: returnCode,
+		Data: apis.BatchSuccessCreated,
 	})
 }

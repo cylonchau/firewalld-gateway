@@ -477,43 +477,47 @@ func (this *Rule) ToString() (ruleString string) {
 	return
 }
 
-func SliceToStruct(array interface{}) (forwardPort ForwardPort, err error) {
-	forwardPort = ForwardPort{}
-	valueOf := reflect.ValueOf(forwardPort)
-	if valueOf.Kind() != reflect.Ptr {
-		return ForwardPort{}, errors.New("must ptr")
-	}
-	valueOf = valueOf.Elem()
-	if valueOf.Kind() != reflect.Struct {
-		return ForwardPort{}, errors.New("must struct")
-	}
-
+func SliceToStruct(array interface{}) (ForwardPort, error) {
+	forwardPort := ForwardPort{}
+	valueOf := reflect.ValueOf(&forwardPort).Elem()
+	var encounterError error
 	switch array.(type) {
 	case []string:
 		arrayImplement := array.([]string)
-		for i := 0; i < valueOf.NumField(); i++ {
-			if i >= len(arrayImplement) {
-				break
+		if len(arrayImplement) >= 0 {
+			for i := 0; i < len(arrayImplement); i++ {
+				if i >= len(arrayImplement) {
+					break
+				}
+				val := arrayImplement[i]
+				if val != "" {
+					valueOf.Field(i).Set(reflect.ValueOf(val))
+				}
 			}
-			val := arrayImplement[i]
-			if val != "" && reflect.ValueOf(val).Kind() == valueOf.Field(i).Kind() {
-				valueOf.Field(i).Set(reflect.ValueOf(val))
-			}
+			return forwardPort, nil
+		} else {
+			encounterError = errors.New("forward rule is nil")
 		}
 	case []interface{}:
 		arrayImplement := array.([]interface{})
-		for i := 0; i < valueOf.NumField(); i++ {
-			if i >= len(arrayImplement) {
-				break
+		if len(arrayImplement) >= 0 {
+			for i := 0; i < valueOf.NumField(); i++ {
+				if i >= len(arrayImplement) {
+					break
+				}
+				val := arrayImplement[i]
+				if val != "" && reflect.ValueOf(val).Kind() == valueOf.Field(i).Kind() {
+					valueOf.Field(i).Set(reflect.ValueOf(val))
+				}
 			}
-			val := arrayImplement[i]
-			if val != "" && reflect.ValueOf(val).Kind() == valueOf.Field(i).Kind() {
-				valueOf.Field(i).Set(reflect.ValueOf(val))
-			}
+			return forwardPort, nil
+		} else {
+			encounterError = errors.New("forward rule is nil")
 		}
+	default:
+		encounterError = errors.New("Unsupport forward type.")
 	}
-
-	return forwardPort, nil
+	return ForwardPort{}, encounterError
 }
 
 func stringToReject(slice []string) (reject *Reject, ruleSlice []string) {

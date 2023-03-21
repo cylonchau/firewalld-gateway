@@ -2,7 +2,6 @@ package firewalld
 
 import (
 	"github.com/godbus/dbus/v5"
-	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalldGateway/apis"
 )
@@ -24,16 +23,28 @@ func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout int) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_ADDMASQUERADE)
-	klog.V(4).Infof("Trying enable network masquerade in zone %s .", zone)
-	call := obj.Call(apis.ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart, zone, timeout)
 
-	if call.Err != nil && len(call.Body) <= 0 {
-		klog.Errorf("Enable network masquerade failed: %v", call.Err.Error())
-		return call.Err
+	//print log
+	c.eventLogFormat.Format = SwitchResourceStartFormat
+	c.eventLogFormat.resourceType = "enable"
+	c.eventLogFormat.encounterError = nil
+
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	c.printResourceEventLog()
+
+	c.printPath(apis.ZONE_ADDMASQUERADE)
+	call := obj.Call(apis.ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart, zone, timeout)
+	c.eventLogFormat.encounterError = call.Err
+
+	if c.eventLogFormat.encounterError == nil {
+		c.eventLogFormat.Format = SwitchResourceSuccessFormat
+		c.printResourceEventLog()
+		return nil
 	}
-	return nil
+
+	c.eventLogFormat.Format = SwitchResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -46,22 +57,35 @@ func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout int) error {
  *                                                  ALREADY_ENABLED,
  *                                                  INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) PermanentEnableMasquerade(zone string) (err error) {
+func (c *DbusClientSerivce) EnablePermanentMasquerade(zone string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	if path, err := c.generatePath(zone, apis.ZONE_PATH); err == nil {
+	// print log
+	c.eventLogFormat.Format = SwitchPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "enable"
+	c.eventLogFormat.encounterError = nil
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_ADDMASQUERADE)
-		klog.V(4).Infof("Try to permanent enable network masquerade in zone %s .", zone)
+		c.printPath(apis.CONFIG_ZONE_ADDMASQUERADE)
+
+		c.printResourceEventLog()
+
+		c.printPath(apis.CONFIG_ZONE_ADDMASQUERADE)
 		call := obj.Call(apis.CONFIG_ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart)
-		err = call.Err
-		if err == nil {
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = SwitchPermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("Permanent enable network masquerade failed: %v", err)
-	return err
+	c.eventLogFormat.Format = SwitchPermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -80,16 +104,28 @@ func (c *DbusClientSerivce) DisableMasquerade(zone string) (err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_REMOVEMASQUERADE)
-	klog.V(4).Infof("Trying to disable network masquerade in zone %s .", zone)
 
+	// print log
+	c.eventLogFormat.Format = SwitchResourceStartFormat
+	c.eventLogFormat.resourceType = "disable"
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	c.printPath(apis.ZONE_REMOVEMASQUERADE)
 	call := obj.Call(apis.ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart, zone)
-	if call.Err != nil && len(call.Body) <= 0 {
-		klog.Errorf("Disable network masquerade failed:", call.Err.Error())
-		return call.Err
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError != nil {
+		c.eventLogFormat.Format = SwitchResourceFailedFormat
+		c.printResourceEventLog()
+		return c.eventLogFormat.encounterError
 	}
-	return
+
+	c.eventLogFormat.Format = SwitchResourceSuccessFormat
+	c.printResourceEventLog()
+	return nil
 }
 
 /*
@@ -101,23 +137,36 @@ func (c *DbusClientSerivce) DisableMasquerade(zone string) (err error) {
  * @return        error            error          "Possible errors:
  *                                                  NOT_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentDisableMasquerade(zone string) (err error) {
+func (c *DbusClientSerivce) DisablePermanentMasquerade(zone string) (err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+	// print log
+	c.eventLogFormat.Format = SwitchPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "disable"
+	c.eventLogFormat.encounterError = nil
 
-	if path, err := c.generatePath(zone, apis.ZONE_PATH); err == nil {
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
+		c.printResourceEventLog()
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_REMOVEMASQUERADE)
-		klog.V(4).Infof("Trying to disable network masquerade in zone %s.", zone)
+
+		c.printPath(apis.CONFIG_ZONE_REMOVEMASQUERADE)
 		call := obj.Call(apis.CONFIG_ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart)
-		err = call.Err
-		if err == nil && len(call.Body) >= 0 {
+		c.eventLogFormat.encounterError = call.Err
+
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = SwitchPermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("Disable network masquerade failed: %v", err)
-	return err
+
+	c.eventLogFormat.Format = SwitchPermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -129,27 +178,37 @@ func (c *DbusClientSerivce) PermanentDisableMasquerade(zone string) (err error) 
  * @return        error            error          "Possible errors:
  *                                                   INVALID_ZONE"
  */
-func (c *DbusClientSerivce) PermanentQueryMasquerade(zone string) (b bool, err error) {
+func (c *DbusClientSerivce) QueryPermanentMasquerade(zone string) (bool, error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	if path, err := c.generatePath(zone, apis.ZONE_PATH); err == nil {
+	// print log
+	c.eventLogFormat.Format = QueryPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "masquerade"
+	c.eventLogFormat.encounterError = nil
+
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
+		c.printResourceEventLog()
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_QUERYMASQUERADE)
-		klog.V(4).Infof("Trying to query permanent network masquerade in zone %s.", zone)
+
+		c.printPath(apis.CONFIG_ZONE_QUERYMASQUERADE)
 		call := obj.Call(apis.CONFIG_ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart)
-		err = call.Err
-		if call.Err == nil {
-			if !call.Body[0].(bool) {
-				klog.V(4).Infof("network masquerade in zone %s is disabled.", zone)
-				return false, nil
-			} else {
+
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			if call.Body[0].(bool) {
+				c.eventLogFormat.Format = QueryPermanentResourceSuccessFormat
+				c.printResourceEventLog()
 				return true, nil
 			}
 		}
 	}
-	klog.Errorf("query permanent network masquerade is failed:", err)
+	c.eventLogFormat.Format = QueryPermanentResourceFailedFormat
+	c.printResourceEventLog()
 	return false, err
 }
 
@@ -167,16 +226,31 @@ func (c *DbusClientSerivce) QueryMasquerade(zone string) (b bool, err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_QUERYMASQUERADE)
-	klog.V(4).Infof("Trying to query permanent network masquerade in zone %s .", zone)
 
+	// print log
+	c.eventLogFormat.Format = QueryResourceStartFormat
+	c.eventLogFormat.resourceType = "masquerade"
+	c.eventLogFormat.resource = zone
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	c.printPath(apis.ZONE_QUERYMASQUERADE)
 	call := obj.Call(apis.ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart, zone)
-	if call.Err == nil {
-		if len(call.Body) <= 0 || !call.Body[0].(bool) {
-			klog.V(4).Infof("Network masquerade in zone %s is disabled.")
-			return false, call.Err
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil {
+		if call.Body[0].(bool) {
+			c.eventLogFormat.Format = QueryResourceSuccessFormat
+			c.eventLogFormat.resource = "enable"
+			c.printResourceEventLog()
+			return true, nil
+		} else {
+			c.eventLogFormat.resource = "disable"
 		}
 	}
-	return true, nil
+	c.eventLogFormat.Format = QueryResourceFailedFormat
+	c.printResourceEventLog()
+	return false, c.eventLogFormat.encounterError
 }

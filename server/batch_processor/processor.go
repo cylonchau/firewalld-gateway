@@ -1,81 +1,103 @@
 package batch_processor
 
 import (
+	"reflect"
 	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/workqueue"
+	"k8s.io/klog/v2"
+
+	"github.com/cylonchau/firewalldGateway/config"
 )
 
+var P *Processor
+var T = time.Second * 5
+
 type Processor struct {
-	nextCh        chan Event
-	addCh         chan Event
+	stopCh        chan interface{}
+	addCh         chan interface{}
 	listenersLock sync.RWMutex
-	wg            sync.WaitGroup
+	wg            wait.Group
+	queue         workqueue.RateLimitingInterface
 }
 
-func (p *Processor) Start() {
-	p.wg.Add(2)
-	go func() {
-		defer p.wg.Done()
-		p.run()
-	}()
-	go func() {
-		defer p.wg.Done()
-		p.pop()
-	}()
+func NewProcessor() *Processor {
+	if !reflect.DeepEqual(P, nil) {
+		return &Processor{
+			stopCh: make(chan interface{}),
+			addCh:  make(chan interface{}),
+			queue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		}
+	}
+	return P
 }
 
-func (p *Processor) add(notification Event) {
-	p.addCh <- notification
+func (p *Processor) Run() {
+	defer func() {
+		p.queue.ShutDown()
+	}()
+	p.wg.Start(p.pop)
+	p.wg.Wait()
+}
+
+func (p *Processor) Add(notification string, event interface{}) {
+	StoreAdd(notification, event)
+	p.queue.Add(notification)
+}
+
+func (p *Processor) AddAfter(notification string, t time.Duration) {
+	p.queue.AddAfter(notification, t)
 }
 
 func (p *Processor) pop() {
-	defer close(p.nextCh) // Tell .run() to stop
 
-	//var nextCh chan<- interface{}
-	//var notification interface{}
-	//for {
-	//	select {
-	//	case nextCh <- notification:
-	//		// Notification dispatched
-	//		var ok bool
-	//		notification, ok = p.pendingNotifications.ReadOne()
-	//		if !ok { // Nothing to pop
-	//			nextCh = nil // Disable this select case
-	//		}
-	//	case notificationToAdd, ok := <-p.addCh:
-	//		if !ok {
-	//			return
-	//		}
-	//		if notification == nil { // No notification to pop (and pendingNotifications is empty)
-	//			// Optimize the case - skip adding to pendingNotifications
-	//			notification = notificationToAdd
-	//			nextCh = p.nextCh
-	//		} else { // There is already a notification waiting to be dispatched
-	//			p.pendingNotifications.WriteOne(notificationToAdd)
-	//		}
-	//	}
-	//}
-}
+	klog.V(5).Infof("Async event processor started, waitting task...")
 
-func (p *Processor) run() {
-	// this call blocks until the channel is closed.  When a panic happens during the notification
-	// we will catch it, **the offending item will be skipped!**, and after a short delay (one second)
-	// the next notification will be attempted.  This is usually better than the alternative of never
-	// delivering again.
-	stopCh := make(chan struct{})
-	wait.Until(func() {
-		for next := range p.nextCh {
-			next = next
+	for {
+		var event Event
+		select {
+		case <-p.stopCh:
+			klog.V(5).Infof("Async evnet process exit.")
+			return
+		default:
+			notificationKey, quit := p.queue.Get()
+			if quit {
+				return
+			}
+
+			var encouterError error
+			key := notificationKey.(string)
+			eventInterface, enconterBool := Store[key]
+			if enconterBool {
+				event, enconterBool = eventInterface.(Event)
+				if enconterBool {
+					klog.V(5).Infof("Recived mission %s", event.TaskName)
+					encouterError = event.processEvent()
+					if encouterError != nil {
+						if event.errNum <= config.CONFIG.Mission_Retry_Number {
+							event.errNum++
+							Store[key] = event
+							retryTime := time.Duration(event.errNum+1) * T
+							p.queue.Forget(key)
+							p.AddAfter(key, retryTime)
+							klog.Warningf("Event processing failed, will retry on %v second after.", retryTime)
+						} else {
+							p.queue.Forget(key)
+							StoreDel(key)
+							klog.Warningf("Task %s exceed MRN value: %v.", event.TaskName, encouterError)
+						}
+					} else {
+						p.queue.Forget(key)
+						StoreDel(key)
+					}
+				}
+			}
+			p.queue.Done(key)
+			if encouterError != nil {
+				klog.Errorf("Event failed: %v", encouterError)
+			}
 		}
-		// the only way to get here is if the p.nextCh is empty and closed
-		close(stopCh)
-	}, 1*time.Second, stopCh)
-}
-
-func (p *Processor) distribute(obj interface{}) {
-	p.listenersLock.RLock()
-	defer p.listenersLock.RUnlock()
-
+	}
 }

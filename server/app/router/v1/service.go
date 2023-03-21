@@ -14,11 +14,11 @@ type ServiceRouter struct{}
 
 func (this *ServiceRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/service")
-	portGroup.GET("/get", this.getServicesAtRuntime)
-	portGroup.POST("/add", this.addServicesAtRuntime)
+	portGroup.GET("/", this.getServicesAtRuntime)
+	portGroup.DELETE("/", this.deleteServicesAtRuntime)
+	portGroup.POST("/", this.addServicesAtRuntime)
 	portGroup.POST("/new", this.newServiceAtPermanent)
 	portGroup.GET("/list", this.listServicesAtRuntime)
-	portGroup.DELETE("/delete", this.deleteServicesAtRuntime)
 
 }
 
@@ -44,7 +44,7 @@ func (this *ServiceRouter) getServicesAtRuntime(c *gin.Context) {
 		return
 	}
 
-	services, err := dbusClient.GetService(rich.Zone)
+	services, err := dbusClient.GetServices()
 
 	if err != nil {
 		apis.APIResponse(c, err, nil)
@@ -104,12 +104,13 @@ func (this *ServiceRouter) listServicesAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		apis.ConnectDbusService(c, err)
 		return
 	}
-	services, err := dbusClient.ListServices()
+	defer dbusClient.Destroy()
+
+	services, err := dbusClient.GetServices()
 	if err != nil {
 		apis.APIResponse(c, err, nil)
 		return
@@ -139,11 +140,11 @@ func (this *ServiceRouter) deleteServicesAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		apis.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	if err := dbusClient.RemoveService(query.Zone, query.Service); err != nil {
 		apis.APIResponse(c, err, nil)
@@ -166,13 +167,14 @@ func (this *ServiceRouter) newServiceAtPermanent(c *gin.Context) {
 		return
 	}
 
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
+	dbusClient, err := firewalld.NewDbusClientService(query.Host)
 	if err != nil {
 		apis.ConnectDbusService(c, err)
 		return
 	}
-	err = dbusClient.NewService(query.Name, query.Setting)
+	defer dbusClient.Destroy()
+
+	err = dbusClient.AddNewService(query.ServiceName, query.Setting)
 	if err != nil {
 		apis.APIResponse(c, err, nil)
 		return

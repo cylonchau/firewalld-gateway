@@ -90,5 +90,5 @@ func (o *Options) Complete() error {
 }
 
 func (o *Options) Run() error {
-	return app.NewAPIController()
+	return app.NewHTTPSever()
 }

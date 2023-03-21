@@ -2,7 +2,6 @@ package firewalld
 
 import (
 	"github.com/godbus/dbus/v5"
-	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalldGateway/apis"
 )
@@ -22,20 +21,32 @@ import (
  *                                                      ALREADY_ENABLED,
  *                                                      INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) BindInterface(zone, interface_name string) (list string, err error) {
+func (c *DbusClientSerivce) BindInterface(zone, interfaceName string) (string, error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_ADDINTERFACE)
-	klog.V(4).Infof("Trying to bind interface %s to rule in zone %s .", interface_name, zone)
+	//print log
+	c.eventLogFormat.Format = CreateResourceStartFormat
+	c.eventLogFormat.resourceType = "NIC"
+	c.eventLogFormat.resource = interfaceName
+	c.eventLogFormat.encounterError = nil
 
-	call := obj.Call(apis.ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
-	if call.Err != nil {
-		klog.Errorf("bind interface %s failed: %v", interface_name, call.Err.Error())
-		return "", call.Err
+	c.printResourceEventLog()
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	c.printPath(apis.ZONE_ADDINTERFACE)
+	call := obj.Call(apis.ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError != nil {
+		c.eventLogFormat.Format = CreateResourceFailedFormat
+		c.printResourceEventLog()
+		return "", c.eventLogFormat.encounterError
 	}
+
+	c.eventLogFormat.Format = CreateResourceSuccessFormat
+	c.printResourceEventLog()
 	return call.Body[0].(string), nil
 }
 
@@ -48,22 +59,33 @@ func (c *DbusClientSerivce) BindInterface(zone, interface_name string) (list str
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentBindInterface(zone, interface_name string) (err error) {
+func (c *DbusClientSerivce) BindPermanentInterface(zone, interfaceName string) (err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, apis.ZONE_PATH); err == nil {
+	//print log
+	c.eventLogFormat.Format = CreatePermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NIC"
+	c.eventLogFormat.resource = interfaceName
+	c.eventLogFormat.encounterError = nil
+
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_ADDINTERFACE)
-		klog.V(4).Infof("Trying to permanent bind interface %s to rule in zone %s.", interface_name, zone)
-		call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interface_name)
-		err = call.Err
-		if call.Err == nil {
+		c.printPath(apis.CONFIG_ZONE_ADDINTERFACE)
+		call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interfaceName)
+
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = CreatePermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("Permanent bind interface %s, failed: %v", interface_name, err)
+	c.eventLogFormat.Format = CreatePermanentResourceFailedFormat
+	c.printResourceEventLog()
 	return err
 }
 
@@ -78,21 +100,32 @@ func (c *DbusClientSerivce) PermanentBindInterface(zone, interface_name string) 
  *                                                      INVALID_ZONE,
  *                                                      INVALID_INTERFACE
  */
-func (c *DbusClientSerivce) QueryInterface(zone, interface_name string) (b bool, err error) {
+func (c *DbusClientSerivce) QueryInterface(zone, interfaceName string) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_QUERYINTERFACE)
-	klog.V(4).Infof("Trying to query interface %s bind in zone %s .", interface_name, zone)
-	call := obj.Call(apis.ZONE_QUERYINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
+	//print log
+	c.eventLogFormat.Format = QueryResourceStartFormat
+	c.eventLogFormat.resourceType = "NIC"
+	c.eventLogFormat.resource = interfaceName
+	c.eventLogFormat.encounterError = nil
 
-	if len(call.Body) <= 0 || !call.Body[0].(bool) {
-		klog.Errorf("Query interface %s bind failed: %v", interface_name, call.Err)
-		return false, call.Err
+	c.printResourceEventLog()
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	c.printPath(apis.ZONE_QUERYINTERFACE)
+	call := obj.Call(apis.ZONE_QUERYINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
+
+	if call.Body[0].(bool) {
+		c.eventLogFormat.Format = QueryResourceSuccessFormat
+		c.printResourceEventLog()
+		return true
 	}
-	return true, nil
+
+	c.eventLogFormat.Format = QueryResourceFailedFormat
+	c.printResourceEventLog()
+	return false
 }
 
 /*
@@ -103,22 +136,36 @@ func (c *DbusClientSerivce) QueryInterface(zone, interface_name string) (b bool,
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentQueryInterface(zone, interface_name string) error {
+func (c *DbusClientSerivce) QueryPermanentInterface(zone, interfaceName string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
+
+	//print log
+	c.eventLogFormat.Format = QueryPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NIC"
+	c.eventLogFormat.resource = interfaceName
+	c.eventLogFormat.encounterError = nil
+
 	path, err := c.generatePath(zone, apis.ZONE_PATH)
-	if err == nil {
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
+		c.printResourceEventLog()
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_ADDINTERFACE)
-		klog.V(4).Infof("Trying to query permanent interface %s bind in zone %s .", interface_name, zone)
-		call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interface_name)
-		err = call.Err
-		if err == nil {
+
+		c.printPath(apis.CONFIG_ZONE_ADDINTERFACE)
+		call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interfaceName)
+
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = QueryPermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("Query permanent interface %s bind failed: %v", interface_name, err)
+	c.eventLogFormat.Format = QueryPermanentResourceFailedFormat
+	c.printResourceEventLog()
 	return err
 }
 
@@ -130,20 +177,33 @@ func (c *DbusClientSerivce) PermanentQueryInterface(zone, interface_name string)
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) RemoveInterface(zone, interface_name string) error {
+func (c *DbusClientSerivce) RemoveInterface(zone, interfaceName string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
+	//print log
+	c.eventLogFormat.Format = RemoveResourceStartFormat
+	c.eventLogFormat.resourceType = "NIC"
+	c.eventLogFormat.resource = interfaceName
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_REMOVEINTERFACE)
-	klog.V(4).Infof("Trying to remove interface %s bind in zone %s.", interface_name, zone)
-	call := obj.Call(apis.ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, zone, interface_name)
-	if call.Err != nil && len(call.Body) <= 0 {
-		klog.Errorf("Remove interface %s bind failed: %v", interface_name, call.Err)
-		return call.Err
+
+	c.printPath(apis.ZONE_REMOVEINTERFACE)
+	call := obj.Call(apis.ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
+	c.eventLogFormat.encounterError = call.Err
+
+	if c.eventLogFormat.encounterError == nil {
+		c.eventLogFormat.Format = RemoveResourceSuccessFormat
+		c.printResourceEventLog()
+		return nil
 	}
-	return nil
+
+	c.eventLogFormat.Format = RemoveResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 /*
@@ -151,26 +211,38 @@ func (c *DbusClientSerivce) RemoveInterface(zone, interface_name string) error {
  * @description   Permanently remove interface from list of interfaces bound to zone.
  * @auth          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
- * @param         interface_name   string         "interface name. e.g. eth0 | ens33.  "
+ * @param         interfaceName   string         "interface name. e.g. eth0 | ens33.  "
  * @return        error            error          "Possible errors:
  *                                                       NOT_ENABLED"
  */
-func (c *DbusClientSerivce) PermanentRemoveInterface(zone, interface_name string) (err error) {
+func (c *DbusClientSerivce) PermanentRemoveInterface(zone, interfaceName string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	var path dbus.ObjectPath
-	if path, err = c.generatePath(zone, apis.ZONE_PATH); err != nil {
-		return err
-	}
+	//print log
+	c.eventLogFormat.Format = RemovePermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "NIC"
+	c.eventLogFormat.resource = interfaceName
+	c.eventLogFormat.encounterError = nil
 
-	obj := c.client.Object(apis.INTERFACE, path)
-	printPath(path, apis.CONFIG_ZONE_REMOVEINTERFACE)
-	klog.V(4).Infof("Trying to remove permanent interface %s bind in zone %s.", interface_name, zone)
-	call := obj.Call(apis.CONFIG_ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, interface_name)
-	if call.Err != nil {
-		klog.Errorf("Remove permanent interface %s bind failed: %v", interface_name, call.Err)
-		return call.Err
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
+		c.printResourceEventLog()
+		obj := c.client.Object(apis.INTERFACE, path)
+
+		c.printPath(apis.CONFIG_ZONE_REMOVEINTERFACE)
+		call := obj.Call(apis.CONFIG_ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, interfaceName)
+		c.eventLogFormat.encounterError = call.Err
+
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = RemovePermanentResourceSuccessFormat
+			c.printResourceEventLog()
+			return nil
+		}
 	}
-	return nil
+	c.eventLogFormat.Format = RemovePermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }

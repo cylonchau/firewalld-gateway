@@ -2,7 +2,6 @@ package firewalld
 
 import (
 	"github.com/godbus/dbus/v5"
-	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalldGateway/apis"
 )
@@ -20,20 +19,31 @@ func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, er
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_GETRICHRULES)
-	klog.V(4).Infof("Try to get all rich rule in zone %s.", zone)
-	call := obj.Call(apis.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
+	// print log
+	c.eventLogFormat.Format = ListResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
 
-	if call.Err != nil {
-		klog.Errorf("Cannot get rich rules in zone %s:", zone, call.Err)
-		return nil, call.Err
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	c.printPath(apis.ZONE_GETRICHRULES)
+	call := obj.Call(apis.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
+	c.eventLogFormat.encounterError = call.Err
+
+	if c.eventLogFormat.encounterError == nil {
+		list, ok := call.Body[0].([]string)
+		if ok {
+			for _, value := range list {
+				ruleList = append(ruleList, apis.StringToRule(value))
+			}
+			c.eventLogFormat.Format = ListResourceSuccessFormat
+			c.eventLogFormat.resource = ruleList
+			c.printResourceEventLog()
+			return
+		}
 	}
-	for _, value := range call.Body[0].([]string) {
-		ruleList = append(ruleList, apis.StringToRule(value))
-	}
-	klog.V(5).Infof("rich rules: %v", ruleList)
-	return
+	return nil, c.eventLogFormat.encounterError
 }
 
 // @title         AddRichRule
@@ -48,16 +58,25 @@ func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout in
 		zone = c.GetDefaultZone()
 	}
 
+	// print log
+	c.eventLogFormat.Format = CreateResourceStartFormat
+	c.eventLogFormat.resource = rule.ToString()
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_ADDRICHRULE)
-	klog.V(4).Infof("Try to add rich rule in zone %s.", rule.ToString(), zone)
+	c.printPath(apis.ZONE_ADDRICHRULE)
 	call := obj.Call(apis.ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString(), timeout)
 
-	if call.Err != nil {
-		klog.Errorf("Add rich rule failed:", call.Err)
-		return call.Err
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError != nil {
+		c.eventLogFormat.Format = CreateResourceFailedFormat
+		c.printResourceEventLog()
+		return c.eventLogFormat.encounterError
 	}
-	klog.V(5).Infof("Add rich %s rule in zone %s success.", rule.ToString(), zone)
+	c.eventLogFormat.Format = CreateResourceSuccessFormat
+	c.printResourceEventLog()
 	return nil
 }
 
@@ -67,23 +86,35 @@ func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout in
 // @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) PermanentAddRichRule(zone string, rule *apis.Rule) error {
+func (c *DbusClientSerivce) AddPermanentRichRule(zone string, rule *apis.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
-	if err != nil {
-		return err
-	}
-	obj := c.client.Object(apis.INTERFACE, path)
-	printPath(path, apis.CONFIG_ZONE_ADDRICHRULE)
-	klog.V(4).Infof("Try to create permanent rich rule %s in zone %s.", rule.ToString(), zone)
 
-	call := obj.Call(apis.CONFIG_ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
-	if call.Err != nil {
-		klog.Errorf("Create permanent rich rule failed: %v", call.Err)
-		return call.Err
+	// print log
+	c.eventLogFormat.Format = CreatePermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.resource = rule.ToString()
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	c.eventLogFormat.encounterError = err
+
+	if c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		c.printPath(apis.CONFIG_ZONE_ADDRICHRULE)
+
+		call := obj.Call(apis.CONFIG_ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+
+		if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = CreatePermanentResourceSuccessFormat
+			c.printResourceEventLog()
+			return c.eventLogFormat.encounterError
+		}
 	}
+	c.eventLogFormat.Format = CreatePermanentResourceFailedFormat
+	c.printResourceEventLog()
 	return nil
 }
 
@@ -97,15 +128,27 @@ func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_REOMVERICHRULE)
-	klog.V(4).Infof("Try to remove rich rule %s in zone %s.", rule.ToString(), zone)
 
+	// print log
+	c.eventLogFormat.Format = RemoveResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.resource = rule.ToString()
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
+
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+
+	c.printPath(apis.ZONE_REOMVERICHRULE)
 	call := obj.Call(apis.ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
-	if call.Err != nil {
-		klog.Errorf("remove rich rule failed: %v", call.Err)
-		return call.Err
+
+	if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError != nil {
+		c.eventLogFormat.Format = RemoveResourceFailedFormat
+		c.printResourceEventLog()
+		return c.eventLogFormat.encounterError
 	}
+	c.eventLogFormat.Format = RemoveResourceSuccessFormat
+	c.printResourceEventLog()
 	return nil
 }
 
@@ -115,22 +158,33 @@ func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
 // @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) PermanentRemoveRichRule(zone string, rule *apis.Rule) (encounterError error) {
+func (c *DbusClientSerivce) RemovePermanentRichRule(zone string, rule *apis.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	var path dbus.ObjectPath
-	if path, encounterError = c.generatePath(zone, apis.ZONE_PATH); encounterError != nil {
+	// print log
+	c.eventLogFormat.Format = RemovePermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.resource = rule.ToString()
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+
+	c.eventLogFormat.encounterError = err
+	if c.eventLogFormat.encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(apis.PATH, apis.CONFIG_ZONE_REOMVERICHRULE)
-		klog.V(4).Infof("Try to remove permanent rich rule %s in zone %s.", rule.ToString(), zone)
-		call := obj.Call(apis.CONFIG_ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart)
-		if encounterError = call.Err; encounterError == nil {
+		c.printPath(apis.CONFIG_ZONE_REOMVERICHRULE)
+		call := obj.Call(apis.CONFIG_ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+
+		if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = RemovePermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("remove rich rule %s in zone %s failed:", rule.ToString(), zone, encounterError)
-	return encounterError
+	c.eventLogFormat.Format = RemovePermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 // @title         PermanentQueryRichRule
@@ -139,26 +193,33 @@ func (c *DbusClientSerivce) PermanentRemoveRichRule(zone string, rule *apis.Rule
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"
-func (c *DbusClientSerivce) PermanentQueryRichRule(zone string, rule *apis.Rule) bool {
+func (c *DbusClientSerivce) QueryPermanentRichRule(zone string, rule *apis.Rule) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	var (
-		path           dbus.ObjectPath
-		encounterError error
-	)
 
-	if path, encounterError = c.generatePath(zone, apis.ZONE_PATH); encounterError == nil {
+	// print log
+	c.eventLogFormat.Format = QueryPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.resource = rule.ToString()
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
+	path, err := c.generatePath(zone, apis.ZONE_PATH)
+
+	if c.eventLogFormat.encounterError = err; c.eventLogFormat.encounterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(path, apis.CONFIG_ZONE_QUERYRICHRULE)
-		klog.V(4).Infof("Try to query permanent rich rule %s in zone %s.", rule.ToString(), zone)
+		c.printPath(apis.CONFIG_ZONE_QUERYRICHRULE)
 		call := obj.Call(apis.CONFIG_ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
-		encounterError = call.Err
-		if len(call.Body) == 0 || call.Body[0].(bool) {
+
+		if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil && (len(call.Body) == 0 || call.Body[0].(bool)) {
+			c.eventLogFormat.Format = QueryPermanentResourceSuccessFormat
+			c.printResourceEventLog()
 			return true
 		}
 	}
-	klog.Warningf("Query permanent rich rule %s in zone %s failed: %v", rule.ToString(), zone, encounterError)
+	c.eventLogFormat.Format = QueryPermanentResourceFailedFormat
+	c.printResourceEventLog()
 	return false
 }
 
@@ -172,14 +233,25 @@ func (c *DbusClientSerivce) QueryRichRule(zone string, rule *apis.Rule) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_QUERYRICHRULE)
-	klog.V(4).Infof("Try to query rich rule %s in zone %s.", rule.ToString, zone)
 
+	// print log
+	c.eventLogFormat.Format = QueryResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.resource = rule.ToString()
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
+	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	c.printPath(apis.ZONE_QUERYRICHRULE)
 	call := obj.Call(apis.ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
-	if len(call.Body) <= 0 || !call.Body[0].(bool) {
-		klog.Warningf("Query rich rule %s in zone %s failed: %v", rule.ToString(), zone, call.Err.Error())
-		return false
+
+	if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil && call.Body[0].(bool) {
+		c.eventLogFormat.Format = QueryResourceSuccessFormat
+		c.printResourceEventLog()
+		return true
 	}
-	return true
+
+	c.eventLogFormat.Format = QueryResourceFailedFormat
+	c.printResourceEventLog()
+	return false
 }

@@ -28,19 +28,28 @@ func (c *DbusClientSerivce) GetDefaultZone() string {
 // @param 		  zone			   zone name
 // @return        error            error          ""
 func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
+
+	//print log
+	c.eventLogFormat.Format = ZoneDefaultStartFormat
+	c.eventLogFormat.resourceType = "zone"
+	c.eventLogFormat.resource = zone
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	klog.V(5).Infof("Call Remotely Dbus:", apis.PATH, apis.INTERFACE_SETDEFAULTZONE)
-	klog.V(4).Infof("Try set default zone to %s", zone)
-	var enconnterError error
-	currentDefaultZone := c.GetDefaultZone()
+
+	c.printPath(apis.INTERFACE_SETDEFAULTZONE)
 	call := obj.Call(apis.INTERFACE_SETDEFAULTZONE, dbus.FlagNoAutoStart, zone)
-	enconnterError = call.Err
-	if enconnterError == nil {
-		klog.V(4).Infof("changed zone %s to %s", currentDefaultZone, zone)
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil {
+		c.eventLogFormat.Format = ZoneDefaultSuccessFormat
+		c.printResourceEventLog()
 		return nil
 	}
-	klog.Errorf("set default zone to %s failed: %v", zone, enconnterError)
-	return enconnterError
+	c.eventLogFormat.Format = ZoneDefaultFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 // @title         GetZones
@@ -48,17 +57,30 @@ func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
 // @auth      	  author           2021-09-26
 // @return        zones            []string       "Return array of names (s) of predefined zones known to current runtime environment."
 // @return        error            error          ""
-func (c *DbusClientSerivce) GetZones() (zones []string, err error) {
-	var enconterError error
+func (c *DbusClientSerivce) GetZones() ([]string, error) {
+
+	//print log
+	c.eventLogFormat.Format = ListResourceStartFormat
+	c.eventLogFormat.resourceType = "zone"
+	c.eventLogFormat.encounterError = nil
+
+	c.printResourceEventLog()
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	klog.V(5).Infof("Call Remotely D-Bus: %s=>%s ", apis.PATH, apis.ZONE_GETZONES)
+
+	c.printPath(apis.ZONE_GETZONES)
 	call := obj.Call(apis.ZONE_GETZONES, dbus.FlagNoAutoStart)
-	enconterError = call.Err
-	if enconterError == nil || len(call.Body) > 0 {
-		klog.V(5).Infof("Get zones: %v", call.Body[0])
-		return call.Body[0].([]string), nil
+
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
+		list := call.Body[0].([]string)
+		c.eventLogFormat.Format = ListResourceSuccessFormat
+		c.eventLogFormat.resource = list
+		c.printResourceEventLog()
+		return list, nil
 	}
-	klog.Errorf("Get Zones failed: %v", enconterError)
+
+	c.eventLogFormat.Format = ListResourceFailedFormat
+	c.printResourceEventLog()
 	return nil, call.Err
 }
 
@@ -91,18 +113,29 @@ func (c *DbusClientSerivce) getZoneId(zone string) int {
 // @auth      	  author           2021-09-26
 // @param         zone		       string         "zone name."
 // @return        error            error          "Possible errors: INVALID_ZONE"
-func (c *DbusClientSerivce) GetZoneSettings(zone string) (enconterError error) {
-	if enconterError = c.checkZoneName(zone); enconterError == nil {
+func (c *DbusClientSerivce) GetZoneSettings(zone string) error {
+
+	//print log
+	c.eventLogFormat.Format = ListResourceStartFormat
+	c.eventLogFormat.resourceType = "zone setting"
+	c.eventLogFormat.resource = zone
+	c.eventLogFormat.encounterError = nil
+
+	if c.eventLogFormat.encounterError = c.checkZoneName(zone); c.eventLogFormat.encounterError == nil {
+		c.printResourceEventLog()
 		obj := c.client.Object(apis.INTERFACE, apis.PATH)
-		printPath(apis.PATH, apis.INTERFACE_GETZONESETTINGS)
+		c.printPath(apis.INTERFACE_GETZONESETTINGS)
 		call := obj.Call(apis.INTERFACE_GETZONESETTINGS, dbus.FlagNoAutoStart, zone)
-		enconterError = call.Err
-		if enconterError == nil {
-			return enconterError
+		c.eventLogFormat.encounterError = call.Err
+
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = ListResourceSuccessFormat
+			return nil
 		}
 	}
-	klog.Errorf("Invailed zone name: %s, error: %v", zone, enconterError)
-	return enconterError
+	c.eventLogFormat.Format = ListResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 // @title         RemoveZone
@@ -110,21 +143,35 @@ func (c *DbusClientSerivce) GetZoneSettings(zone string) (enconterError error) {
 // @auth      	  author           2021-09-26
 // @param         zone		       string         "zone name."
 // @return        error            error          "Possible errors: INVALID_ZONE"
-func (c *DbusClientSerivce) RemoveZone(zone string) (enconterError error) {
-	if enconterError = c.checkZoneName(zone); enconterError == nil {
-		var path dbus.ObjectPath
-		if path, enconterError = c.generatePath(zone, apis.ZONE_PATH); enconterError == nil {
+func (c *DbusClientSerivce) RemoveZone(zone string) error {
+
+	//print log
+	c.eventLogFormat.Format = RemoveResourceStartFormat
+	c.eventLogFormat.resourceType = "zone"
+	c.eventLogFormat.resource = zone
+	c.eventLogFormat.encounterError = nil
+
+	if c.eventLogFormat.encounterError = c.checkZoneName(zone); c.eventLogFormat.encounterError == nil {
+
+		path, err := c.generatePath(zone, apis.ZONE_PATH)
+		c.eventLogFormat.encounterError = err
+		if c.eventLogFormat.encounterError == nil {
+			c.printResourceEventLog()
 			obj := c.client.Object(apis.INTERFACE, path)
-			klog.V(4).Infof("Try to delete zone %s.", zone)
+
+			c.printPath(apis.INTERFACE)
 			call := obj.Call(apis.CONFIG_REMOVEZONE, dbus.FlagNoAutoStart)
-			enconterError = call.Err
-			if enconterError == nil {
+			c.eventLogFormat.encounterError = call.Err
+			if c.eventLogFormat.encounterError == nil {
+				c.eventLogFormat.Format = RemoveResourceSuccessFormat
+				c.printResourceEventLog()
 				return nil
 			}
 		}
 	}
-	klog.Errorf("Delete zone %s failed: %v", zone, enconterError)
-	return enconterError
+	c.eventLogFormat.Format = RemoveResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 // @title         AddZone
@@ -132,21 +179,30 @@ func (c *DbusClientSerivce) RemoveZone(zone string) (enconterError error) {
 // @auth      	  author           2021-09-27
 // @param         name		       string         "Is an optional start and end tag and is used to give a more readable name."
 // @return        error            error          "Possible errors: NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
-func (c *DbusClientSerivce) AddZone(setting *apis.Settings) (enconterError error) {
-	if enconterError = c.checkZoneName(setting.Short); enconterError == nil {
-		obj := c.client.Object(apis.INTERFACE, apis.CONFIG_PATH)
-		printPath(apis.CONFIG_PATH, apis.CONFIG_ADDZONE)
-		klog.V(4).Infof("Call ZoneSetting is: %v", setting)
+func (c *DbusClientSerivce) AddZone(setting *apis.Settings) error {
 
+	// print log
+	c.eventLogFormat.Format = CreateResourceStartFormat
+	c.eventLogFormat.resourceType = "zone"
+	c.eventLogFormat.resource = setting.Short
+	c.eventLogFormat.encounterError = nil
+
+	if c.eventLogFormat.encounterError = c.checkZoneName(setting.Short); c.eventLogFormat.encounterError == nil {
+		c.printResourceEventLog()
+		obj := c.client.Object(apis.INTERFACE, apis.CONFIG_PATH)
+
+		c.printPath(apis.CONFIG_ADDZONE)
 		call := obj.Call(apis.CONFIG_ADDZONE, dbus.FlagNoAutoStart, setting.Short, setting)
-		enconterError = call.Err
-		if enconterError == nil {
-			klog.V(4).Infof("Add zoneSetting is: %v", setting)
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			c.eventLogFormat.Format = CreateResourceSuccessFormat
+			c.printResourceEventLog()
 			return nil
 		}
 	}
-	klog.Errorf("Create ZoneSettiings %s failed: %v", setting.Short, enconterError)
-	return enconterError
+	c.eventLogFormat.Format = CreateResourceFailedFormat
+	c.printResourceEventLog()
+	return c.eventLogFormat.encounterError
 }
 
 // @title         GetZoneOfInterface
@@ -155,9 +211,31 @@ func (c *DbusClientSerivce) AddZone(setting *apis.Settings) (enconterError error
 // @param         iface    		   string         "e.g. eth0, iface is device name."
 // @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
 func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
+
+	// print log
+	c.eventLogFormat.Format = QueryResourceStartFormat
+	c.eventLogFormat.resourceType = "zone"
+	c.eventLogFormat.resource = iface
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_GETZONEOFINTERFACE)
-	klog.V(4).Infof("Get zone of interface: %v", iface)
+
+	c.printPath(apis.ZONE_GETZONEOFINTERFACE)
 	call := obj.Call(apis.ZONE_GETZONEOFINTERFACE, dbus.FlagNoAutoStart, iface)
-	return call.Body[0].(string)
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
+		name, ok := call.Body[0].(string)
+		if ok {
+			c.eventLogFormat.Format = QueryResourceSuccessFormat
+			c.eventLogFormat.resource = name
+			c.printResourceEventLog()
+			return name
+		} else {
+			c.eventLogFormat.resource = nil
+		}
+	}
+	c.eventLogFormat.Format = QueryResourceFailedFormat
+	c.printResourceEventLog()
+	return ""
 }

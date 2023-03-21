@@ -12,9 +12,9 @@ type RichRuleRouter struct{}
 
 func (this *RichRuleRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/rich")
-	portGroup.POST("/add", this.addRichRuleAtRuntime)
-	portGroup.GET("/get", this.getRichRulesAtRuntime)
-	portGroup.DELETE("/delete", this.delRichRuleAtRuntime)
+	portGroup.POST("/", this.addRichRuleAtRuntime)
+	portGroup.GET("/", this.getRichRulesAtRuntime)
+	portGroup.DELETE("/", this.delRichRuleAtRuntime)
 }
 
 // GetRichRules ...
@@ -32,11 +32,11 @@ func (this *RichRuleRouter) getRichRulesAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(rich.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	rules, err := dbusClient.GetRichRules(rich.Zone)
 
@@ -72,11 +72,11 @@ func (this *RichRuleRouter) addRichRuleAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	err = dbusClient.AddRichRule(query.Zone, query.Rich, query.Timeout)
 
@@ -103,11 +103,11 @@ func (this *RichRuleRouter) delRichRuleAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	if query.Rich.Family == "" {
 		query.Rich.Family = "ipv4"

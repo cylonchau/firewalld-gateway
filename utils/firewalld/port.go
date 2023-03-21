@@ -24,11 +24,11 @@ func (c *DbusClientSerivce) AddPort(port *apis.Port, zone string, timeout int) e
 	}
 
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_ADDPORT)
-	klog.V(4).Infof("Trying create port rule in zone <%s>, %s/%s, lifecycle is %d", zone, port.Port, port.Protocol, timeout)
+	c.printPath(apis.ZONE_ADDPORT)
+	klog.V(4).Infof("Trying create port rule in zone %s, %s/%s, timeout is %d", zone, port.Port, port.Protocol, timeout)
 	call := obj.Call(apis.ZONE_ADDPORT, dbus.FlagNoAutoStart, zone, port.Port, port.Protocol, timeout)
 	if call.Err != nil || len(call.Body) <= 0 {
-		klog.Errorf("Create a Port Rule Failed:", call.Err.Error())
+		klog.Errorf("Create a port rule failed: %v", call.Err.Error())
 		return call.Err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (enconterError e
 
 		if path, enconterError := c.generatePath(zone, apis.ZONE_PATH); enconterError == nil {
 			obj := c.client.Object(apis.INTERFACE, path)
-			printPath(path, apis.CONFIG_ZONE_ADDPORT)
+			c.printPath(apis.CONFIG_ZONE_ADDPORT)
 			klog.V(4).Infof("Trying create port Permanent rule in zone %s, %s/%s.", zone, port, protocol)
 			call := obj.Call(apis.CONFIG_ZONE_ADDPORT, dbus.FlagNoAutoStart, port, protocol)
 			enconterError = call.Err
@@ -82,7 +82,7 @@ func (c *DbusClientSerivce) GetPort(zone string) (list []apis.Port, enconterErro
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
 
 	call := obj.Call(apis.ZONE_GETPORTS, dbus.FlagNoAutoStart, zone)
-	printPath(apis.PATH, apis.ZONE_GETPORTS)
+	c.printPath(apis.ZONE_GETPORTS)
 	klog.V(4).Infof("Trying to get port rule in zone %s.", zone)
 
 	enconterError = call.Err
@@ -118,7 +118,7 @@ func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []apis.Port, enc
 	var path dbus.ObjectPath
 	if path, enconterError = c.generatePath(zone, apis.ZONE_PATH); enconterError == nil {
 		obj := c.client.Object(apis.INTERFACE, path)
-		printPath(apis.ZONE_PATH, apis.CONFIG_ZONE_GETPORTS)
+		c.printPath(apis.CONFIG_ZONE_GETPORTS)
 		klog.V(4).Infof("Trying to get permanent port rule in zone %s.", zone)
 		call := obj.Call(apis.CONFIG_ZONE_GETPORTS, dbus.FlagNoAutoStart)
 
@@ -159,7 +159,7 @@ func (c *DbusClientSerivce) RemovePort(port *apis.Port, zone string) error {
 	}
 
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	printPath(apis.PATH, apis.ZONE_REMOVEPORT)
+	c.printPath(apis.ZONE_REMOVEPORT)
 	klog.V(4).Infof("Trying to remove port rule in zone %s, port rule is: %s/%s", zone, port.Port, port.Protocol)
 
 	call := obj.Call(apis.ZONE_REMOVEPORT, dbus.FlagNoAutoStart, zone, port.Port, port.Protocol)
@@ -193,7 +193,7 @@ func (c *DbusClientSerivce) PermanentRemovePort(port, zone string) (enconterErro
 		if path, enconterError = c.generatePath(zone, apis.ZONE_PATH); enconterError != nil {
 			obj := c.client.Object(apis.INTERFACE, path)
 
-			printPath(path, apis.CONFIG_ZONE_REMOVEPORT)
+			c.printPath(apis.CONFIG_ZONE_REMOVEPORT)
 			klog.V(4).Infof("Try to remove permanent port rule in zone %s, %s/%s.", zone, port, protocol)
 
 			call := obj.Call(apis.CONFIG_ZONE_REMOVEPORT, dbus.FlagNoAutoStart, port, protocol)
@@ -205,6 +205,6 @@ func (c *DbusClientSerivce) PermanentRemovePort(port, zone string) (enconterErro
 		}
 
 	}
-	klog.Errorf("remove permanently port rule failed:", enconterError)
+	klog.Errorf("remove permanently port rule failed: %v", enconterError)
 	return enconterError
 }

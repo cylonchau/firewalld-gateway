@@ -8,14 +8,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type NatRouter struct{}
+type NATRouter struct{}
 
-func (this *NatRouter) RegisterPortAPI(g *gin.RouterGroup) {
+func (this *NATRouter) RegisterNATRouterAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/nat")
 
-	portGroup.POST("/add", this.addForwardInRuntime)
-	portGroup.GET("/get", this.getForwardInRuntime)
-	portGroup.DELETE("/delete", this.delForwardInRuntime)
+	portGroup.POST("/", this.addForwardInRuntime)
+	portGroup.GET("/", this.getForwardInRuntime)
+	portGroup.DELETE("/", this.delForwardInRuntime)
 }
 
 // addForward ...
@@ -23,7 +23,7 @@ func (this *NatRouter) RegisterPortAPI(g *gin.RouterGroup) {
 // @Produce  json
 // @Success 200 {object} internal.Response
 // @Router /fw/v1/port/add [POST]
-func (this *NatRouter) addForwardInRuntime(c *gin.Context) {
+func (this *NATRouter) addForwardInRuntime(c *gin.Context) {
 
 	var query = &q.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
@@ -39,6 +39,7 @@ func (this *NatRouter) addForwardInRuntime(c *gin.Context) {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	if err = dbusClient.AddForwardPort(query.Zone, query.Timeout, query.Forward); err != nil {
 		q.APIResponse(c, err, nil)
@@ -52,7 +53,7 @@ func (this *NatRouter) addForwardInRuntime(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} internal.Response
 // @Router /fw/v1/port/get [GET]
-func (this *NatRouter) getForwardInRuntime(c *gin.Context) {
+func (this *NATRouter) getForwardInRuntime(c *gin.Context) {
 
 	var query = &q.Query{}
 	err := c.Bind(query)
@@ -67,8 +68,9 @@ func (this *NatRouter) getForwardInRuntime(c *gin.Context) {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
-	forwards, err := dbusClient.GetForwardPort(query.Zone)
+	forwards, err := dbusClient.Listforwards(query.Zone)
 
 	if err != nil {
 		q.APIResponse(c, err, nil)
@@ -87,7 +89,7 @@ func (this *NatRouter) getForwardInRuntime(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} internal.Response
 // @Router /fw/v1/port/add [DELETE]
-func (this *NatRouter) delForwardInRuntime(c *gin.Context) {
+func (this *NATRouter) delForwardInRuntime(c *gin.Context) {
 
 	var query = &q.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
@@ -103,6 +105,7 @@ func (this *NatRouter) delForwardInRuntime(c *gin.Context) {
 		q.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	if err = dbusClient.RemoveForwardPort(query.Zone, query.Forward); err != nil {
 		q.APIResponse(c, err, nil)
