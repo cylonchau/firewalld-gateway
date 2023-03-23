@@ -6,9 +6,9 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/config"
-	"github.com/cylonchau/firewalldGateway/server/app/router"
-	"github.com/cylonchau/firewalldGateway/server/batch_processor"
+	"github.com/cylonchau/firewalld-gateway/config"
+	"github.com/cylonchau/firewalld-gateway/server/app/router"
+	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
 
 	"github.com/gin-gonic/gin"
 )

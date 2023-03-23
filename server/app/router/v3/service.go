@@ -5,10 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	code "github.com/cylonchau/firewalldGateway/server/apis"
-	"github.com/cylonchau/firewalldGateway/server/batch_processor"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
 )
 
 type ServiceRouter struct{}
@@ -30,31 +29,12 @@ func (this *ServiceRouter) batchAddService(c *gin.Context) {
 		return
 	}
 	for _, item := range query.Services {
-		function := func(c context.Context) {
-			b := c.Value("service")
-			service := b.(apis.ServiceQuery)
-			dbusClient, err := firewalld.NewDbusClientService(service.Ip)
-			if err != nil {
-				return
-			}
-			defer func() {
-				c.Done()
-				dbusClient.Destroy()
-			}()
-			tName := batch_processor.RandName()
-			event := batch_processor.Event{
-				EventName: batch_processor.CREATE_SERVICE,
-				Host:      service.Ip,
-				TaskName:  tName,
-				Task:      service,
-			}
-			batch_processor.P.Add(tName, event)
-
-		}
 		go func(p apis.ServiceQuery) {
 			contexts := context.TODO()
-			contexts = context.WithValue(contexts, "service", p)
-			go function(contexts)
+			contexts = context.WithValue(contexts, "action_obj", p)
+			contexts = context.WithValue(contexts, "delay_time", query.Delay)
+			contexts = context.WithValue(contexts, "event_name", batch_processor.CREATE_SERVICE)
+			go batchFunction(contexts)
 		}(item)
 	}
 	apis.SuccessResponse(c, code.OK, code.BatchSuccessCreated)

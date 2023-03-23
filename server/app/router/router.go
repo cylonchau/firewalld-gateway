@@ -3,10 +3,10 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/cylonchau/firewalldGateway/config"
-	v1 "github.com/cylonchau/firewalldGateway/server/app/router/v1"
-	v2 "github.com/cylonchau/firewalldGateway/server/app/router/v2"
-	v3 "github.com/cylonchau/firewalldGateway/server/app/router/v3"
+	"github.com/cylonchau/firewalld-gateway/config"
+	v1 "github.com/cylonchau/firewalld-gateway/server/app/router/v1"
+	v2 "github.com/cylonchau/firewalld-gateway/server/app/router/v2"
+	v3 "github.com/cylonchau/firewalld-gateway/server/app/router/v3"
 )
 
 func RegisteredRouter(e *gin.Engine) {

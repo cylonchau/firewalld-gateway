@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/server"
+	"github.com/cylonchau/firewalld-gateway/server"
 )
 
 func main() {

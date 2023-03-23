@@ -3,9 +3,9 @@ package v1
 import (
 	"errors"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	code "github.com/cylonchau/firewalldGateway/server/apis"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,11 +38,11 @@ func (this *ServiceRouter) getServicesAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(rich.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		apis.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 
 	services, err := dbusClient.GetServices()
 
@@ -75,11 +75,11 @@ func (this *ServiceRouter) addServicesAtRuntime(c *gin.Context) {
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	defer dbusClient.Destroy()
 	if err != nil {
 		apis.ConnectDbusService(c, err)
 		return
 	}
+	defer dbusClient.Destroy()
 	err = dbusClient.AddService(query.Zone, query.Service, query.Timeout)
 	if err != nil {
 		apis.APIResponse(c, err, nil)

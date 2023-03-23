@@ -6,7 +6,7 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 /************************************************** ForwardPort area ***********************************************************/
@@ -139,7 +139,7 @@ func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.Forward
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) AddForwardPort(zone string, timeout int, forward *apis.ForwardPort) error {
+func (c *DbusClientSerivce) AddForwardPort(zone string, timeout uint32, forward *apis.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}

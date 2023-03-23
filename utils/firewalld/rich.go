@@ -3,7 +3,7 @@ package firewalld
 import (
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 /************************************************** rich rule area ***********************************************************/
@@ -53,7 +53,7 @@ func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, er
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout int) error {
+func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}

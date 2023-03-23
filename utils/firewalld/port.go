@@ -4,7 +4,7 @@ import (
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 /************************************************** port area ***********************************************************/
@@ -17,7 +17,7 @@ import (
 // @param         timeout    	   int	          "Timeout, 0 is the permanent effect of the currently service startup state."
 // @return        zoneName         string         "Returns name of zone to which the protocol was added."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_PORT, MISSING_PROTOCOL, INVALID_PROTOCOL, ALREADY_ENABLED, INVALID_COMMAND."
-func (c *DbusClientSerivce) AddPort(port *apis.Port, zone string, timeout int) error {
+func (c *DbusClientSerivce) AddPort(port *apis.Port, zone string, timeout uint32) error {
 
 	if zone == "" {
 		zone = c.GetDefaultZone()

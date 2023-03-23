@@ -5,10 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	code_api "github.com/cylonchau/firewalldGateway/server/apis"
-	"github.com/cylonchau/firewalldGateway/server/batch_processor"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	code_api "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
 )
 
 type MasqueradeRouter struct{}
@@ -32,30 +31,11 @@ func (this *MasqueradeRouter) batchEnableMasquerade(c *gin.Context) {
 	}
 
 	for _, item := range query.ActionObject {
-		function := func(c context.Context) {
-			b := c.Value("action_obj")
-			obj := b.(apis.ZoneDst)
-			dbusClient, err := firewalld.NewDbusClientService(obj.Host)
-			if err != nil {
-				return
-			}
-			defer func() {
-				c.Done()
-				dbusClient.Destroy()
-			}()
-			tName := batch_processor.RandName()
-			event := batch_processor.Event{
-				EventName: batch_processor.ENABLE_MASQUERADE,
-				Host:      obj.Host,
-				TaskName:  tName,
-				Task:      obj.Zone,
-			}
-			batch_processor.P.Add(tName, event)
-
-		}
 		go func(host apis.ZoneDst) {
 			contexts := context.WithValue(c, "action_obj", host)
-			go function(contexts)
+			contexts = context.WithValue(contexts, "delay_time", query.Delay)
+			contexts = context.WithValue(contexts, "event_name", batch_processor.ENABLE_MASQUERADE)
+			go batchFunction(contexts)
 		}(item)
 	}
 
@@ -75,30 +55,11 @@ func (this *MasqueradeRouter) batchDisableMasquerade(c *gin.Context) {
 	}
 
 	for _, item := range query.ActionObject {
-		function := func(c context.Context) {
-			b := c.Value("action_obj")
-			obj := b.(apis.ZoneDst)
-			dbusClient, err := firewalld.NewDbusClientService(obj.Host)
-			if err != nil {
-				return
-			}
-			defer func() {
-				c.Done()
-				dbusClient.Destroy()
-			}()
-			tName := batch_processor.RandName()
-			event := batch_processor.Event{
-				EventName: batch_processor.DISABLE_MASQUERADE,
-				Host:      obj.Host,
-				TaskName:  tName,
-				Task:      obj.Zone,
-			}
-			batch_processor.P.Add(tName, event)
-
-		}
 		go func(host apis.ZoneDst) {
 			contexts := context.WithValue(c, "action_obj", host)
-			go function(contexts)
+			contexts = context.WithValue(contexts, "delay_time", query.Delay)
+			contexts = context.WithValue(contexts, "event_name", batch_processor.DISABLE_MASQUERADE)
+			go batchFunction(contexts)
 		}(item)
 	}
 

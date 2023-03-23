@@ -1,0 +1,86 @@
+# Copyright 2017 The cylonchau Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uranus
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    firewalld-app: uranus
+  name: uranus
+  namespace: uranus
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    firewalld-app: uranus
+  name: uranus
+  namespace: uranus
+spec:
+  ports:
+    - port: 2952
+      targetPort: 2952
+  selector:
+    firewalld-app: uranus
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    firewalld-app: uranus
+  name: firewalld-uranus
+  namespace: uranus
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      firewalld-app: uranus
+  template:
+    metadata:
+      labels:
+        firewalld-app: uranus
+    spec:
+      containers:
+        - name: uranus
+          image: cylonchau/uranus
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 2952
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /
+              port: 2952
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+      serviceAccountName: uranus
+      nodeSelector:
+        "kubernetes.io/os": linux
+      # Comment the following tolerations if Dashboard must not be deployed on master
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule

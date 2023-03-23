@@ -3,16 +3,18 @@ package firewalld
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	"github.com/cylonchau/firewalldGateway/config"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	"github.com/cylonchau/firewalld-gateway/config"
 )
 
 var (
-	PORT = "55556"
+	PORT          = "55556"
+	InterfaceName = "com.github.cylonchau."
 )
 
 type DbusClientSerivce struct {
@@ -27,6 +29,7 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 	var (
 		encounterError error
 		conn           *dbus.Conn
+		reply          dbus.RequestNameReply
 	)
 	if config.CONFIG.Port == "" {
 		klog.V(5).Infof("Start connect to D-Bus service: %s:%s", addr, PORT)
@@ -36,20 +39,38 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 	}
 
 	if conn, encounterError = dbus.Connect("tcp:host="+addr+",port="+PORT, dbus.WithAuth(dbus.AuthAnonymous())); encounterError == nil {
-		obj := conn.Object(apis.INTERFACE, apis.PATH)
-		call := obj.Call(apis.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
-		encounterError = call.Err
 		if encounterError == nil {
-			return &DbusClientSerivce{
-				conn,
-				call.Body[0].(string),
-				addr,
-				PORT,
-				logFormat{},
-			}, encounterError
+			appNameStr := strings.Split(config.CONFIG.AppName, " ")
+			var registionName = InterfaceName + appNameStr[0]
+			reply, encounterError = conn.RequestName(registionName, dbus.NameFlagDoNotQueue)
+			switch reply {
+			case dbus.RequestNameReplyInQueue:
+				klog.Warningf("Interface %s already taken cannot be assigned again.", registionName)
+			case dbus.RequestNameReplyExists:
+				klog.Warningf("Interface %s cannot be assigned, because it's already taken by another owner", registionName)
+			case dbus.RequestNameReplyAlreadyOwner:
+				klog.Warningf("You are already the owner of %s. no need to ask again.", registionName)
+			}
+			if encounterError == nil {
+				obj := conn.Object(apis.INTERFACE, apis.PATH)
+				call := obj.Call(apis.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
+				encounterError = call.Err
+				if encounterError == nil {
+					return &DbusClientSerivce{
+						conn,
+						call.Body[0].(string),
+						addr,
+						PORT,
+						logFormat{},
+					}, encounterError
+				}
+			}
 		}
 	}
-	klog.Errorf("Connect to firewalld client failed: %v", encounterError)
+	if encounterError != nil && conn != nil {
+		conn.Close()
+	}
+	klog.Errorf("Connect to firewalld service failed: %v", encounterError)
 	return nil, encounterError
 }
 
@@ -112,7 +133,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 			"dhcpv6-client",
 		},
 		Port: []*apis.Port{
-			&apis.Port{
+			{
 				Port:     config.CONFIG.Dbus_Port,
 				Protocol: "tcp",
 			},
@@ -127,7 +148,9 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 		call := obj.Call(apis.CONFIG_UPDATE, dbus.FlagNoAutoStart, defaultZoneSetting)
 		encounterError = call.Err
 		if encounterError == nil || len(call.Body) <= 0 {
-			return nil
+			if encounterError = c.Reload(); encounterError == nil {
+				return nil
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-module github.com/cylonchau/firewalldGateway
+module github.com/cylonchau/firewalld-gateway
 
 go 1.18
 

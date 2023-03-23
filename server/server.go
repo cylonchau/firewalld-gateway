@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/config"
-	"github.com/cylonchau/firewalldGateway/server/app"
+	"github.com/cylonchau/firewalld-gateway/config"
+	"github.com/cylonchau/firewalld-gateway/server/app"
 )
 
 type Options struct {

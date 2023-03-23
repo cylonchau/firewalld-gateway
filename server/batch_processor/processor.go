@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/config"
+	"github.com/cylonchau/firewalld-gateway/config"
 )
 
 var P *Processor
@@ -44,10 +44,14 @@ func (p *Processor) Run() {
 
 func (p *Processor) Add(notification string, event interface{}) {
 	StoreAdd(notification, event)
+
 	p.queue.Add(notification)
 }
 
-func (p *Processor) AddAfter(notification string, t time.Duration) {
+func (p *Processor) AddAfter(notification string, t time.Duration, event interface{}) {
+	if v, ok := event.(interface{}); ok && v != nil {
+		StoreAdd(notification, event)
+	}
 	p.queue.AddAfter(notification, t)
 }
 
@@ -81,7 +85,7 @@ func (p *Processor) pop() {
 							Store[key] = event
 							retryTime := time.Duration(event.errNum+1) * T
 							p.queue.Forget(key)
-							p.AddAfter(key, retryTime)
+							p.AddAfter(key, retryTime, nil)
 							klog.Warningf("Event processing failed, will retry on %v second after.", retryTime)
 						} else {
 							p.queue.Forget(key)
@@ -95,7 +99,7 @@ func (p *Processor) pop() {
 				}
 			}
 			p.queue.Done(key)
-			if encouterError != nil {
+			if encouterError != nil || !enconterBool {
 				klog.Errorf("Event failed: %v", encouterError)
 			}
 		}

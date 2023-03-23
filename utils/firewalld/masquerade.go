@@ -3,7 +3,7 @@ package firewalld
 import (
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 /************************************************** Masquerade area ***********************************************************/
@@ -19,7 +19,7 @@ import (
  *                                                  ALREADY_ENABLED,
  *                                                  INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout int) error {
+func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}

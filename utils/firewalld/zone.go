@@ -7,7 +7,7 @@ import (
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 func (c *DbusClientSerivce) checkZoneName(name string) error {

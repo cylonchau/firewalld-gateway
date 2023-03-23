@@ -5,10 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	code "github.com/cylonchau/firewalldGateway/server/apis"
-	"github.com/cylonchau/firewalldGateway/server/batch_processor"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
 )
 
 type PortRouter struct{}
@@ -30,31 +29,12 @@ func (this *PortRouter) batchAddPort(c *gin.Context) {
 		return
 	}
 	for _, item := range query.Ports {
-		function := func(c context.Context) {
-			b := c.Value("portRule")
-			port := b.(apis.PortQuery)
-			dbusClient, err := firewalld.NewDbusClientService(port.Ip)
-			if err != nil {
-				return
-			}
-			defer func() {
-				c.Done()
-				dbusClient.Destroy()
-			}()
-			tName := batch_processor.RandName()
-			event := batch_processor.Event{
-				EventName: batch_processor.CREATE_PORT,
-				Host:      port.Ip,
-				TaskName:  tName,
-				Task:      port,
-			}
-			batch_processor.P.Add(tName, event)
-
-		}
 		go func(p apis.PortQuery) {
 			contexts := context.TODO()
-			contexts = context.WithValue(contexts, "portRule", p)
-			go function(contexts)
+			contexts = context.WithValue(contexts, "action_obj", p)
+			contexts = context.WithValue(contexts, "delay_time", query.Delay)
+			contexts = context.WithValue(contexts, "event_name", batch_processor.CREATE_PORT)
+			go batchFunction(contexts)
 		}(item)
 	}
 	apis.SuccessResponse(c, code.OK, code.BatchSuccessCreated)

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 )
 
 var Store map[string]interface{}

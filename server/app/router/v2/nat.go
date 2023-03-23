@@ -1,9 +1,9 @@
 package v2
 
 import (
-	q "github.com/cylonchau/firewalldGateway/apis"
-	code "github.com/cylonchau/firewalldGateway/server/apis"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	q "github.com/cylonchau/firewalld-gateway/apis"
+	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
 )

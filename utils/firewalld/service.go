@@ -5,7 +5,7 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 /************************************************** service area ***********************************************************/
@@ -90,7 +90,7 @@ func (c *DbusClientSerivce) AddNewService(name string, setting *apis.ServiceSett
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
 // @return        zoneName         string         "Returns name of zone to which the service was added."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) AddService(zone, service string, timeout int) error {
+func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}

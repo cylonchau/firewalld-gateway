@@ -1,8 +1,10 @@
 package apis
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 //nolint: golint
@@ -79,6 +81,8 @@ func DecodeErr(err error) (int, string) {
 		return typed.Code, typed.Message
 	case *Errno:
 		return typed.Code, typed.Message
+	case error:
+		err = errors.New(strings.ReplaceAll(err.Error(), "\"", ""))
 	default:
 	}
 

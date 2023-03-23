@@ -3,7 +3,7 @@ package firewalld
 import (
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalldGateway/apis"
+	"github.com/cylonchau/firewalld-gateway/apis"
 )
 
 /************************************************** Protocol area ***********************************************************/
@@ -16,7 +16,7 @@ import (
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
 // @return        zoneName         string         "Returns name of zone to which the protocol was added."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_PROTOCOL, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) AddProtocol(zone, protocol string, timeout int) error {
+func (c *DbusClientSerivce) AddProtocol(zone, protocol string, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}

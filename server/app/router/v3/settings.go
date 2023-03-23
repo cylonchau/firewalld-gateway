@@ -5,10 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/cylonchau/firewalldGateway/apis"
-	code "github.com/cylonchau/firewalldGateway/server/apis"
-	"github.com/cylonchau/firewalldGateway/server/batch_processor"
-	"github.com/cylonchau/firewalldGateway/utils/firewalld"
+	"github.com/cylonchau/firewalld-gateway/apis"
+	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
 )
 
 type SettingRouter struct{}
@@ -32,29 +31,12 @@ func (this *SettingRouter) reload(c *gin.Context) {
 		return
 	}
 	for _, item := range query.Hosts {
-		function := func(c context.Context) {
-			b := c.Value("settingQuery")
-			host := b.(string)
-			dbusClient, err := firewalld.NewDbusClientService(host)
-			if err != nil {
-				return
-			}
-			defer func() {
-				c.Done()
-				dbusClient.Destroy()
-			}()
-			tName := batch_processor.RandName()
-			event := batch_processor.Event{
-				EventName: batch_processor.RELOAD_FIREWALD,
-				Host:      host,
-				TaskName:  tName,
-			}
-			batch_processor.P.Add(tName, event)
-
-		}
 		go func(host string) {
-			contexts := context.WithValue(c, "settingQuery", host)
-			go function(contexts)
+			contexts := context.WithValue(c, "action_obj", item)
+			contexts = context.WithValue(contexts, "delay_time", query.Delay)
+			contexts = context.WithValue(contexts, "event_name", batch_processor.RELOAD_FIREWALD)
+
+			go batchFunction(contexts)
 		}(item)
 	}
 	apis.BacthMissionSuccessResponse(c, code.BatchSuccessCreated)
@@ -74,30 +56,11 @@ func (this *SettingRouter) setDefautZone(c *gin.Context) {
 	}
 
 	for _, item := range query.ActionObject {
-		function := func(c context.Context) {
-			b := c.Value("setDefautZone")
-			action := b.(apis.ZoneDst)
-			dbusClient, err := firewalld.NewDbusClientService(action.Host)
-			if err != nil {
-				return
-			}
-			defer func() {
-				c.Done()
-				dbusClient.Destroy()
-			}()
-			tName := batch_processor.RandName()
-			event := batch_processor.Event{
-				EventName: batch_processor.SET_DEFAULT_ZONE,
-				Host:      action.Host,
-				TaskName:  tName,
-				Task:      action.Zone,
-			}
-			batch_processor.P.Add(tName, event)
-
-		}
 		go func(zoneAction apis.ZoneDst) {
-			contexts := context.WithValue(c, "setDefautZone", zoneAction)
-			go function(contexts)
+			contexts := context.WithValue(c, "action_obj", zoneAction)
+			contexts = context.WithValue(contexts, "delay_time", query.Delay)
+			contexts = context.WithValue(contexts, "event_name", batch_processor.SET_DEFAULT_ZONE)
+			go batchFunction(contexts)
 		}(item)
 	}
 	apis.BacthMissionSuccessResponse(c, code.BatchSuccessCreated)

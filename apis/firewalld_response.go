@@ -3,7 +3,7 @@ package apis
 import (
 	"net/http"
 
-	"github.com/cylonchau/firewalldGateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/server/apis"
 
 	"github.com/gin-gonic/gin"
 )
