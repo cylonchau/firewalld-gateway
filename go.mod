@@ -7,7 +7,7 @@ replace k8s.io/apimachinery => k8s.io/apimachinery v0.24.5
 replace k8s.io/client-go => k8s.io/client-go v0.24.5
 
 require (
-	github.com/gin-gonic/gin v1.7.4
+	github.com/gin-gonic/gin v1.7.7
 	github.com/glebarez/sqlite v1.7.0
 	github.com/godbus/dbus/v5 v5.0.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
