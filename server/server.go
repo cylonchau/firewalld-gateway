@@ -9,6 +9,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalld-gateway/config"
+	"github.com/cylonchau/firewalld-gateway/model"
 	"github.com/cylonchau/firewalld-gateway/server/app"
 )
 
@@ -16,6 +17,8 @@ type Options struct {
 	ConfigFile string
 	AppName    string
 	h          bool
+	migration  bool
+	sqlDriver  string
 	errCh      chan error
 }
 
@@ -29,8 +32,7 @@ func NewProxyCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use: "",
-		Long: `
-	The firewalld-gateway is a central controller as firewallds. 
+		Long: `The firewalld-gateway is a central controller as firewallds. 
 run only host, docker, kubernetes.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			PrintFlags(cmd.Flags())
@@ -65,7 +67,9 @@ run only host, docker, kubernetes.`,
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&o.ConfigFile, "config", "./firewall-gateway.conf", "The path to the configuration file.")
+	fs.StringVar(&o.ConfigFile, "config", "./firewalld-gateway.toml", "The path to the configuration file.")
+	fs.BoolVar(&o.migration, "migration", false, "Inital database and tables.")
+	fs.StringVar(&o.sqlDriver, "sql-driver", "", "enable which sql backend.")
 
 }
 
@@ -86,9 +90,20 @@ func (o *Options) Complete() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (o *Options) Run() error {
+	if o.migration {
+		return model.Migration(o.sqlDriver)
+	}
+
+	if !config.CONFIG.MySQL.IsEmpty() || !config.CONFIG.SQLite.IsEmpty() {
+		if err := model.InitDB(config.CONFIG.DatabaseDriver); err != nil {
+			return err
+		}
+	}
+
 	return app.NewHTTPSever()
 }

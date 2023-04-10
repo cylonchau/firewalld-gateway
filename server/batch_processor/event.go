@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	"github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 )
 

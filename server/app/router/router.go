@@ -1,58 +1,79 @@
 package router
 
 import (
+	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/host"
+	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/tag"
 	"github.com/gin-gonic/gin"
 
 	"github.com/cylonchau/firewalld-gateway/config"
-	v1 "github.com/cylonchau/firewalld-gateway/server/app/router/v1"
-	v2 "github.com/cylonchau/firewalld-gateway/server/app/router/v2"
-	v3 "github.com/cylonchau/firewalld-gateway/server/app/router/v3"
+	"github.com/cylonchau/firewalld-gateway/server/app/auth"
+	"github.com/cylonchau/firewalld-gateway/server/app/auther"
+	fv1 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v1"
+	fv2 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v2"
+	fv3 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v3"
 )
 
 func RegisteredRouter(e *gin.Engine) {
 	e.Handle("GET", "ping", ping)
-	firewall_api := e.Group("/fw")
-	v1Group := firewall_api.Group("/v1")
-	v2Group := firewall_api.Group("/v2")
-	v3Group := firewall_api.Group("/v3")
 
-	portRouter := &v1.PortRouter{}
-	portRouter.RegisterPortAPI(v1Group)
+	firewallAPI := e.Group("/fw")
+	authAPI := e.Group("/auth")
+	firewallAPI.Use(auther.JWTAuthMiddleware())
 
-	masqueradeRouter := &v1.MasqueradeRouter{}
-	masqueradeRouter.RegisterPortAPI(v1Group)
+	fv1Group := firewallAPI.Group("/v1")
+	fv2Group := firewallAPI.Group("/v2")
+	fv3Group := firewallAPI.Group("/v3")
 
-	natRouter := &v1.NATRouter{}
-	natRouter.RegisterNATRouterAPI(v1Group)
+	tagGroup := firewallAPI.Group("/tag")
+	hostGroup := firewallAPI.Group("/host")
 
-	richRuleRouter := &v1.RichRuleRouter{}
-	richRuleRouter.RegisterPortAPI(v1Group)
+	portRouter := &fv1.PortRouter{}
+	portRouter.RegisterPortAPI(fv1Group)
 
-	serviceRouter := &v1.ServiceRouter{}
-	serviceRouter.RegisterPortAPI(v1Group)
+	masqueradeRouter := &fv1.MasqueradeRouter{}
+	masqueradeRouter.RegisterPortAPI(fv1Group)
 
-	natv2Router := &v2.NatRouter{}
-	natv2Router.RegisterPortAPI(v2Group)
+	natRouter := &fv1.NATRouter{}
+	natRouter.RegisterNATRouterAPI(fv1Group)
 
-	settingRouter := v2.SettingRouter{}
-	settingRouter.RegisterPortAPI(v2Group)
+	richRuleRouter := &fv1.RichRuleRouter{}
+	richRuleRouter.RegisterPortAPI(fv1Group)
 
-	if config.CONFIG.Async_Process {
-		batchPortRouter := v3.PortRouter{}
-		batchPortRouter.RegisterBatchAPI(v3Group)
+	serviceRouter := &fv1.ServiceRouter{}
+	serviceRouter.RegisterPortAPI(fv1Group)
 
-		batchSettingRouter := v3.SettingRouter{}
-		batchSettingRouter.RegisterBatchAPI(v3Group)
+	natv2Router := &fv2.NatRouter{}
+	natv2Router.RegisterPortAPI(fv2Group)
 
-		batchNATRouter := v3.MasqueradeRouter{}
-		batchNATRouter.RegisterBatchAPI(v3Group)
+	settingRouter := fv2.SettingRouter{}
+	settingRouter.RegisterPortAPI(fv2Group)
 
-		batchServiceRouter := v3.ServiceRouter{}
-		batchServiceRouter.RegisterBatchAPI(v3Group)
+	if config.CONFIG.AsyncProcess {
+		batchPortRouter := fv3.PortRouter{}
+		batchPortRouter.RegisterBatchAPI(fv3Group)
+
+		batchSettingRouter := fv3.SettingRouter{}
+		batchSettingRouter.RegisterBatchAPI(fv3Group)
+
+		batchNATRouter := fv3.MasqueradeRouter{}
+		batchNATRouter.RegisterBatchAPI(fv3Group)
+
+		batchServiceRouter := fv3.ServiceRouter{}
+		batchServiceRouter.RegisterBatchAPI(fv3Group)
 	}
 
-	if !config.CONFIG.Mysql.IsEmpty() {
-		storageRouter := v1.StoageRouter{}
-		storageRouter.RegisterStoageAPI(v1Group)
+	// auth route
+	authRouter := &auth.Auth{}
+	authRouter.RegisterUserAPI(authAPI)
+
+	if !config.CONFIG.MySQL.IsEmpty() || !config.CONFIG.SQLite.IsEmpty() {
+		tagRouter := &tag.Tag{}
+		tagRouter.RegisterTagAPI(tagGroup)
+
+		hostRouter := &host.Host{}
+		hostRouter.RegisterHostAPI(hostGroup)
+
+		asyncHostRouter := &host.AsyncHost{}
+		asyncHostRouter.RegisterAsyncHostAPI(hostGroup)
 	}
 }

@@ -12,7 +12,7 @@ import (
 
 // @title         NewService
 // @description   create new service with given settings into permanent configuration.
-// @auth      	  author           2021-10-23
+// @auther      	  author           2021-10-23
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
@@ -50,7 +50,7 @@ func (c *DbusClientSerivce) GetServices() (list []string, err error) {
 
 // @title         NewService
 // @description   in runtime configuration.
-// @auth      	  author           2021-10-23
+// @auther      	  author           2021-10-23
 // @param         service    	   string         		"service name."
 // @param         setting          *ServiceSetting      "service configruate"
 // @return        error            error          		"Possible errors:
@@ -84,7 +84,7 @@ func (c *DbusClientSerivce) AddNewService(name string, setting *apis.ServiceSett
 
 // @title         AddService
 // @description   temporary Add service into zone.
-// @auth      	  author           2021-09-29
+// @auther      	  author           2021-09-29
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
@@ -122,7 +122,7 @@ func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) err
 
 // @title         PermanentAddService
 // @description   Permanent Add service into zone.
-// @auth      	  author           2021-09-29
+// @auther      	  author           2021-09-29
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
@@ -157,7 +157,7 @@ func (c *DbusClientSerivce) PermanentAddService(zone, service string) error {
 
 // @title         QueryService
 // @description   temporary check whether service has been added for zone..
-// @auth      	  author           2021-10-05
+// @auther      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
@@ -188,7 +188,7 @@ func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 
 // @title         PermanentQueryService
 // @description   Permanent Return whether Add service in rich rules in zone.
-// @auth      	  author           2021-10-05
+// @auther      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
@@ -223,7 +223,7 @@ func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 
 // @title         RemoveService
 // @description   temporary Remove service from zone.
-// @auth      	  author           2021-10-05
+// @auther      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
@@ -256,7 +256,7 @@ func (c *DbusClientSerivce) RemoveService(zone, service string) error {
 
 // @title         PermanentAddService
 // @description   Permanent Add service into zone.
-// @auth      	  author           2021-09-29
+// @auther      	  author           2021-09-29
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         service          string         "service name e.g. http|ssh|ftp.."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
@@ -292,7 +292,7 @@ func (c *DbusClientSerivce) RemovePermanentService(zone, service string) error {
 
 // @title         PermanentGetServices
 // @description   get permanently service in zone.
-// @auth      	  author           2021-10-21
+// @auther      	  author           2021-10-21
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) GetPermanentServices(zone, service string) error {

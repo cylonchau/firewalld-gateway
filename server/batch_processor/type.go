@@ -13,4 +13,5 @@ const (
 	RELOAD_FIREWALD    = "reload"
 	FLUSH_SETTING      = "flush"
 	SET_DEFAULT_ZONE   = "set-default-zone"
+	DiscoverHost       = "discover_host"
 )

@@ -71,37 +71,39 @@ func (p *Processor) pop() {
 				return
 			}
 
-			var encouterError error
-			key := notificationKey.(string)
-			eventInterface, enconterBool := Store[key]
-			if enconterBool {
-				event, enconterBool = eventInterface.(Event)
+			go func(notificationKey interface{}) {
+				var encouterError error
+				key := notificationKey.(string)
+				eventInterface, enconterBool := Store[key]
 				if enconterBool {
-					klog.V(5).Infof("Recived mission %s", event.TaskName)
-					encouterError = event.processEvent()
-					if encouterError != nil {
-						if event.errNum <= config.CONFIG.Mission_Retry_Number {
-							event.errNum++
-							Store[key] = event
-							retryTime := time.Duration(event.errNum+1) * T
-							p.queue.Forget(key)
-							p.AddAfter(key, retryTime, nil)
-							klog.Warningf("Event processing failed, will retry on %v second after.", retryTime)
+					event, enconterBool = eventInterface.(Event)
+					if enconterBool {
+						klog.V(5).Infof("Recived mission %s", event.TaskName)
+						encouterError = event.processEvent()
+						if encouterError != nil {
+							if event.errNum <= config.CONFIG.MissionRetryNumber {
+								event.errNum++
+								Store[key] = event
+								retryTime := time.Duration(event.errNum+1) * T
+								p.queue.Forget(key)
+								p.AddAfter(key, retryTime, nil)
+								klog.Warningf("Event processing failed, will retry on %v second after.", retryTime)
+							} else {
+								p.queue.Forget(key)
+								StoreDel(key)
+								klog.Warningf("Task %s exceed MRN value: %v.", event.TaskName, encouterError)
+							}
 						} else {
 							p.queue.Forget(key)
 							StoreDel(key)
-							klog.Warningf("Task %s exceed MRN value: %v.", event.TaskName, encouterError)
 						}
-					} else {
-						p.queue.Forget(key)
-						StoreDel(key)
 					}
 				}
-			}
-			p.queue.Done(key)
-			if encouterError != nil || !enconterBool {
-				klog.Errorf("Event failed: %v", encouterError)
-			}
+				p.queue.Done(key)
+				if encouterError != nil || !enconterBool {
+					klog.Errorf("Event failed: %v", encouterError)
+				}
+			}(notificationKey)
 		}
 	}
 }

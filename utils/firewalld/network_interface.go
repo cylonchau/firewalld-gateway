@@ -12,7 +12,7 @@ import (
  * @title         BindInterface
  * @description   temporary Bind interface with zone. From now on all traffic
  * 				   going through the interface will respect the zone's settings.
- * @auth          author           2021-09-29
+ * @auther          author           2021-09-29
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        zoneName         string         "Returns name of zone to which the interface was bound."
  * @return        error            error          "Possible errors:
@@ -54,7 +54,7 @@ func (c *DbusClientSerivce) BindInterface(zone, interfaceName string) (string, e
  * @title         PermanentBindInterface
  * @description   Permanently Bind interface with zone. From now on all traffic
  * 				   going through the interface will respect the zone's settings.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
@@ -92,7 +92,7 @@ func (c *DbusClientSerivce) BindPermanentInterface(zone, interfaceName string) (
 /*
  * @title         QueryInterface
  * @description   temporary Query whether interface has been bound to zone.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         interface        string         "device name， e.g. "
  * @return        b         	   bool           "true:enable, fales:disable."
@@ -131,7 +131,7 @@ func (c *DbusClientSerivce) QueryInterface(zone, interfaceName string) bool {
 /*
  * @title         PermanentQueryInterface
  * @description   Permanently Query whether interface has been bound to zone.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
@@ -172,7 +172,7 @@ func (c *DbusClientSerivce) QueryPermanentInterface(zone, interfaceName string) 
 /*
  * @title         RemoveInterface
  * @description   Permanently Query whether interface has been bound to zone.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
@@ -209,7 +209,7 @@ func (c *DbusClientSerivce) RemoveInterface(zone, interfaceName string) error {
 /*
  * @title         PermanentRemoveInterface
  * @description   Permanently remove interface from list of interfaces bound to zone.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         interfaceName   string         "interface name. e.g. eth0 | ens33.  "
  * @return        error            error          "Possible errors:

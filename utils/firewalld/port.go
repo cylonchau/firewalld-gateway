@@ -11,7 +11,7 @@ import (
 
 // @title         addPort
 // @description   temporary add a firewalld port
-// @auth      	  author           2021-09-29
+// @auther      	  author           2021-09-29
 // @param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
 // @param         zone    		   string         "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
 // @param         timeout    	   int	          "Timeout, 0 is the permanent effect of the currently service startup state."
@@ -36,7 +36,7 @@ func (c *DbusClientSerivce) AddPort(port *apis.Port, zone string, timeout uint32
 
 // @title         PermanentAddPort
 // @description   Permanently add port & procotol to list of ports of zone.
-// @auth      	  author           2021-09-29
+// @auther      	  author           2021-09-29
 // @param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
 // @param         zone    		   string         "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
 // @return        error            error          "Possible errors: ALREADY_ENABLED."
@@ -67,7 +67,7 @@ func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (enconterError e
 /*
  * @title         GetPort
  * @description   temporary get a firewalld port list
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "The empty string is usage default zone, is currently firewalld defualt zone."
  *                                                   e.g. public|dmz..
  * @return        []list           Port           "Returns port list of zone."
@@ -103,7 +103,7 @@ func (c *DbusClientSerivce) GetPort(zone string) (list []apis.Port, enconterErro
 /*
  * @title         PermanentGetPort
  * @description   get Permanent configurtion a firewalld port list.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @param         zone             string         "The empty string is usage default zone, is currently firewalld defualt zone"
  *														e.g. public|dmz..
  * @return        []list           Port           "Returns port list of zone."
@@ -141,7 +141,7 @@ func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []apis.Port, enc
 /*
  * @title         RemovePort
  * @description   temporary delete a firewalld port
- * @auth      	  author           2021-10-05
+ * @auther      	  author           2021-10-05
  * @param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
  * @param         zone    		   string         "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
  * @return        bool             string         "Returns name of zone from which the port was removed."
@@ -174,7 +174,7 @@ func (c *DbusClientSerivce) RemovePort(port *apis.Port, zone string) error {
 /*
  * @title         PermanentRemovePort
  * @description   Permanently delete (port, protocol) from list of ports of zone.
- * @auth      	  author           2021-10-05
+ * @auther      	  author           2021-10-05
  * @param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
  * @param         zone    		   string         "The empty string is usage default zone, is currently firewalld defualt zone"
  * 														e.g. public|dmz.."

@@ -13,7 +13,7 @@ RUN \
 FROM alpine AS runner
 WORKDIR /go/firewalld
 COPY --from=builder /firewalld/_output/firewalld-gateway ./bin/
-COPY --from=builder /firewalld/firewalld-gateway.conf .
-CMD  ["firewalld-gateway", "-v", "5", "--config", "./firewalld-gateway.conf"]
+COPY --from=builder /firewalld/firewalld-gateway.toml .
+CMD  ["firewalld-gateway", "-v", "5"]
 ENV PATH "$PATH:/go/firewalld/bin"
 VOLUME ["/firewall"]

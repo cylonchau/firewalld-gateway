@@ -34,7 +34,7 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 	if config.CONFIG.Port == "" {
 		klog.V(5).Infof("Start connect to D-Bus service: %s:%s", addr, PORT)
 	} else {
-		PORT = config.CONFIG.Dbus_Port
+		PORT = config.CONFIG.DbusPort
 		klog.V(5).Infof("Start connect to D-Bus service: %s:%s", addr, PORT)
 	}
 
@@ -77,7 +77,7 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 /*
  * @title         Destroy
  * @description   off firewalld connection.
- * @auth          author    2021-10-31
+ * @auther          author    2021-10-31
  */
 func (c *DbusClientSerivce) Destroy() {
 	if c.client.Connected() {
@@ -93,7 +93,7 @@ func (c *DbusClientSerivce) Destroy() {
 /*
  * @title         Reload
  * @description   temporary Add rich language rule into zone.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
@@ -114,7 +114,7 @@ func (c *DbusClientSerivce) Reload() error {
 /*
  * @title         flush currently zone zoneSettings to default zoneSettings.
  * @description   temporary Add rich language rule into zone.
- * @auth          author           2021-10-05
+ * @auther          author           2021-10-05
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
@@ -134,7 +134,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 		},
 		Port: []*apis.Port{
 			{
-				Port:     config.CONFIG.Dbus_Port,
+				Port:     config.CONFIG.DbusPort,
 				Protocol: "tcp",
 			},
 		},
@@ -160,7 +160,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 
 // @title         Reload
 // @description   temporary Add rich language rule into zone.
-// @auth      	  author           2021-10-05
+// @auther      	  author           2021-10-05
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
 func (c *DbusClientSerivce) generatePath(zone, interfacePath string) (dbus.ObjectPath, error) {
 	zoneid := c.getZoneId(zone)

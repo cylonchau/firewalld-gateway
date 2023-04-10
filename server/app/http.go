@@ -26,7 +26,7 @@ func NewHTTPSever() (err error) {
 	router.RegisteredRouter(http)
 	klog.V(2).Infof("Listening and serving HTTP on %s:%s", config.CONFIG.Address, config.CONFIG.Port)
 
-	if config.CONFIG.Async_Process {
+	if config.CONFIG.AsyncProcess {
 		batch_processor.P = batch_processor.NewProcessor()
 		go batch_processor.P.Run()
 	}
