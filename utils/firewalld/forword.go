@@ -50,7 +50,6 @@ func (c *DbusClientSerivce) Listforwards(zone string) ([]apis.ForwardPort, error
 				}
 			}
 		}
-
 		c.eventLogFormat.Format = ListResourceSuccessFormat
 		c.eventLogFormat.resource = len(forwards)
 		c.printResourceEventLog()

@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	code "github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
@@ -70,14 +72,10 @@ func (this *NATRouter) getForwardInRuntime(c *gin.Context) {
 	defer dbusClient.Destroy()
 
 	forwards, err := dbusClient.Listforwards(query.Zone)
+	fmt.Printf("%+v", forwards)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	if len(forwards) <= 0 {
-		code.NotFount(c, code.ErrForwardNotFount, nil)
+		code.SuccessResponse(c, err, nil)
 		return
 	}
 	code.SuccessResponse(c, code.OK, forwards)

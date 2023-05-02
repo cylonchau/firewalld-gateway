@@ -93,4 +93,5 @@ const (
 	CONFIG_ZONE_QUERYFORWARDPORT  = CONFIG_ZONE + ".queryForwardPort"
 	CONFIG_GETFORWARDPORT         = CONFIG_ZONE + ".getForwardPorts"
 	CONFIG_REMOVEZONE             = CONFIG_ZONE + ".remove"
+	CONFIG_DEFAULT_POLICY         = CONFIG_ZONE + ".getTarget"
 )

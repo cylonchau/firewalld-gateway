@@ -56,6 +56,11 @@ type Log struct {
 	Level  string `form:"level" json:"level,omitempty"`
 	Limit  Limit  `form:"limit" json:"limit,omitempty"`
 }
+
+type Value struct {
+	Value string `form:"value" json:"value,omitempty"`
+}
+
 type Limit struct {
 	Value string `form:"value" json:"value,omitempty"`
 }
@@ -63,16 +68,13 @@ type Audit struct {
 	Limit Limit `form:"limit" json:"limit,omitempty"`
 }
 type Accept struct {
-	Flag  bool
-	Limit Limit `form:"limit" json:"limit,omitempty"`
+	Flag bool `form:"flag" json:"flag,omitempty"`
 }
 type Reject struct {
-	Type  string `form:"type" json:"type,omitempty"`
-	Limit Limit  `form:"limit" json:"limit,omitempty"`
+	Flag bool `form:"flag" json:"flag,omitempty"`
 }
 type Drop struct {
-	Flag  bool
-	Limit Limit `form:"limit" json:"limit,omitempty"`
+	Flag bool
 }
 
 type Mark struct {
@@ -86,11 +88,11 @@ type SourcePort struct {
 }
 
 type Rule struct {
-	Family      string       `form:"family" json:"family,omitempty,default=ipv4"`
+	Family      string       `form:"family" json:"family,omitempty"`
 	Source      *Source      `form:"source" json:"source,omitempty"`
 	Destination *Destination `form:"destination" json:"destination,omitempty"`
 	Service     []string     `form:"service" json:"service,omitempty"`
-	Port        *Port        `form:"protocol" json:"protocol,omitempty"`
+	Port        *Port        `form:"port" json:"port,omitempty"`
 	Protocol    *Protocol    `form:"protocol" json:"protocol,omitempty"`
 	IcmpBlock   *IcmpBlock   `form:"icmpblock" json:"icmpblock,omitempty"`
 	IcmpType    *IcmpType    `form:"icmptype" json:"icmptype,omitempty"`
@@ -101,6 +103,8 @@ type Rule struct {
 	Reject      *Reject      `form:"reject" json:"reject,omitempty"`
 	Drop        *Drop        `form:"drop" json:"drop,omitempty"`
 	Mark        *Mark        `form:"mark" json:"mark,omitempty"`
+	Limit       *Limit       `form:"limit" json:"limit,omitempty"`
+	Value       *Value       `form:"value" json:"value,omitempty"`
 }
 
 type Interface struct {
@@ -168,8 +172,8 @@ type Settings struct {
 	IcmpBlockInversion bool           `deepcopier:"field:IcmpBlockInversion" form:"icmp-block-inversion" json:"icmp-block-inversion",omitempty"`
 }
 
-func (this *Source) IsEmpty() bool {
-	return this == nil
+func (s *Source) IsEmpty() bool {
+	return s == nil
 }
 
 func (this *Destination) IsEmpty() bool {
@@ -224,13 +228,18 @@ func (this *Limit) IsEmpty() bool {
 	return this == nil
 }
 
+func (this *Value) IsEmpty() bool {
+	return this == nil
+}
+
 func (this *Source) ToString() string {
+
 	var str = " source "
 	if this.Address != "" {
 		str += "address=" + this.Address
 	} else if this.Mac != "" {
 		str += "mac=" + this.Mac
-	} else {
+	} else if this.Ipset != "" {
 		str += "ipset=" + this.Ipset
 	}
 	if this.Invert != "" {
@@ -257,10 +266,11 @@ func (this *Destination) ToString() string {
 func (this *Port) ToString() string {
 	var str = "port "
 	if this.Port != "" {
-		str += "name=" + this.Port
+		str += "port=" + this.Port
 	}
 	if this.Protocol != "" {
-		str += "protocol=" + this.Protocol
+
+		str += " " + "protocol=" + this.Protocol
 	}
 
 	str += " "
@@ -268,7 +278,7 @@ func (this *Port) ToString() string {
 }
 
 func (this *Protocol) ToString() string {
-	var str = "Protocol "
+	var str = "protocol "
 	if this.Value != "" {
 		str += "value=" + this.Value
 	}
@@ -337,7 +347,6 @@ func (this *Log) ToString() string {
 	if !this.Limit.IsEmpty() {
 		str += " " + "limit value=" + this.Limit.Value
 	}
-
 	str += " "
 	return str
 }
@@ -353,32 +362,42 @@ func (this *Audit) ToString() string {
 	return str
 }
 
+func (this *Limit) ToString() string {
+	var str string
+	if !this.IsEmpty() {
+		str += "limit value=" + this.Value
+	}
+	str += " "
+	return str
+}
+
 func (this *Accept) ToString() string {
 	var str string
 
 	if this.Flag {
 		str = "accept "
 	}
-	if !this.Limit.IsEmpty() {
-		str += "limit value=" + this.Limit.Value
+	str += " "
+	return str
+}
+
+func (this *Reject) ToString() string {
+	var str string
+
+	if !this.IsEmpty() {
+		str = "reject "
 	}
 
 	str += " "
 	return str
 }
 
-func (this *Reject) ToString() string {
-	var str = "reject "
+func (this *Value) ToString() string {
+	var str = "value= "
 
-	if this.Type != "" {
-		str += "type=" + this.Type
+	if !this.IsEmpty() {
+		str += "type=" + this.Value
 	}
-
-	if !this.Limit.IsEmpty() {
-		str += " "
-		str += "limit value=" + this.Limit.Value
-	}
-
 	str += " "
 	return str
 }
@@ -388,9 +407,6 @@ func (this *Drop) ToString() string {
 
 	if this.Flag {
 		str = "drop "
-	}
-	if !this.Limit.IsEmpty() {
-		str += "limit value=" + this.Limit.Value
 	}
 	str += " "
 	return str
@@ -415,8 +431,9 @@ func (this *Mark) ToString() string {
 
 func (this *Rule) ToString() (ruleString string) {
 	ruleString = "rule "
+
 	if this.Family != "" {
-		ruleString += "family=" + this.Family
+		ruleString += "family=" + this.Family + " "
 	}
 
 	if !this.Source.IsEmpty() {
@@ -520,27 +537,21 @@ func SliceToStruct(array interface{}) (ForwardPort, error) {
 	return ForwardPort{}, encounterError
 }
 
-func stringToReject(slice []string) (reject *Reject, ruleSlice []string) {
-Label:
-	for index, value := range slice {
-		tmp_slice := strings.Split(value, "=")
-		switch tmp_slice[1] {
-		case "type":
-			slice = removeSliceElement(slice, index)
-			reject.Type = slice[index]
-			slice = removeSliceElement(slice, index)
-			goto Label
-		case "limit":
-			slice = removeSliceElement(slice, index)
-			tmp_slice := strings.Split(slice[index], "=")
-			reject.Limit = Limit{Value: tmp_slice[1]}
-			slice = removeSliceElement(slice, index)
-			goto Label
-		}
-	}
-	ruleSlice = slice
-	return reject, ruleSlice
-}
+//func stringToReject(slice []string) (reject *Reject, ruleSlice []string) {
+//Label:
+//	for index, value := range slice {
+//		tmp_slice := strings.Split(value, "=")
+//		switch tmp_slice[1] {
+//		case "type":
+//			slice = removeSliceElement(slice, index)
+//			reject.Type = slice[index]
+//			slice = removeSliceElement(slice, index)
+//			goto Label
+//		}
+//	}
+//	ruleSlice = slice
+//	return reject, ruleSlice
+//}
 
 func stringToMark(slice []string) (mark *Mark, ruleSlice []string) {
 
@@ -619,7 +630,6 @@ Label:
 }
 
 func StringToRule(str string) (rule *Rule) {
-
 	strslice := strings.Split(str, " ")
 	rule = &Rule{}
 Label:
@@ -627,10 +637,11 @@ Label:
 		switch value {
 		case "rule":
 			strslice = removeSliceElement(strslice, index)
+			goto Label
+		case `family="ipv4"`, `family="ipv6"`:
 			tmp_str := strings.Split(strslice[index], "=")
 			rule.Family = tmp_str[1]
 			strslice = removeSliceElement(strslice, index)
-			goto Label
 		case "source":
 			strslice = removeSliceElement(strslice, index)
 			tmp_str := strings.Split(strslice[index], "=")
@@ -676,10 +687,11 @@ Label:
 				Protocol: protocol[1],
 			}
 			strslice = removeSliceElement(strslice, index)
+			strslice = removeSliceElement(strslice, index)
 			goto Label
 		case "protocol":
 			strslice = removeSliceElement(strslice, index)
-			tmp_str := strings.Split(strslice[index+1], "=")
+			tmp_str := strings.Split(strslice[index], "=")
 			rule.Protocol = &Protocol{Value: tmp_str[1]}
 			strslice = removeSliceElement(strslice, index)
 			goto Label
@@ -711,39 +723,37 @@ Label:
 			goto Label
 		case "accept":
 			strslice = removeSliceElement(strslice, index)
-			accept := &Accept{}
-			rule.Accept = accept
-			rule.Accept.Flag = true
-			var tmp_str []string
-			if len(strslice) > 0 {
-				if strslice[index] == "limit" {
-					strslice = removeSliceElement(strslice, index)
-					tmp_str = strings.Split(strslice[index], "=")
-					rule.Accept.Limit = Limit{Value: tmp_str[1]}
-				}
+			rule.Accept = &Accept{
+				Flag: true,
 			}
 			goto Label
 		case "drop":
-			var tmp_str []string
 			strslice = removeSliceElement(strslice, index)
-			rule.Drop.Flag = true
-			if len(strslice) > 0 {
-				if strslice[index] == "limit" {
-					strslice = removeSliceElement(strslice, index)
-					tmp_str = strings.Split(strslice[index], "=")
-					rule.Drop.Limit = Limit{Value: tmp_str[1]}
-				}
+			rule.Drop = &Drop{
+				Flag: true,
 			}
 			goto Label
 		case "reject":
 			strslice = removeSliceElement(strslice, index)
-			rule.Reject, strslice = stringToReject(strslice)
+			rule.Reject = &Reject{}
 			goto Label
 		case "mark":
 			strslice = removeSliceElement(strslice, index)
 			rule.Mark, strslice = stringToMark(strslice)
 			goto Label
+		case "limit":
+			var tmp_str []string
+			strslice = removeSliceElement(strslice, index)
+			tmp_str = strings.Split(strslice[index], "=")
+			rule.Limit = &Limit{Value: tmp_str[1]}
+			goto Label
+		case "value":
+			strslice = removeSliceElement(strslice, index)
+			rule.Value = &Value{
+				Value: strslice[index],
+			}
 		}
+
 	}
 	return rule
 }

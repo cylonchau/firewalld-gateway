@@ -23,6 +23,7 @@ func (this *SettingRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup.DELETE("/remove", this.removeZone)
 	portGroup.GET("/list", this.listZone)
 	portGroup.GET("/default", this.defaultZone)
+	portGroup.GET("/policy", this.defaultPolicy)
 	portGroup.POST("/setdefaultzone", this.setDefaultZone)
 
 }
@@ -166,6 +167,31 @@ func (this *SettingRouter) defaultZone(c *gin.Context) {
 	defer dbusClient.Destroy()
 
 	zone := dbusClient.GetDefaultZone()
+
+	code.SuccessResponse(c, code.OK, zone)
+}
+
+// default policy ...
+// @Summary default policy
+// @Produce  json
+// @Success 200 {object} internal.Response
+// @Router /fw/v2/setting/policy [GET]
+func (this *SettingRouter) defaultPolicy(c *gin.Context) {
+
+	var query = &code.Query{}
+	if err := c.BindQuery(query); err != nil {
+		code.APIResponse(c, err, nil)
+		return
+	}
+
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
+	if err != nil {
+		code.ConnectDbusService(c, err)
+		return
+	}
+	defer dbusClient.Destroy()
+
+	zone := dbusClient.GetDefaultPolicy()
 
 	code.SuccessResponse(c, code.OK, zone)
 }

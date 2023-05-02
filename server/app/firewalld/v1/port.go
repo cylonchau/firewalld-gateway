@@ -38,7 +38,7 @@ func (this *PortRouter) getInRuntime(c *gin.Context) {
 	}
 	defer dbusClient.Destroy()
 
-	port, err := dbusClient.GetPort(query.Zone)
+	port, err := dbusClient.GetPorts(query.Zone)
 
 	if err != nil {
 		code.APIResponse(c, err, nil)

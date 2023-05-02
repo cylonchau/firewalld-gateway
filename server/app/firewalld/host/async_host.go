@@ -11,9 +11,9 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalld-gateway/config"
-	"github.com/cylonchau/firewalld-gateway/model"
 	"github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
+	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
 type AsyncHost struct{}
@@ -73,7 +73,7 @@ func (h *AsyncHost) createHost(c *gin.Context) {
 				if ping(ip.String()) {
 					ipInt, _ := ipconv.IPv4ToInt(ip)
 					host := &model.Host{
-						Ip:    ipInt,
+						IP:    ipInt,
 						TagId: query.TagId,
 					}
 					if err := model.CreateHostWithHost(host); err != nil {

@@ -1,0 +1,229 @@
+package model
+
+import (
+	"database/sql/driver"
+	"errors"
+	"fmt"
+	"reflect"
+	"strings"
+
+	json "github.com/json-iterator/go"
+	"gorm.io/gorm"
+
+	"github.com/cylonchau/firewalld-gateway/apis"
+	queryapi "github.com/cylonchau/firewalld-gateway/server/apis"
+)
+
+var rich_table_name = "riches"
+
+type Rich struct {
+	gorm.Model
+	Family      string            `form:"family" json:"family,omitempty" gorm:"type:char(4)"`
+	Source      *apis.Source      `form:"source" json:"source,omitempty" gorm:"json"`
+	Destination *apis.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
+	Port        []*apis.Port      `form:"port" json:"port,omitempty" gorm:"json"`
+	Protocol    *apis.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
+	Action      string            `form:"action" json:"action,omitempty" gorm:"type:varchar(30)"`
+	Limit       uint16            `form:"limit" json:"limit,omitempty" gorm:"type:varchar(255)"`
+	LimitUnit   string            `form:"limit_unit" json:"limit_unit,omitempty" gorm:"type:char(1)"`
+	TemplateID  int               `form:"template_id" json:"template_id,omitempty" gorm:"type:int"`
+}
+
+type RichList struct {
+	ID          int               `json:"id"`
+	Family      string            `form:"family" json:"family,omitempty"`
+	Source      *apis.Source      `form:"source" json:"source,omitempty" gorm:"json"`
+	Destination *apis.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
+	Port        []*apis.Port      `form:"port" json:"port,omitempty" gorm:"json"`
+	Protocol    *apis.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
+	Action      string            `form:"action" json:"action,omitempty"`
+	Limit       uint16            `form:"limit" json:"limit,omitempty"`
+	LimitUnit   string            `form:"limit_unit" json:"limit_unit,omitempty"`
+	TemplateID  int               `form:"template_id" json:"template_id,omitempty"`
+	Template    string            `json:"template"`
+}
+
+func (*RichList) TableName() string {
+	return rich_table_name
+}
+
+func (r *Rich) Scan(value interface{}) error {
+	b, _ := value.([]byte)
+	return json.Unmarshal(b, r)
+}
+
+func (r *Rich) Value() (value driver.Value, err error) {
+	return json.Marshal(r)
+}
+
+func (r *RichList) Scan(value interface{}) error {
+	var encounterError error
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+	}
+
+	if len(bytes) > 2 {
+		var result = &RichList{}
+		encounterError = json.Unmarshal(bytes, result)
+		if encounterError == nil {
+			panic(result)
+			if !isEmptyStruct(result.Port) {
+
+				r.Port = result.Port
+			}
+			if !(result.Source == &apis.Source{}) {
+				r.Source = result.Source
+			}
+
+			if !(result.Destination == &apis.Destination{}) {
+				r.Destination = result.Destination
+			}
+
+			if (result.Protocol == &apis.Protocol{}) {
+				r.Protocol = result.Protocol
+			}
+		}
+	}
+	return encounterError
+}
+
+func (r *RichList) Value() (value driver.Value, err error) {
+	return json.Marshal(r)
+}
+
+func CreateRich(query *queryapi.RichEditQuery) (enconterError error) {
+	ports := []*apis.Port{}
+	if len(query.Port) > 0 {
+		for _, value := range query.Port {
+			s := strings.Split(value, "/")
+			port := &apis.Port{Port: s[0], Protocol: s[1]}
+			ports = append(ports, port)
+		}
+	}
+
+	rich := &Rich{
+		Family: query.Family,
+		Source: &apis.Source{
+			Address: query.Source,
+		},
+		Destination: &apis.Destination{
+			Address: query.Destination,
+		},
+		Port: ports,
+		Protocol: &apis.Protocol{
+			Value: query.Protocol,
+		},
+		Action:     query.Action,
+		Limit:      query.Limit,
+		LimitUnit:  query.LimitUnit,
+		TemplateID: query.TemplateId,
+	}
+	result := DB.Create(rich)
+	if enconterError = result.Error; enconterError == nil {
+		return nil
+	}
+
+	return enconterError
+}
+
+func GetRich(offset, limit int, sort string) (map[string]interface{}, error) {
+	richs := []*RichList{}
+	response := make(map[string]interface{})
+	var count int64
+	result := DB.Table(rich_table_name).
+		Select([]string{
+			rich_table_name + ".id",
+			rich_table_name + ".family",
+			rich_table_name + ".source",
+			rich_table_name + ".destination",
+			rich_table_name + ".port",
+			rich_table_name + ".protocol",
+			rich_table_name + ".action",
+			rich_table_name + ".`limit`",
+			rich_table_name + ".limit_unit",
+			"templates.name template",
+			"templates.id template_id"}).
+		Joins("join templates on "+rich_table_name+".template_id = templates.id").
+		Limit(limit).
+		Offset((offset-1)*limit).
+		Where(rich_table_name+".deleted_at is ?", nil).
+		Order(rich_table_name + ".id " + sort).
+		Scan(&richs)
+	DB.Model(&Rich{}).Distinct("id").Count(&count)
+	if result.Error != gorm.ErrRecordNotFound {
+		response["list"] = richs
+		response["total"] = count
+		return response, nil
+	}
+	return nil, result.Error
+}
+
+func isEmptyStruct(s interface{}) bool {
+	v := reflect.ValueOf(s)
+	for i := 0; i < v.NumField(); i++ {
+		fv := v.Field(i)
+		switch fv.Kind() {
+		case reflect.String:
+			if fv.String() != "" {
+				return false
+			}
+		case reflect.Slice, reflect.Map:
+			if !fv.IsNil() && fv.Len() > 0 {
+				return false
+			}
+		case reflect.Bool:
+			if fv.Bool() {
+				return false
+			}
+		default:
+			if !fv.IsZero() {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func UpdateRichWithID(query *queryapi.RichEditQuery) (enconterError error) {
+	ports := []*apis.Port{}
+	if len(query.Port) > 0 {
+		for _, value := range query.Port {
+			s := strings.Split(value, "/")
+			port := &apis.Port{Port: s[0], Protocol: s[1]}
+			ports = append(ports, port)
+		}
+	}
+
+	rich := &Rich{
+		Family: query.Family,
+		Source: &apis.Source{
+			Address: query.Source,
+		},
+		Destination: &apis.Destination{
+			Address: query.Destination,
+		},
+		Port: ports,
+		Protocol: &apis.Protocol{
+			Value: query.Protocol,
+		},
+		Action:     query.Action,
+		Limit:      query.Limit,
+		LimitUnit:  query.LimitUnit,
+		TemplateID: query.TemplateId,
+	}
+	result := DB.Model(&Rich{}).Where("id = ?", query.ID).Updates(rich)
+	if enconterError = result.Error; enconterError == nil {
+		return nil
+	}
+
+	return enconterError
+}
+
+func DeleteRichWithID(id uint64) error {
+	result := DB.Delete(&Rich{}, id)
+	if result.Error == nil {
+		return nil
+	}
+	return result.Error
+}

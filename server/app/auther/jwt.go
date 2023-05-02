@@ -25,13 +25,33 @@ type Token struct {
 	jwt.StandardClaims
 }
 
+type PerToken struct {
+	SignTo string `json:"sign_to"`
+	jwt.StandardClaims
+}
+
 func GenToken(userID int64) (string, error) {
 	// 创建一个我们自己的声明的数据
 	c := Token{
 		userID,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 30).Unix(), // 过期时间
-			Issuer:    config.CONFIG.AppName,                   // 签发人
+			ExpiresAt: time.Now().Add(time.Minute * 30000).Unix(), // 过期时间
+			Issuer:    config.CONFIG.AppName,                      // 签发人
+		},
+	}
+	// 使用指定的签名方法创建签名对象
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+	// 使用指定的secret签名并获得完整的编码后的字符串token
+	return token.SignedString(jsonSecret)
+}
+
+func SignPermanentToken(signBy string) (string, error) {
+	// 创建一个我们自己的声明的数据
+	c := PerToken{
+		signBy,
+		jwt.StandardClaims{
+			ExpiresAt: -1,                    // 过期时间
+			Issuer:    config.CONFIG.AppName, // 签发人
 		},
 	}
 	// 使用指定的签名方法创建签名对象
@@ -47,7 +67,7 @@ func GetInfo(token string) (int64, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return []byte(jsonSecret), nil
+		return jsonSecret, nil
 	})
 	if enconterError == nil {
 		if claims, ok := tokenOk.Claims.(*Token); ok && tokenOk.Valid {
@@ -73,21 +93,20 @@ func ParseToken(tokenString string) (*Token, error) {
 }
 
 // RefreshToken 刷新AccessToken
-func RefreshToken(aToken, rToken string) (newAToken, newRToken string, err error) {
+func RefreshToken(accessToken, refreshToken string) (newAToken, newRToken string, err error) {
 	// refresh token无效直接返回
-	if _, err = jwt.Parse(rToken, keyFunc); err != nil {
-		return
+	var encounterError error
+	if _, encounterError = jwt.Parse(refreshToken, keyFunc); encounterError == nil {
+		// 从旧access token中解析出claims数据
+		var claims Token
+		if _, encounterError = jwt.ParseWithClaims(accessToken, &claims, keyFunc); encounterError == nil {
+			v, _ := err.(*jwt.ValidationError)
+			// 当 access token是过期错误 并且 refresh token没有过期时就创建一个新的access token
+			if v.Errors == jwt.ValidationErrorExpired {
+				token, _ := GenToken(claims.UserID)
+				return token, "", nil
+			}
+		}
 	}
-
-	// 从旧access token中解析出claims数据
-	var claims Token
-	_, err = jwt.ParseWithClaims(aToken, &claims, keyFunc)
-	v, _ := err.(*jwt.ValidationError)
-
-	// 当 access token是过期错误 并且 refresh token没有过期时就创建一个新的access token
-	if v.Errors == jwt.ValidationErrorExpired {
-		token, _ := GenToken(claims.UserID)
-		return token, "", nil
-	}
-	return
+	return "", "", encounterError
 }

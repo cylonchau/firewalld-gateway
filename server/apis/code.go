@@ -11,8 +11,9 @@ import (
 var (
 	// Common errors
 	OK                         = &Errno{Code: 10000, Message: "operation succeeded"}
-	NETWORK_MASQUERADE_ENABLE  = &Errno{Code: 0, Message: "network masquerade is enable"}
-	NETWORK_MASQUERADE_DISABLE = &Errno{Code: 0, Message: "network masquerade is disable"}
+	QUERY_NULL                 = &Errno{Code: 10003, Message: "request query is null"}
+	NETWORK_MASQUERADE_ENABLE  = &Errno{Code: 10000, Message: "network masquerade is enable"}
+	NETWORK_MASQUERADE_DISABLE = &Errno{Code: 10000, Message: "network masquerade is disable"}
 	ErrDBus                    = "connect to remote firewalld server failed"
 	InternalServerError        = &Errno{Code: 10001, Message: "Internal server error"}
 	ErrBind                    = &Errno{Code: 10002, Message: "Error occurred while binding the request body to the struct"}
@@ -46,8 +47,10 @@ var (
 	ErrRegisterFailed        = &Errno{Code: 50113, Message: "注册失败"}
 	ErrCreatedUser           = &Errno{Code: 50114, Message: "用户创建失败"}
 
-	ErrTagNotFound  = &Errno{Code: 30104, Message: "Tag not found"}
-	ErrUserTagExist = &Errno{Code: 30106, Message: "Tag does existed"}
+	ErrTagNotFound   = &Errno{Code: 30104, Message: "Tag not found"}
+	ErrTagExist      = &Errno{Code: 30106, Message: "Tag does existed"}
+	ErrTemplateExist = &Errno{Code: 30106, Message: "Template does existed"}
+	ErrExist         = &Errno{Code: 30106, Message: "Tag does existed"}
 
 	BatchSuccessCreated = &Errno{Code: 60000, Message: "The batch mission has created"}
 	BatchErrCreated     = &Errno{Code: 60005, Message: "The batch mission create failed"}

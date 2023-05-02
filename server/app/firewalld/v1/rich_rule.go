@@ -44,11 +44,6 @@ func (this *RichRuleRouter) getRichRulesAtRuntime(c *gin.Context) {
 		return
 	}
 
-	if len(rules) <= 0 {
-		code.NotFount(c, code.ErrRichNotFount, rules)
-		return
-	}
-
 	code.SuccessResponse(c, code.OK, rules)
 }
 
@@ -64,10 +59,6 @@ func (this *RichRuleRouter) addRichRuleAtRuntime(c *gin.Context) {
 	if err := c.BindJSON(query); err != nil {
 		code.APIResponse(c, err, nil)
 		return
-	}
-
-	if query.Rich.Family == "" {
-		query.Rich.Family = "ipv4"
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
@@ -95,22 +86,16 @@ func (this *RichRuleRouter) addRichRuleAtRuntime(c *gin.Context) {
 func (this *RichRuleRouter) delRichRuleAtRuntime(c *gin.Context) {
 
 	var query = &code.RichQuery{}
-
 	if err := c.BindJSON(query); err != nil {
 		code.APIResponse(c, err, nil)
 		return
 	}
-
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
 		code.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
-
-	if query.Rich.Family == "" {
-		query.Rich.Family = "ipv4"
-	}
 
 	err = dbusClient.RemoveRichRule(query.Zone, query.Rich)
 

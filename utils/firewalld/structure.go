@@ -124,7 +124,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 	}
 
 	defaultZoneSetting := apis.Settings{
-		Target:      "default",
+		Target:      "accpet",
 		Description: "reset by " + config.CONFIG.AppName,
 		Short:       "public",
 		Interface:   nil,

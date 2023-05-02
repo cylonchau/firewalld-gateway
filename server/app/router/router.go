@@ -1,13 +1,15 @@
 package router
 
 import (
-	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/host"
-	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/tag"
 	"github.com/gin-gonic/gin"
 
 	"github.com/cylonchau/firewalld-gateway/config"
 	"github.com/cylonchau/firewalld-gateway/server/app/auth"
 	"github.com/cylonchau/firewalld-gateway/server/app/auther"
+	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/host"
+	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/tag"
+	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/template"
+	Token "github.com/cylonchau/firewalld-gateway/server/app/firewalld/token"
 	fv1 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v1"
 	fv2 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v2"
 	fv3 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v3"
@@ -26,6 +28,8 @@ func RegisteredRouter(e *gin.Engine) {
 
 	tagGroup := firewallAPI.Group("/tag")
 	hostGroup := firewallAPI.Group("/host")
+	templateGroup := firewallAPI.Group("/template")
+	tokenGroup := firewallAPI.Group("/token")
 
 	portRouter := &fv1.PortRouter{}
 	portRouter.RegisterPortAPI(fv1Group)
@@ -75,5 +79,11 @@ func RegisteredRouter(e *gin.Engine) {
 
 		asyncHostRouter := &host.AsyncHost{}
 		asyncHostRouter.RegisterAsyncHostAPI(hostGroup)
+
+		templateRouter := &template.Template{}
+		templateRouter.RegisterTemplateAPI(templateGroup)
+
+		tokenRouter := &Token.Token{}
+		tokenRouter.RegisterTokenAPI(tokenGroup)
 	}
 }

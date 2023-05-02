@@ -74,27 +74,27 @@ func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (enconterError e
  * @return        error            error          "Possible errors:
  *                                                      INVALID_ZONE"
  */
-func (c *DbusClientSerivce) GetPort(zone string) (list []apis.Port, enconterError error) {
+func (c *DbusClientSerivce) GetPorts(zone string) (relits []apis.Port, enconterError error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
 	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-
 	call := obj.Call(apis.ZONE_GETPORTS, dbus.FlagNoAutoStart, zone)
 	c.printPath(apis.ZONE_GETPORTS)
 	klog.V(4).Infof("Trying to get port rule in zone %s.", zone)
 
 	enconterError = call.Err
+	var lists []apis.Port
 	if enconterError == nil || len(call.Body) >= 0 {
 		portList := call.Body[0].([][]string)
 		for _, value := range portList {
-			list = append(list, apis.Port{
+			lists = append(lists, apis.Port{
 				Port:     value[0],
 				Protocol: value[1],
 			})
 		}
-		return list, enconterError
+		return lists, enconterError
 	}
 	klog.Errorf("Get a port rule failed: ", enconterError)
 	return

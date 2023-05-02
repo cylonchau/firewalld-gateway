@@ -9,8 +9,8 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalld-gateway/config"
-	"github.com/cylonchau/firewalld-gateway/model"
 	"github.com/cylonchau/firewalld-gateway/server/app"
+	model2 "github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
 type Options struct {
@@ -96,11 +96,11 @@ func (o *Options) Complete() error {
 
 func (o *Options) Run() error {
 	if o.migration {
-		return model.Migration(o.sqlDriver)
+		return model2.Migration(o.sqlDriver)
 	}
 
 	if !config.CONFIG.MySQL.IsEmpty() || !config.CONFIG.SQLite.IsEmpty() {
-		if err := model.InitDB(config.CONFIG.DatabaseDriver); err != nil {
+		if err := model2.InitDB(config.CONFIG.DatabaseDriver); err != nil {
 			return err
 		}
 	}

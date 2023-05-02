@@ -1,10 +1,13 @@
-## Fiewall Gateway Uranus
+# Uranus
 
-Firewalld gateway Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king of gods. The firewall gateway is the Uranus for iptables.
+Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king of gods. The firewall gateway is the Uranus for iptables.
+
+## Show
+
+▶ [Click](#Screenshot) ◀
 
 ## Features
-
-- Full firewalld features (currently only covert Redhat7)
+- Full firewalld features (currently converted OS debian11, centos7)
 - Full D-BUS API convert to REST API.
 - Based dbus remotely.
 - HTTP restful API.
@@ -25,11 +28,12 @@ Firewalld gateway Uranus is a Linux firewalld central controller. In Greek mytho
 - [X] optional API on (v3 only)
 - [X] security policy
 - [X] Delay task
-- [ ] UI doing
+- [X] UI
 - [X] Authtication.
+- [X] Deplyment on Kubernetes & Docker
 - [ ] Prometheus Metics.
 - [ ] WAF SDK.
-- [X] Deplyment on Kubernetes
+- [ ] Token destory
 
 
 ## Deploy
@@ -114,3 +118,17 @@ To edit /etc/dbus-1/system.conf, example.
 -v 4 // info log
 -v 2 // no log
 ```
+
+## Screenshot
+
+![](./images/123.png)
+
+![](./images/223.png)
+
+![](./images/323.png)
+
+![](./images/423.png)
+
+![](./images/523.png)
+
+![](./images/623.png)

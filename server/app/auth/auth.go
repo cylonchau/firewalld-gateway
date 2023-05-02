@@ -3,9 +3,10 @@ package auth
 import (
 	"reflect"
 
-	userModel "github.com/cylonchau/firewalld-gateway/model"
 	"github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/server/app/auther"
+	userModel "github.com/cylonchau/firewalld-gateway/utils/model"
+
 	"github.com/gin-gonic/gin"
 	"github.com/praserx/ipconv"
 )
@@ -17,6 +18,8 @@ func (a *Auth) RegisterUserAPI(g *gin.RouterGroup) {
 	authGroup.POST("/signin", a.signinHandler)
 	authGroup.POST("/signup", a.signupHandler)
 	authGroup.GET("/info", a.userInfoHandler)
+	authGroup.GET("/cip", a.getClientIP)
+
 }
 
 func (u *Auth) signinHandler(c *gin.Context) {
@@ -110,4 +113,10 @@ func (u *Auth) userInfoHandler(c *gin.Context) {
 		return
 	}
 	apis.SuccessResponse(c, enconterError, nil)
+}
+
+func (u *Auth) getClientIP(c *gin.Context) {
+	apis.SuccessResponse(c, nil, map[string]string{
+		"ip": c.ClientIP(),
+	})
 }

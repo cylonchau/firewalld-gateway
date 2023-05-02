@@ -239,3 +239,40 @@ func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
 	c.printResourceEventLog()
 	return ""
 }
+
+// @title         GetZoneOfInterface
+// @description   temporary add a firewalld port
+// @auther        author           2023-04-22
+// @param         iface    		   string         "e.g. eth0, iface is device name."
+// @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
+func (c *DbusClientSerivce) GetDefaultPolicy() string {
+
+	// print log
+	c.eventLogFormat.Format = QueryResourceStartFormat
+	c.eventLogFormat.resourceType = "zone"
+	c.eventLogFormat.resource = "get-target"
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+	var path dbus.ObjectPath
+	path, c.eventLogFormat.encounterError = c.generatePath(c.defaultZone, apis.ZONE_PATH)
+	if c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(apis.INTERFACE, path)
+		c.printPath(apis.CONFIG_DEFAULT_POLICY)
+		call := obj.Call(apis.CONFIG_DEFAULT_POLICY, dbus.FlagNoAutoStart)
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
+			name, ok := call.Body[0].(string)
+			if ok {
+				c.eventLogFormat.Format = QueryResourceSuccessFormat
+				c.eventLogFormat.resource = name
+				c.printResourceEventLog()
+				return name
+			} else {
+				c.eventLogFormat.resource = nil
+			}
+		}
+	}
+	c.eventLogFormat.Format = QueryResourceFailedFormat
+	c.printResourceEventLog()
+	return ""
+}
