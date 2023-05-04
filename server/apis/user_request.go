@@ -18,6 +18,6 @@ type InfoQuery struct {
 }
 
 type InfoResp struct {
-	Username string `form:"token" json:"token" binding:"required"`
-	UserRole string `form:"token" json:"token" binding:"required"`
+	Username string `form:"username" json:"username" binding:"required"`
+	UserRole string `form:"role" json:"role" binding:"required"`
 }

@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/cylonchau/firewalld-gateway/config"
+	"github.com/cylonchau/firewalld-gateway/utils/auther"
 )
 
 func Migration(driver string) error {
@@ -40,8 +41,8 @@ func Migration(driver string) error {
 			if !dbInterface.Migrator().HasTable(&Rich{}) {
 				dbInterface.Migrator().CreateTable(&Rich{})
 			}
-			if !dbInterface.Migrator().HasTable(&Token{}) {
-				dbInterface.Migrator().CreateTable(&Token{})
+			if !dbInterface.Migrator().HasTable(&auther.Token{}) {
+				dbInterface.Migrator().CreateTable(&auther.Token{})
 			}
 		}
 		return nil

@@ -6,11 +6,12 @@ Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king 
 
 ▶ [Click](#Screenshot) ◀
 
+![](./images/Uranus.png)
+
 ## Features
-- Full firewalld features (currently converted OS debian11, centos7)
-- Full D-BUS API convert to REST API.
+- Full firewalld features 
+- Full D-BUS API convert to REST API.(currently converted OS debian11, centos7)
 - Based dbus remotely.
-- HTTP restful API.
 - Declarative API and Imperative API.
 - Asynchronous batch interface (only add).
 - Can control thousands of linux machine via firewall gateway remotely.
@@ -22,6 +23,7 @@ Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king 
 - Only HTTP Service (without store).
 - UI based VUE-element-admin.
 - Support datacenter tag and machine management.
+- Support SQLite & MySQL databases.
 
 ## TODO
 - [X] Asynchronous batch process
@@ -33,7 +35,6 @@ Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king 
 - [X] Deplyment on Kubernetes & Docker
 - [ ] Prometheus Metics.
 - [ ] WAF SDK.
-- [ ] Token destory
 
 
 ## Deploy
@@ -58,14 +59,6 @@ docker run -d --rm  cylonchau/uranus
 ```
 
 if you think update you dbus-daemon verion to lasest, can use `dbus.spec` make your package.
-
-
-## Thanks libs
-- [kubernetes workqueue](https://github.com/kubernetes/kubernetes)
-- [klog](https://github.com/kubernetes/kubernetes)
-- [godbus](https://github.com/godbus/dbus)
-- [gin](https://github.com/gin-gonic/gin)
-- [viper](https://github.com/spf13/viper)
 
 ## use
 

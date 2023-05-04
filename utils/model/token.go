@@ -4,14 +4,14 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/cylonchau/firewalld-gateway/config"
-	"github.com/cylonchau/firewalld-gateway/server/app/auther"
+	token2 "github.com/cylonchau/firewalld-gateway/utils/auther"
 )
 
 const token_table_name = "tokens"
 
 type Token struct {
 	gorm.Model
-	Token       string `form:"token" json:"token" gorm:"type:text"`
+	Token       string `form:"token" json:"token" gorm:"index,type:text"`
 	SignedTo    string `form:"signed_to" json:"signed_to" gorm:"type:varchar(255)"`
 	SignedBy    string `form:"signed_by" json:"signed_by" gorm:"type:varchar(255)"`
 	Description string `json:"description" gorm:"type:varchar(255)"`
@@ -31,7 +31,7 @@ func (*TokenList) TableName() string {
 
 func CreateToken(SignedTo, description string) (enconterError error) {
 	var tokenByte string
-	if tokenByte, enconterError = auther.SignPermanentToken(SignedTo); enconterError == nil {
+	if tokenByte, enconterError = token2.SignPermanentToken(SignedTo); enconterError == nil {
 		token := &Token{
 			SignedTo:    SignedTo,
 			SignedBy:    config.CONFIG.AppName,
@@ -68,7 +68,7 @@ func UpdateTokenWithID(id uint64, signedTo, description string, isUpdate bool) (
 	var token *Token
 	if isUpdate && signedTo != "" {
 		var tokenByte string
-		if tokenByte, enconterError = auther.SignPermanentToken(signedTo); enconterError == nil {
+		if tokenByte, enconterError = token2.SignPermanentToken(signedTo); enconterError == nil {
 			token = &Token{
 				SignedTo:    signedTo,
 				Description: description,
@@ -95,4 +95,18 @@ func DeleteTokenWithID(id uint64) error {
 		return nil
 	}
 	return result.Error
+}
+
+func TokenIsDestoryed(tokenStr string) bool {
+	var count int64
+	result := DB.Model(&Token{}).
+		Where("token = ?", tokenStr).
+		Where(token_table_name+".deleted_at is NOT ?", nil).
+		Unscoped().
+		Count(&count)
+
+	if (result.Error != gorm.ErrRecordNotFound || result.Error == nil) && count > 0 {
+		return true
+	}
+	return false
 }

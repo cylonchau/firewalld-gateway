@@ -32,7 +32,7 @@ var (
 	ErrZoneNotFount    = &Errno{Code: 40004, Message: "Not found the zone"}
 	ErrForwardNotFount = &Errno{Code: 40004, Message: "The Forward in the zone is empty"}
 
-	// auther errors
+	// token errors
 	ErrEncrypt               = &Errno{Code: 50101, Message: "success"}
 	ErrUserNotFound          = &Errno{Code: 50102, Message: "User not found"}
 	ErrTokenInvalid          = &Errno{Code: 50103, Message: "Invalied token"}
@@ -40,6 +40,7 @@ var (
 	ErrUserExist             = &Errno{Code: 50105, Message: "User exists"}
 	ErrUserNotExist          = &Errno{Code: 50106, Message: "User does not exist"}
 	ErrNeedAuth              = &Errno{Code: 50107, Message: "Your need authetication"}
+	ErrTokenDestoryed        = &Errno{Code: 50108, Message: "Token is destoryed"}
 	ErrSendSMSTooMany        = &Errno{Code: 50109, Message: "已超出当日限制，请明天再试"}
 	ErrVerifyCode            = &Errno{Code: 50110, Message: "验证码错误"}
 	ErrEmailOrPassword       = &Errno{Code: 50111, Message: "邮箱或密码错误"}

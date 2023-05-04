@@ -18,18 +18,20 @@ type ResponseSlice struct {
 	Data interface{} `form:"data" json:"data,omitempty"`
 }
 
-func AuthFailed(ctx *gin.Context, msg *Errno) {
+func AuthFailed(ctx *gin.Context, msg *Errno, data interface{}) {
 	ctx.JSON(http.StatusUnauthorized, Response{
 		Code: msg.Code,
 		Msg:  msg.Message,
+		Data: data,
 	})
 }
 
 // API403Response ....
-func Auth403Failed(ctx *gin.Context, msg *Errno) {
+func Auth403Failed(ctx *gin.Context, msg *Errno, data interface{}) {
 	ctx.JSON(http.StatusForbidden, Response{
 		Code: msg.Code,
 		Msg:  msg.Message,
+		Data: data,
 	})
 }
 

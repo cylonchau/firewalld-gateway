@@ -77,7 +77,7 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 /*
  * @title         Destroy
  * @description   off firewalld connection.
- * @auther          author    2021-10-31
+ * @middlewares          author    2021-10-31
  */
 func (c *DbusClientSerivce) Destroy() {
 	if c.client.Connected() {
@@ -93,7 +93,7 @@ func (c *DbusClientSerivce) Destroy() {
 /*
  * @title         Reload
  * @description   temporary Add rich language rule into zone.
- * @auther          author           2021-10-05
+ * @middlewares          author           2021-10-05
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
@@ -114,7 +114,7 @@ func (c *DbusClientSerivce) Reload() error {
 /*
  * @title         flush currently zone zoneSettings to default zoneSettings.
  * @description   temporary Add rich language rule into zone.
- * @auther          author           2021-10-05
+ * @middlewares          author           2021-10-05
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
@@ -160,7 +160,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 
 // @title         Reload
 // @description   temporary Add rich language rule into zone.
-// @auther      	  author           2021-10-05
+// @middlewares      	  author           2021-10-05
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
 func (c *DbusClientSerivce) generatePath(zone, interfacePath string) (dbus.ObjectPath, error) {
 	zoneid := c.getZoneId(zone)

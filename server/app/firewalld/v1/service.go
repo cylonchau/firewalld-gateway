@@ -12,12 +12,12 @@ import (
 type ServiceRouter struct{}
 
 func (this *ServiceRouter) RegisterPortAPI(g *gin.RouterGroup) {
-	portGroup := g.Group("/service")
-	portGroup.GET("/", this.getServicesAtRuntime)
-	portGroup.DELETE("/", this.deleteServicesAtRuntime)
-	portGroup.POST("/", this.addServicesAtRuntime)
-	portGroup.POST("/new", this.newServiceAtPermanent)
-	portGroup.GET("/list", this.listServicesAtRuntime)
+	serivceGroup := g.Group("/service")
+	serivceGroup.GET("/", this.getServicesAtRuntime)
+	serivceGroup.DELETE("/", this.deleteServicesAtRuntime)
+	serivceGroup.POST("/", this.addServicesAtRuntime)
+	serivceGroup.POST("/new", this.newServiceAtPermanent)
+	serivceGroup.GET("/list", this.listServicesAtRuntime)
 
 }
 

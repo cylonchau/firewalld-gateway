@@ -5,7 +5,6 @@ import (
 
 	"github.com/cylonchau/firewalld-gateway/config"
 	"github.com/cylonchau/firewalld-gateway/server/app/auth"
-	"github.com/cylonchau/firewalld-gateway/server/app/auther"
 	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/host"
 	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/tag"
 	"github.com/cylonchau/firewalld-gateway/server/app/firewalld/template"
@@ -13,6 +12,7 @@ import (
 	fv1 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v1"
 	fv2 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v2"
 	fv3 "github.com/cylonchau/firewalld-gateway/server/app/firewalld/v3"
+	"github.com/cylonchau/firewalld-gateway/server/app/middlewares"
 )
 
 func RegisteredRouter(e *gin.Engine) {
@@ -20,7 +20,7 @@ func RegisteredRouter(e *gin.Engine) {
 
 	firewallAPI := e.Group("/fw")
 	authAPI := e.Group("/auth")
-	firewallAPI.Use(auther.JWTAuthMiddleware())
+	firewallAPI.Use(middlewares.JWTAuthMiddleware())
 
 	fv1Group := firewallAPI.Group("/v1")
 	fv2Group := firewallAPI.Group("/v2")
@@ -45,6 +45,9 @@ func RegisteredRouter(e *gin.Engine) {
 
 	serviceRouter := &fv1.ServiceRouter{}
 	serviceRouter.RegisterPortAPI(fv1Group)
+
+	dashboardRouter := &fv1.DashboardRouter{}
+	dashboardRouter.RegisterPortAPI(fv1Group)
 
 	natv2Router := &fv2.NatRouter{}
 	natv2Router.RegisterPortAPI(fv2Group)

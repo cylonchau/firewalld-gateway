@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/cylonchau/firewalld-gateway/server/apis"
-	"github.com/cylonchau/firewalld-gateway/server/app/auther"
+	token2 "github.com/cylonchau/firewalld-gateway/utils/auther"
 	userModel "github.com/cylonchau/firewalld-gateway/utils/model"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +46,7 @@ func (u *Auth) signinHandler(c *gin.Context) {
 			var ip uint32
 			if ip, enconterError = userModel.GetRequestIP(c.Request); enconterError == nil {
 				userModel.LastLogin(int64(user.ID), ip)
-				if token, enconterError = auther.GenToken(int64(user.ID)); enconterError == nil {
+				if token, enconterError = token2.GenToken(int64(user.ID)); enconterError == nil {
 					apis.SuccessResponse(c, nil, apis.UserResp{
 						UserID:  uint64(user.ID),
 						Token:   token,
@@ -56,7 +56,7 @@ func (u *Auth) signinHandler(c *gin.Context) {
 				}
 			}
 
-			if token, enconterError = auther.GenToken(int64(user.ID)); enconterError == nil {
+			if token, enconterError = token2.GenToken(int64(user.ID)); enconterError == nil {
 				apis.SuccessResponse(c, nil, apis.UserResp{
 					UserID: uint64(user.ID),
 					Token:  token,
@@ -98,7 +98,7 @@ func (u *Auth) userInfoHandler(c *gin.Context) {
 		return
 	}
 
-	uid, err := auther.GetInfo(userInfoQuery.Token)
+	uid, err := token2.GetInfo(userInfoQuery.Token)
 	if err != nil {
 		apis.APIResponse(c, err, nil)
 		return

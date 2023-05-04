@@ -47,15 +47,15 @@ func GenToken(userID int64) (string, error) {
 
 func SignPermanentToken(signBy string) (string, error) {
 	// 创建一个我们自己的声明的数据
-	c := PerToken{
+	claims := PerToken{
 		signBy,
 		jwt.StandardClaims{
-			ExpiresAt: -1,                    // 过期时间
-			Issuer:    config.CONFIG.AppName, // 签发人
+			IssuedAt: time.Now().Unix(),
+			Issuer:   config.CONFIG.AppName, // 签发人
 		},
 	}
 	// 使用指定的签名方法创建签名对象
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 使用指定的secret签名并获得完整的编码后的字符串token
 	return token.SignedString(jsonSecret)
 }
@@ -101,7 +101,7 @@ func RefreshToken(accessToken, refreshToken string) (newAToken, newRToken string
 		var claims Token
 		if _, encounterError = jwt.ParseWithClaims(accessToken, &claims, keyFunc); encounterError == nil {
 			v, _ := err.(*jwt.ValidationError)
-			// 当 access token是过期错误 并且 refresh token没有过期时就创建一个新的access token
+			// 当 access token是过期错误 并且 refresh token没有过期时就创建一个新的access middlewares
 			if v.Errors == jwt.ValidationErrorExpired {
 				token, _ := GenToken(claims.UserID)
 				return token, "", nil

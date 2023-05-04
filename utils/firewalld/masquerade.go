@@ -11,7 +11,7 @@ import (
 /*
  * @title         EnableMasquerade
  * @description   temporary enable masquerade in zone..
- * @auther          author           2021-09-29
+ * @middlewares          author           2021-09-29
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         timeout          int            "Timeout, If timeout is non-zero, masquerading will be active for the amount of seconds."
  * @return        error            error          "Possible errors:
@@ -50,7 +50,7 @@ func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout uint32) error 
 /*
  * @title         PermanentEnableMasquerade
  * @description   permanent enable masquerade in zone..
- * @auther          author           2021-09-29
+ * @middlewares          author           2021-09-29
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        error            error          "Possible errors:
  *                                                  INVALID_ZONE,
@@ -91,7 +91,7 @@ func (c *DbusClientSerivce) EnablePermanentMasquerade(zone string) error {
 /*
  * @title         DisableMasquerade
  * @description   temporary enable masquerade in zone..
- * @auther          author           2021-10-05
+ * @middlewares          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         timeout          int            "Timeout, If timeout is non-zero, masquerading will be active for the amount of seconds."
  * @return        zoneName         string         "Returns name of zone in which the masquerade was enabled."
@@ -131,7 +131,7 @@ func (c *DbusClientSerivce) DisableMasquerade(zone string) (err error) {
 /*
  * @title         PermanentDisableMasquerade
  * @description   permanent enable masquerade in zone..
- * @auther          author           2021-10-05
+ * @middlewares          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        b            	   bool           "Possible errors:
  * @return        error            error          "Possible errors:
@@ -172,7 +172,7 @@ func (c *DbusClientSerivce) DisablePermanentMasquerade(zone string) (err error) 
 /*
  * @title         PermanentQueryMasquerade
  * @description   query runtime masquerading has been enabled in zone.
- * @auther          author           2021-10-05
+ * @middlewares          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        b            	   bool           "enable: true, disable:false:
  * @return        error            error          "Possible errors:
@@ -215,7 +215,7 @@ func (c *DbusClientSerivce) QueryPermanentMasquerade(zone string) (bool, error) 
 /*
  * @title         QueryMasquerade
  * @description   query runtime masquerading has been enabled in zone.
- * @auther          author           2021-10-05
+ * @middlewares          author           2021-10-05
  * @param         zone             string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         timeout          int            "Timeout, If timeout is non-zero, masquerading will be active for the amount of seconds."
  * @return        zoneName         string         "Returns name of zone in which the masquerade was enabled."

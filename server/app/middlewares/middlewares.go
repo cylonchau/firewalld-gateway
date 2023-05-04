@@ -1,4 +1,4 @@
-package auther
+package middlewares
 
 import (
 	"strings"
@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/auther"
+	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
 // JWTAuthMiddleware 基于JWT的认证中间件
@@ -17,26 +19,32 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// 这里的具体实现方式要依据你的实际业务情况决定
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" {
-			apis.AuthFailed(c, apis.ErrNeedAuth)
+			apis.AuthFailed(c, apis.ErrNeedAuth, nil)
 			c.Abort() // 中止
 			return
 		}
 		// 按空格分割
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			apis.AuthFailed(c, apis.ErrTokenInvalid)
+			apis.Auth403Failed(c, apis.ErrTokenInvalid, nil)
+			c.Abort()
+			return
+		}
+		tokenStr := parts[1]
+		if model.TokenIsDestoryed(tokenStr) {
+			apis.Auth403Failed(c, apis.ErrTokenDestoryed, nil)
 			c.Abort()
 			return
 		}
 		// parts[1]是获取到的tokenString，我们使用之前定义好的解析JWT的函数来解析它
-		mc, err := ParseToken(parts[1])
+		mc, err := auther.ParseToken(tokenStr)
 		if err != nil {
-			apis.AuthFailed(c, apis.ErrTokenInvalid)
+			apis.Auth403Failed(c, apis.ErrTokenInvalid, err.Error())
 			c.Abort()
 			return
 		}
 		// 将当前请求的userid信息保存到请求的上下文c上
-		c.Set(UserIDKey, mc.UserID)
+		c.Set(auther.UserIDKey, mc.UserID)
 
 		c.Next() // 后续的处理函数可以用过c.Get("username")来获取当前请求的用户信息
 	}

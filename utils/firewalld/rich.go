@@ -10,7 +10,7 @@ import (
 
 // @title         GetRichRules
 // @description   Get list of rich-language rules in zone.
-// @auther      	  author           2021-09-29
+// @middlewares      	  author           2021-09-29
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @return        zoneName         string         "Returns name of zone to which the interface was bound."
 // @return        error            error          "Possible errors: INVALID_ZONE"
@@ -48,7 +48,7 @@ func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, er
 
 // @title         AddRichRule
 // @description   temporary Add rich language rule into zone.
-// @auther      	  author           2021-09-29
+// @middlewares      	  author           2021-09-29
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
@@ -82,7 +82,7 @@ func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout ui
 
 // @title         PermanentAddRichRule
 // @description   Permanently Add rich language rule into zone.
-// @auther      	  author           2021-10-05
+// @middlewares      	  author           2021-10-05
 // @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
@@ -120,7 +120,7 @@ func (c *DbusClientSerivce) AddPermanentRichRule(zone string, rule *apis.Rule) e
 
 // @title         RemoveRichRule
 // @description   temporary Remove rich rule from zone.
-// @auther      	  author           2021-10-05
+// @middlewares      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: INVALID_ZONE, INVALID_RULE, NOT_ENABLED, INVALID_COMMAND"
@@ -154,7 +154,7 @@ func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
 
 // @title         PermanentAddRichRule
 // @description   Permanently Add rich language rule into zone.
-// @auther      	  author           2021-10-05
+// @middlewares      	  author           2021-10-05
 // @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        error            error          "Possible errors: ALREADY_ENABLED"
@@ -189,7 +189,7 @@ func (c *DbusClientSerivce) RemovePermanentRichRule(zone string, rule *apis.Rule
 
 // @title         PermanentQueryRichRule
 // @description   Check Permanent Configurtion whether rich rule rule has been added in zone.
-// @auther      	  author           2021-10-05
+// @middlewares      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"
@@ -225,7 +225,7 @@ func (c *DbusClientSerivce) QueryPermanentRichRule(zone string, rule *apis.Rule)
 
 // @title         QueryRichRule
 // @description   Check whether rich rule is already has.
-// @auther      	  author           2021-10-05
+// @middlewares      	  author           2021-10-05
 // @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
 // @param         rule    	   	   rule	          "rule, rule is rule struct."
 // @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"

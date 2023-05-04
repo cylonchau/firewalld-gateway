@@ -24,7 +24,7 @@ func (c *DbusClientSerivce) GetDefaultZone() string {
 
 // @title         SetDefaultZone
 // @description   Set default zone for connections and interfaces where no zone has been selected to zone.
-// @auther      	  author           2021-09-26
+// @middlewares      	  author           2021-09-26
 // @param 		  zone			   zone name
 // @return        error            error          ""
 func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
@@ -54,7 +54,7 @@ func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
 
 // @title         GetZones
 // @description   Return runtime settings of given zone.
-// @auther      	  author           2021-09-26
+// @middlewares      	  author           2021-09-26
 // @return        zones            []string       "Return array of names (s) of predefined zones known to current runtime environment."
 // @return        error            error          ""
 func (c *DbusClientSerivce) GetZones() ([]string, error) {
@@ -86,7 +86,7 @@ func (c *DbusClientSerivce) GetZones() ([]string, error) {
 
 // @title         getZoneId
 // @description   Return runtime settings of given zone.
-// @auther      	  author           2021-09-26
+// @middlewares      	  author           2021-09-26
 // @param         zone		       string         "zone name."
 // @return        error            error          "Possible errors: INVALID_ZONE"
 func (c *DbusClientSerivce) getZoneId(zone string) int {
@@ -110,7 +110,7 @@ func (c *DbusClientSerivce) getZoneId(zone string) int {
 
 // @title         GetZoneSettings
 // @description   Return runtime settings of given zone.
-// @auther      	  author           2021-09-26
+// @middlewares      	  author           2021-09-26
 // @param         zone		       string         "zone name."
 // @return        error            error          "Possible errors: INVALID_ZONE"
 func (c *DbusClientSerivce) GetZoneSettings(zone string) error {
@@ -140,7 +140,7 @@ func (c *DbusClientSerivce) GetZoneSettings(zone string) error {
 
 // @title         RemoveZone
 // @description   Return runtime settings of given zone.
-// @auther      	  author           2021-09-26
+// @middlewares      	  author           2021-09-26
 // @param         zone		       string         "zone name."
 // @return        error            error          "Possible errors: INVALID_ZONE"
 func (c *DbusClientSerivce) RemoveZone(zone string) error {
@@ -176,7 +176,7 @@ func (c *DbusClientSerivce) RemoveZone(zone string) error {
 
 // @title         AddZone
 // @description   Add zone with given settings into permanent configuration.
-// @auther      	  author           2021-09-27
+// @middlewares      	  author           2021-09-27
 // @param         name		       string         "Is an optional start and end tag and is used to give a more readable name."
 // @return        error            error          "Possible errors: NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
 func (c *DbusClientSerivce) AddZone(setting *apis.Settings) error {
@@ -207,7 +207,7 @@ func (c *DbusClientSerivce) AddZone(setting *apis.Settings) error {
 
 // @title         GetZoneOfInterface
 // @description   temporary add a firewalld port
-// @auther      	  author           2021-09-27
+// @middlewares      	  author           2021-09-27
 // @param         iface    		   string         "e.g. eth0, iface is device name."
 // @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
 func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
@@ -242,7 +242,7 @@ func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
 
 // @title         GetZoneOfInterface
 // @description   temporary add a firewalld port
-// @auther        author           2023-04-22
+// @middlewares        author           2023-04-22
 // @param         iface    		   string         "e.g. eth0, iface is device name."
 // @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
 func (c *DbusClientSerivce) GetDefaultPolicy() string {

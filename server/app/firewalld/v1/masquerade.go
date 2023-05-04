@@ -10,14 +10,14 @@ import (
 type MasqueradeRouter struct{}
 
 func (this *MasqueradeRouter) RegisterPortAPI(g *gin.RouterGroup) {
-	portGroup := g.Group("/masquerade")
+	masqueradeGroup := g.Group("/masquerade")
 
-	portGroup.PUT("/", this.enableInRuntime)
-	portGroup.DELETE("/", this.disableInRuntime)
-	portGroup.GET("/", this.queryInRuntime)
-	portGroup.PUT("/permanent", this.enableInPermanent)
-	portGroup.DELETE("/permanent", this.disableInPermanent)
-	portGroup.GET("/query", this.queryInPermanent)
+	masqueradeGroup.PUT("/", this.enableInRuntime)
+	masqueradeGroup.DELETE("/", this.disableInRuntime)
+	masqueradeGroup.GET("/", this.queryInRuntime)
+	masqueradeGroup.PUT("/permanent", this.enableInPermanent)
+	masqueradeGroup.DELETE("/permanent", this.disableInPermanent)
+	masqueradeGroup.GET("/query", this.queryInPermanent)
 }
 
 // enableInRuntime ...

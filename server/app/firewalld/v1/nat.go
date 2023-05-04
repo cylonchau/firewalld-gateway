@@ -12,11 +12,11 @@ import (
 type NATRouter struct{}
 
 func (this *NATRouter) RegisterNATRouterAPI(g *gin.RouterGroup) {
-	portGroup := g.Group("/nat")
+	natGroup := g.Group("/nat")
 
-	portGroup.POST("/", this.addForwardInRuntime)
-	portGroup.GET("/", this.getForwardInRuntime)
-	portGroup.DELETE("/", this.delForwardInRuntime)
+	natGroup.POST("/", this.addForwardInRuntime)
+	natGroup.GET("/", this.getForwardInRuntime)
+	natGroup.DELETE("/", this.delForwardInRuntime)
 }
 
 // addForward ...

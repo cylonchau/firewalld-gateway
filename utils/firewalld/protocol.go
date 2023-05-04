@@ -10,7 +10,7 @@ import (
 
 // @title         AddProtocol
 // @description   temporary get a firewalld port list
-// @auther      	  author           2021-09-29
+// @middlewares      	  author           2021-09-29
 // @param         zone    		   string         "e.g. public|dmz.. If zone is empty string, use default zone. "
 // @param         protocol         string         "e.g. tcp|udp... The protocol can be any protocol supported by the system."
 // @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."

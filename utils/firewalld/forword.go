@@ -14,7 +14,7 @@ import (
 /*
  * @title         GetForwardPort
  * @description   temporary get IPv4 forward port in zone.
- * @auther      	  author           2021-10-27
+ * @middlewares      	  author           2021-10-27
  * @param         zone    		   string         	"If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        forwardPort      set          	"Return array of IPv4 forward ports previously added into zone.
  * @return        error            error          	"Possible errors:
@@ -65,7 +65,7 @@ func (c *DbusClientSerivce) Listforwards(zone string) ([]apis.ForwardPort, error
 /*
  * @title         PermanentGetForwardPort
  * @description   permanent get IPv4 forward port in zone.
- * @auther      	  author           2021-10-29
+ * @middlewares      	  author           2021-10-29
  * @param         zone    		   string         	"If zone is empty string, use default zone. e.g. public|dmz..  "
  * @return        forwardPort      set          	"Return array of IPv4 forward ports previously added into zone.
  * @return        error            error          	"Possible errors:
@@ -122,7 +122,7 @@ func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.Forward
 /*
  * @title         AddForwardPort
  * @description   temporary Add the IPv4 forward port into zone.
- * @auther      	  author           2021-09-29
+ * @middlewares      	  author           2021-09-29
  * @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         portProtocol     string         "The port can either be a single port number portid or a port
  *													range portid-portid. The protocol can either be tcp or udp e.g. 10-20/tcp|20|20/tcp"
@@ -170,7 +170,7 @@ func (c *DbusClientSerivce) AddForwardPort(zone string, timeout uint32, forward 
 /*
  * @title         PermanentAddForwardPort
  * @description   temporary Add the IPv4 forward port into zone.
- * @auther      	  author           2021-10-07
+ * @middlewares      	  author           2021-10-07
  * @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         portProtocol     string         "The port can either be a single port number portid or a port
  *													range portid-portid. The protocol can either be tcp or udp e.g. 10-20/tcp|20|20/tcp"
@@ -211,7 +211,7 @@ func (c *DbusClientSerivce) AddPermanentForwardPort(zone string, forward *apis.F
 /*
  * @title         RemoveForwardPort
  * @description   temporary (runtime) Remove IPv4 forward port ((port, protocol, toport, toaddr)) from zone.
- * @auther      	  author           2021-09-29
+ * @middlewares      	  author           2021-09-29
  * @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         portProtocol     string         "The port can either be a single port number portid or a port
  *													range portid-portid. The protocol can either be tcp or udp e.g. 10-20/tcp|20|20/tcp"
@@ -257,7 +257,7 @@ func (c *DbusClientSerivce) RemoveForwardPort(zone string, forward *apis.Forward
 /*
  * @title         PermanentRemoveForwardPort
  * @description   Permanently remove (port, protocol, toport, toaddr) from list of forward ports of zone.
- * @auther      	  author           2021-10-07
+ * @middlewares      	  author           2021-10-07
  * @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         portProtocol     string         "The port can either be a single port number portid or a port
  *													range portid-portid. The protocol can either be tcp or udp e.g. 10-20/tcp|20|20/tcp"
@@ -302,7 +302,7 @@ func (c *DbusClientSerivce) RemovePermanentForwardPort(zone string, forward *api
 /*
  * @title         QueryForwardPort
  * @description   temporary (runtime) query whether the IPv4 forward port (port, protocol, toport, toaddr) has been added into zone.
- * @auther      	  author           2021-10-07
+ * @middlewares      	  author           2021-10-07
  * @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         portProtocol     string         "The port can either be a single port number portid or a port
  *													range portid-portid. The protocol can either be tcp or udp e.g. 10-20/tcp|20|20/tcp"
@@ -353,7 +353,7 @@ func (c *DbusClientSerivce) QueryForwardPort(zone, portProtocol, toHostPort stri
 /*
  * @title         PermanentQueryForwardPort
  * @description   Permanently remove (port, protocol, toport, toaddr) from list of forward ports of zone.
- * @auther      	  author           2021-10-07
+ * @middlewares      	  author           2021-10-07
  * @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
  * @param         portProtocol     string         "The port can either be a single port number portid or a port
  *													range portid-portid. The protocol can either be tcp or udp e.g. 10-20/tcp|20|20/tcp"

@@ -10,10 +10,10 @@ import (
 type RichRuleRouter struct{}
 
 func (this *RichRuleRouter) RegisterPortAPI(g *gin.RouterGroup) {
-	portGroup := g.Group("/rich")
-	portGroup.POST("/", this.addRichRuleAtRuntime)
-	portGroup.GET("/", this.getRichRulesAtRuntime)
-	portGroup.DELETE("/", this.delRichRuleAtRuntime)
+	richGroup := g.Group("/rich")
+	richGroup.POST("/", this.addRichRuleAtRuntime)
+	richGroup.GET("/", this.getRichRulesAtRuntime)
+	richGroup.DELETE("/", this.delRichRuleAtRuntime)
 }
 
 // GetRichRules ...
