@@ -99,3 +99,9 @@ func DeleteTagWithID(id uint64) error {
 	}
 	return result.Error
 }
+
+func TagCounter() int64 {
+	var count int64
+	DB.Model(&Tag{}).Distinct("id").Count(&count)
+	return count
+}

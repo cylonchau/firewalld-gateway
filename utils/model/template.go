@@ -105,3 +105,9 @@ func UpdateTemplateWithID(id uint64, name, description, target string) (enconter
 
 	return enconterError
 }
+
+func TemplateCounter() int64 {
+	var count int64
+	DB.Model(&Template{}).Distinct("id").Count(&count)
+	return count
+}

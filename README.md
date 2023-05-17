@@ -4,7 +4,13 @@ Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king 
 
 ## Show
 
+### Show picture
+
 ▶ [Click](#Screenshot) ◀
+
+### Show Video
+- In China ▶ [bilibili](https://www.bilibili.com/video/BV1J24y1K7SD) ◀
+- In World ▶ [YouTube](https://www.youtube.com/watch?v=v7HLZVA5V58) ◀
 
 ![](./images/Uranus.png)
 

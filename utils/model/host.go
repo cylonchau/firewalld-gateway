@@ -9,7 +9,7 @@ import (
 	"github.com/cylonchau/firewalld-gateway/server/apis"
 )
 
-var host_table_name = "hosts"
+const host_table_name = "hosts"
 
 type Host struct {
 	gorm.Model
@@ -26,7 +26,16 @@ type HostList struct {
 	TagId    int    `json:"tag_id"`
 }
 
+type Classify struct {
+	Name  string `json:"name"`
+	Count int    `json:"value"`
+}
+
 func (*HostList) TableName() string {
+	return host_table_name
+}
+
+func (*Classify) TableName() string {
 	return host_table_name
 }
 
@@ -135,4 +144,27 @@ func DeleteHostWithID(id uint64) error {
 		return nil
 	}
 	return result.Error
+}
+
+func HostCounter() int64 {
+	var count int64
+	DB.Model(&Host{}).Distinct("id").Count(&count)
+	return count
+}
+
+func HostClassify() ([]*Classify, error) {
+	hosts := []*Classify{}
+	result := DB.Table(host_table_name).
+		Joins("join tags on " + host_table_name + ".tag_id = tags.id").
+		Select([]string{
+			"COUNT(*) AS count",
+			"tags.name AS name"}).
+		Group("tags.name").
+		Where(host_table_name + ".`deleted_at` IS NULL").
+		Where("tags.`deleted_at` IS NULL").
+		Scan(&hosts)
+	if result.Error != gorm.ErrRecordNotFound || result.Error == nil {
+		return hosts, nil
+	}
+	return nil, result.Error
 }

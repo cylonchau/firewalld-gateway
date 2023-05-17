@@ -47,6 +47,7 @@ var (
 	ErrTwicePasswordNotMatch = &Errno{Code: 50112, Message: "两次密码输入不一致"}
 	ErrRegisterFailed        = &Errno{Code: 50113, Message: "注册失败"}
 	ErrCreatedUser           = &Errno{Code: 50114, Message: "用户创建失败"}
+	ErrDashboardFailed       = &Errno{Code: 50115, Message: "Get host status failed"}
 
 	ErrTagNotFound   = &Errno{Code: 30104, Message: "Tag not found"}
 	ErrTagExist      = &Errno{Code: 30106, Message: "Tag does existed"}
