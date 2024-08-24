@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	code_api "github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
 type MasqueradeRouter struct{}
@@ -17,20 +17,25 @@ func (this *MasqueradeRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 	portGroup.DELETE("/", this.batchDisableMasquerade)
 }
 
-// enable masquerade ...
-// @Summary enable masquerade
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v3/nat [POST]
+// batchEnableMasquerade godoc
+// @Summary Enable masqerade on firewalld runtime with delay timer.
+// @Description Enable masqerade on firewalld runtime with delay timer.
+// @Tags firewalld masquerade
+// @Accept  json
+// @Produce json
+// @Param  query body  query.BatchZoneQuery  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v3/masquerade [put]
 func (this *MasqueradeRouter) batchEnableMasquerade(c *gin.Context) {
-	var query = &code_api.BatchZoneQuery{}
+	var query = &api_query.BatchZoneQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {
-		code_api.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	for _, item := range query.ActionObject {
-		go func(host code_api.ZoneDst) {
+		go func(host api_query.ZoneDst) {
 			contexts := context.WithValue(c, "action_obj", host)
 			contexts = context.WithValue(contexts, "delay_time", query.Delay)
 			contexts = context.WithValue(contexts, "event_name", batch_processor.ENABLE_MASQUERADE)
@@ -38,23 +43,28 @@ func (this *MasqueradeRouter) batchEnableMasquerade(c *gin.Context) {
 		}(item)
 	}
 
-	code_api.SuccessResponse(c, nil, code_api.BatchSuccessCreated)
+	api_query.SuccessResponse(c, nil, api_query.BatchSuccessCreated)
 }
 
-// disable masquerade ...
-// @Summary disable masquerade
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v3/nat [POST]
+// batchDisableMasquerade godoc
+// @Summary Disable masqerade on firewalld runtime with delay timer.
+// @Description Disable masqerade on firewalld runtime with delay timer.
+// @Tags firewalld masquerade
+// @Accept  json
+// @Produce json
+// @Param  query body  query.BatchZoneQuery  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v3/masquerade [delete]
 func (this *MasqueradeRouter) batchDisableMasquerade(c *gin.Context) {
-	var query = &code_api.BatchZoneQuery{}
+	var query = &api_query.BatchZoneQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {
-		code_api.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	for _, item := range query.ActionObject {
-		go func(host code_api.ZoneDst) {
+		go func(host api_query.ZoneDst) {
 			contexts := context.WithValue(c, "action_obj", host)
 			contexts = context.WithValue(contexts, "delay_time", query.Delay)
 			contexts = context.WithValue(contexts, "event_name", batch_processor.DISABLE_MASQUERADE)
@@ -62,5 +72,5 @@ func (this *MasqueradeRouter) batchDisableMasquerade(c *gin.Context) {
 		}(item)
 	}
 
-	code_api.SuccessResponse(c, nil, code_api.BatchSuccessCreated)
+	api_query.SuccessResponse(c, nil, api_query.BatchSuccessCreated)
 }

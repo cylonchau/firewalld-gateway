@@ -11,8 +11,8 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/cylonchau/firewalld-gateway/config"
-	"github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
+	query2 "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
@@ -25,18 +25,18 @@ func (h *AsyncHost) RegisterAsyncHostAPI(g *gin.RouterGroup) {
 func (h *AsyncHost) createHost(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &apis.AsyncHostQuery{}
+	query := &query2.AsyncHostQuery{}
 	enconterError = c.ShouldBindJSON(&query)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		apis.APIResponse(c, enconterError, nil)
+		query2.APIResponse(c, enconterError, nil)
 		return
 	}
 
 	ip, ipnet, err := net.ParseCIDR(query.IPRange)
 	if err != nil {
-		apis.APIResponse(c, err, nil)
+		query2.APIResponse(c, err, nil)
 		return
 	}
 
@@ -93,5 +93,5 @@ func (h *AsyncHost) createHost(c *gin.Context) {
 		}
 	}()
 
-	apis.SuccessResponse(c, apis.OK, nil)
+	query2.SuccessResponse(c, query2.OK, nil)
 }

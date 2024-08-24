@@ -10,6 +10,7 @@ import (
 
 	"github.com/cylonchau/firewalld-gateway/config"
 	"github.com/cylonchau/firewalld-gateway/server/app"
+	"github.com/cylonchau/firewalld-gateway/utils/migration"
 	model2 "github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
@@ -96,7 +97,7 @@ func (o *Options) Complete() error {
 
 func (o *Options) Run() error {
 	if o.migration {
-		return model2.Migration(o.sqlDriver)
+		return migration.Migration(o.sqlDriver)
 	}
 
 	if !config.CONFIG.MySQL.IsEmpty() || !config.CONFIG.SQLite.IsEmpty() {

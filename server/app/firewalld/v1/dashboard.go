@@ -3,7 +3,7 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
@@ -18,24 +18,19 @@ func (this *DashboardRouter) RegisterPortAPI(g *gin.RouterGroup) {
 
 }
 
-// getRuntimeStatus ...
-// @Summary getRuntimeStatus
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/dashboard [GET]
 func (this *DashboardRouter) getRuntimeStatus(c *gin.Context) {
 
-	var query = &code.Query{}
+	var query = &api_query.Query{}
 	err := c.BindQuery(query)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
@@ -65,18 +60,13 @@ func (this *DashboardRouter) getRuntimeStatus(c *gin.Context) {
 		status["rich"] = richCount
 		status["port"] = portCount
 		status["service"] = serviceCount
-		code.SuccessResponse(c, code.OK, status)
+		api_query.SuccessResponse(c, api_query.OK, status)
 	} else {
-		code.SuccessResponse(c, code.OK, err)
+		api_query.SuccessResponse(c, api_query.OK, err)
 	}
 
 }
 
-// getDBStatus ...
-// @Summary getDBStatus
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/dashboard/template [GET]
 func (this *DashboardRouter) getHostPie(c *gin.Context) {
 	var (
 		encounter    error
@@ -84,17 +74,12 @@ func (this *DashboardRouter) getHostPie(c *gin.Context) {
 	)
 
 	if hostClassify, encounter = model.HostClassify(); encounter == nil {
-		code.SuccessResponse(c, code.OK, hostClassify)
+		api_query.SuccessResponse(c, api_query.OK, hostClassify)
 		return
 	}
-	code.SuccessResponse(c, code.ErrDashboardFailed, nil)
+	api_query.SuccessResponse(c, api_query.ErrDashboardFailed, nil)
 }
 
-// getHostPie ...
-// @Summary getHostPie
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/dashboard/pie [GET]
 func (this *DashboardRouter) getHostPanel(c *gin.Context) {
 	var hostCount, tagCount, templateCount int64
 
@@ -105,6 +90,6 @@ func (this *DashboardRouter) getHostPanel(c *gin.Context) {
 	status["hosts"] = hostCount
 	status["tags"] = tagCount
 	status["templates"] = templateCount
-	code.SuccessResponse(c, code.OK, status)
+	api_query.SuccessResponse(c, api_query.OK, status)
 	return
 }

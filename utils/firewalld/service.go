@@ -5,23 +5,24 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	api2 "github.com/cylonchau/firewalld-gateway/api"
 )
 
 /************************************************** service area ***********************************************************/
 
-// @title         NewService
-// @description   create new service with given settings into permanent configuration.
-// @middlewares      	  author           2021-10-23
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
-// @return        zoneName         string         "Returns name of zone to which the service was added."
-// @return        error            error          "Possible errors:
-//													INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ##title         NewService
+// ##description   create new service with given settings into permanent configuration.
+// ##middlewares      	  author           2021-10-23
+// ##param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ##param         service          string         "service name e.g. http|ssh|ftp.."
+// ##param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
+// ##return        zoneName         string         "Returns name of zone to which the service was added."
+// ##return        error            error          "Possible errors:
+//
+//	INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) GetServices() (list []string, err error) {
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	c.printPath(apis.INTERFACE_LISTSERVICES)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
+	c.printPath(api2.INTERFACE_LISTSERVICES)
 
 	//print log
 	c.eventLogFormat.Format = ListResourceStartFormat
@@ -29,7 +30,7 @@ func (c *DbusClientSerivce) GetServices() (list []string, err error) {
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	call := obj.Call(apis.INTERFACE_LISTSERVICES, dbus.FlagNoAutoStart)
+	call := obj.Call(api2.INTERFACE_LISTSERVICES, dbus.FlagNoAutoStart)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil {
@@ -48,16 +49,17 @@ func (c *DbusClientSerivce) GetServices() (list []string, err error) {
 	return nil, call.Err
 }
 
-// @title         NewService
-// @description   in runtime configuration.
-// @middlewares      	  author           2021-10-23
-// @param         service    	   string         		"service name."
-// @param         setting          *ServiceSetting      "service configruate"
-// @return        error            error          		"Possible errors:
-//															NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
-func (c *DbusClientSerivce) AddNewService(name string, setting *apis.ServiceSetting) error {
+// ###title         NewService
+// ###description   in runtime configuration.
+// ###middlewares      	  author           2021-10-23
+// ###param         service    	   string         		"service name."
+// ###param         setting          *ServiceSetting      "service configruate"
+// ###return        error            error          		"Possible errors:
+//
+//	NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
+func (c *DbusClientSerivce) AddNewService(name string, setting *api2.ServiceSetting) error {
 
-	obj := c.client.Object(apis.INTERFACE, apis.CONFIG_PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.CONFIG_PATH)
 
 	//print log
 	c.eventLogFormat.Format = CreateResourceStartFormat
@@ -67,8 +69,8 @@ func (c *DbusClientSerivce) AddNewService(name string, setting *apis.ServiceSett
 
 	c.printResourceEventLog()
 
-	c.printPath(apis.CONFIG_ADDSERVICE)
-	call := obj.Call(apis.CONFIG_ADDSERVICE, dbus.FlagNoAutoStart, name, &setting)
+	c.printPath(api2.CONFIG_ADDSERVICE)
+	call := obj.Call(api2.CONFIG_ADDSERVICE, dbus.FlagNoAutoStart, name, &setting)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError != nil {
@@ -82,20 +84,20 @@ func (c *DbusClientSerivce) AddNewService(name string, setting *apis.ServiceSett
 	return nil
 }
 
-// @title         AddService
-// @description   temporary Add service into zone.
-// @middlewares      	  author           2021-09-29
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
-// @return        zoneName         string         "Returns name of zone to which the service was added."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         AddService
+// ###description   temporary Add service into zone.
+// ###middlewares      	  author           2021-09-29
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###param         service          string         "service name e.g. http|ssh|ftp.."
+// ###param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
+// ###return        zoneName         string         "Returns name of zone to which the service was added."
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
 	// print log
 	c.eventLogFormat.Format = CreateResourceStartFormat
@@ -104,8 +106,8 @@ func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) err
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	c.printPath(apis.ZONE_ADDSERVICE)
-	call := obj.Call(apis.ZONE_ADDSERVICE, dbus.FlagNoAutoStart, zone, service, timeout)
+	c.printPath(api2.ZONE_ADDSERVICE)
+	call := obj.Call(api2.ZONE_ADDSERVICE, dbus.FlagNoAutoStart, zone, service, timeout)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil {
@@ -120,12 +122,12 @@ func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) err
 	return c.eventLogFormat.encounterError
 }
 
-// @title         PermanentAddService
-// @description   Permanent Add service into zone.
-// @middlewares      	  author           2021-09-29
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         PermanentAddService
+// ###description   Permanent Add service into zone.
+// ###middlewares      	  author           2021-09-29
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###param         service          string         "service name e.g. http|ssh|ftp.."
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) PermanentAddService(zone, service string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -137,12 +139,12 @@ func (c *DbusClientSerivce) PermanentAddService(zone, service string) error {
 	c.printResourceEventLog()
 
 	var path dbus.ObjectPath
-	if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(api2.INTERFACE, path)
 		c.printResourceEventLog()
 
-		c.printPath(apis.CONFIG_ZONE_ADDSERVICE)
-		call := obj.Call(apis.CONFIG_ZONE_ADDSERVICE, dbus.FlagNoAutoStart, service)
+		c.printPath(api2.CONFIG_ZONE_ADDSERVICE)
+		call := obj.Call(api2.CONFIG_ZONE_ADDSERVICE, dbus.FlagNoAutoStart, service)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
@@ -155,18 +157,18 @@ func (c *DbusClientSerivce) PermanentAddService(zone, service string) error {
 	return c.eventLogFormat.encounterError
 }
 
-// @title         QueryService
-// @description   temporary check whether service has been added for zone..
-// @middlewares      	  author           2021-10-05
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         QueryService
+// ###description   temporary check whether service has been added for zone..
+// ###middlewares      	  author           2021-10-05
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###param         service          string         "service name e.g. http|ssh|ftp.."
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
 	// print log
 	c.eventLogFormat.Format = QueryResourceStartFormat
@@ -176,8 +178,8 @@ func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 
 	c.printResourceEventLog()
 
-	c.printPath(apis.ZONE_QUERYSERVICE)
-	call := obj.Call(apis.ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, zone, service)
+	c.printPath(api2.ZONE_QUERYSERVICE)
+	call := obj.Call(api2.ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, zone, service)
 	if !call.Body[0].(bool) {
 		c.eventLogFormat.Format = QueryNotFount
 		c.printResourceEventLog()
@@ -186,12 +188,12 @@ func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 	return true
 }
 
-// @title         PermanentQueryService
-// @description   Permanent Return whether Add service in rich rules in zone.
-// @middlewares      	  author           2021-10-05
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         PermanentQueryService
+// ###description   Permanent Return whether Add service in rich rules in zone.
+// ###middlewares      	  author           2021-10-05
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###param         service          string         "service name e.g. http|ssh|ftp.."
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -202,13 +204,13 @@ func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 	c.eventLogFormat.encounterError = nil
 
 	var path dbus.ObjectPath
-	if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(api2.INTERFACE, path)
 
 		c.printResourceEventLog()
 
-		c.printPath(apis.CONFIG_ZONE_QUERYSERVICE)
-		call := obj.Call(apis.CONFIG_ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, service)
+		c.printPath(api2.CONFIG_ZONE_QUERYSERVICE)
+		call := obj.Call(api2.CONFIG_ZONE_QUERYSERVICE, dbus.FlagNoAutoStart, service)
 
 		if call.Body[0].(bool) {
 			return true
@@ -221,12 +223,12 @@ func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 	return false
 }
 
-// @title         RemoveService
-// @description   temporary Remove service from zone.
-// @middlewares      	  author           2021-10-05
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         RemoveService
+// ###description   temporary Remove service from zone.
+// ###middlewares      	  author           2021-10-05
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###param         service          string         "service name e.g. http|ssh|ftp.."
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) RemoveService(zone, service string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -238,10 +240,10 @@ func (c *DbusClientSerivce) RemoveService(zone, service string) error {
 	c.eventLogFormat.resource = service
 	c.eventLogFormat.encounterError = nil
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
-	c.printPath(apis.ZONE_REMOVESERVICE)
-	call := obj.Call(apis.ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, zone, service)
+	c.printPath(api2.ZONE_REMOVESERVICE)
+	call := obj.Call(api2.ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, zone, service)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError != nil {
@@ -254,12 +256,12 @@ func (c *DbusClientSerivce) RemoveService(zone, service string) error {
 	return nil
 }
 
-// @title         PermanentAddService
-// @description   Permanent Add service into zone.
-// @middlewares      	  author           2021-09-29
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         service          string         "service name e.g. http|ssh|ftp.."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         PermanentAddService
+// ###description   Permanent Add service into zone.
+// ###middlewares      	  author           2021-09-29
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###param         service          string         "service name e.g. http|ssh|ftp.."
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) RemovePermanentService(zone, service string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -272,12 +274,12 @@ func (c *DbusClientSerivce) RemovePermanentService(zone, service string) error {
 	c.eventLogFormat.encounterError = nil
 
 	var path dbus.ObjectPath
-	if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(api2.INTERFACE, path)
 		c.printResourceEventLog()
 
-		c.printPath(apis.CONFIG_ZONE_REMOVESERVICE)
-		call := obj.Call(apis.CONFIG_ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, service)
+		c.printPath(api2.CONFIG_ZONE_REMOVESERVICE)
+		call := obj.Call(api2.CONFIG_ZONE_REMOVESERVICE, dbus.FlagNoAutoStart, service)
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
 			c.eventLogFormat.resourceType = RemoveResourceSuccessFormat
@@ -290,11 +292,11 @@ func (c *DbusClientSerivce) RemovePermanentService(zone, service string) error {
 	return c.eventLogFormat.encounterError
 }
 
-// @title         PermanentGetServices
-// @description   get permanently service in zone.
-// @middlewares      	  author           2021-10-21
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// ###title         PermanentGetServices
+// ###description   get permanently service in zone.
+// ###middlewares      	  author           2021-10-21
+// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) GetPermanentServices(zone, service string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -307,13 +309,13 @@ func (c *DbusClientSerivce) GetPermanentServices(zone, service string) error {
 	c.eventLogFormat.encounterError = nil
 
 	var path dbus.ObjectPath
-	if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(api2.INTERFACE, path)
 
 		c.printResourceEventLog()
 
-		c.printPath(apis.CONFIG_ZONE_GETSERVICES)
-		call := obj.Call(apis.CONFIG_ZONE_GETSERVICES, dbus.FlagNoAutoStart, service)
+		c.printPath(api2.CONFIG_ZONE_GETSERVICES)
+		call := obj.Call(api2.CONFIG_ZONE_GETSERVICES, dbus.FlagNoAutoStart, service)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {

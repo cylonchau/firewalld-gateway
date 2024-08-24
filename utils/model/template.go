@@ -3,7 +3,7 @@ package model
 import (
 	"gorm.io/gorm"
 
-	"github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
 const template_table_name = "templates"
@@ -38,7 +38,7 @@ func CreateTemplate(name, description, target string) (enconterError error) {
 			return nil
 		}
 	} else {
-		enconterError = apis.ErrTemplateExist
+		enconterError = query.ErrTemplateExist
 	}
 	return enconterError
 }

@@ -3,7 +3,7 @@ package firewalld
 import (
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	"github.com/cylonchau/firewalld-gateway/api"
 )
 
 /************************************************** Masquerade area ***********************************************************/
@@ -29,11 +29,11 @@ func (c *DbusClientSerivce) EnableMasquerade(zone string, timeout uint32) error 
 	c.eventLogFormat.resourceType = "enable"
 	c.eventLogFormat.encounterError = nil
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
 	c.printResourceEventLog()
 
-	c.printPath(apis.ZONE_ADDMASQUERADE)
-	call := obj.Call(apis.ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart, zone, timeout)
+	c.printPath(api.ZONE_ADDMASQUERADE)
+	call := obj.Call(api.ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart, zone, timeout)
 	c.eventLogFormat.encounterError = call.Err
 
 	if c.eventLogFormat.encounterError == nil {
@@ -65,17 +65,17 @@ func (c *DbusClientSerivce) EnablePermanentMasquerade(zone string) error {
 	c.eventLogFormat.Format = SwitchPermanentResourceStartFormat
 	c.eventLogFormat.resourceType = "enable"
 	c.eventLogFormat.encounterError = nil
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		c.printPath(apis.CONFIG_ZONE_ADDMASQUERADE)
+		obj := c.client.Object(api.INTERFACE, path)
+		c.printPath(api.CONFIG_ZONE_ADDMASQUERADE)
 
 		c.printResourceEventLog()
 
-		c.printPath(apis.CONFIG_ZONE_ADDMASQUERADE)
-		call := obj.Call(apis.CONFIG_ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart)
+		c.printPath(api.CONFIG_ZONE_ADDMASQUERADE)
+		call := obj.Call(api.CONFIG_ZONE_ADDMASQUERADE, dbus.FlagNoAutoStart)
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
 			c.eventLogFormat.Format = SwitchPermanentResourceSuccessFormat
@@ -111,10 +111,10 @@ func (c *DbusClientSerivce) DisableMasquerade(zone string) (err error) {
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
 
-	c.printPath(apis.ZONE_REMOVEMASQUERADE)
-	call := obj.Call(apis.ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart, zone)
+	c.printPath(api.ZONE_REMOVEMASQUERADE)
+	call := obj.Call(api.ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart, zone)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError != nil {
@@ -146,15 +146,15 @@ func (c *DbusClientSerivce) DisablePermanentMasquerade(zone string) (err error) 
 	c.eventLogFormat.resourceType = "disable"
 	c.eventLogFormat.encounterError = nil
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
 		c.printResourceEventLog()
-		obj := c.client.Object(apis.INTERFACE, path)
+		obj := c.client.Object(api.INTERFACE, path)
 
-		c.printPath(apis.CONFIG_ZONE_REMOVEMASQUERADE)
-		call := obj.Call(apis.CONFIG_ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart)
+		c.printPath(api.CONFIG_ZONE_REMOVEMASQUERADE)
+		call := obj.Call(api.CONFIG_ZONE_REMOVEMASQUERADE, dbus.FlagNoAutoStart)
 		c.eventLogFormat.encounterError = call.Err
 
 		if c.eventLogFormat.encounterError == nil {
@@ -188,15 +188,15 @@ func (c *DbusClientSerivce) QueryPermanentMasquerade(zone string) (bool, error) 
 	c.eventLogFormat.resourceType = "masquerade"
 	c.eventLogFormat.encounterError = nil
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
 		c.printResourceEventLog()
-		obj := c.client.Object(apis.INTERFACE, path)
+		obj := c.client.Object(api.INTERFACE, path)
 
-		c.printPath(apis.CONFIG_ZONE_QUERYMASQUERADE)
-		call := obj.Call(apis.CONFIG_ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart)
+		c.printPath(api.CONFIG_ZONE_QUERYMASQUERADE)
+		call := obj.Call(api.CONFIG_ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
@@ -234,10 +234,10 @@ func (c *DbusClientSerivce) QueryMasquerade(zone string) (b bool, err error) {
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
 
-	c.printPath(apis.ZONE_QUERYMASQUERADE)
-	call := obj.Call(apis.ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart, zone)
+	c.printPath(api.ZONE_QUERYMASQUERADE)
+	call := obj.Call(api.ZONE_QUERYMASQUERADE, dbus.FlagNoAutoStart, zone)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil {

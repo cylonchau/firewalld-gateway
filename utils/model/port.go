@@ -8,7 +8,7 @@ var port_table_name = "ports"
 
 type Port struct {
 	gorm.Model
-	Port       uint16 `json:"port" gorm:"index;type:smaillintt;unsigned"`
+	Port       uint16 `json:"port" gorm:"index;type:smallint;unsigned"`
 	Protocol   string `json:"protocol" gorm:"type:varchar(255)"`
 	TemplateId int    `json:"template_id" gorm:"type:int"`
 }

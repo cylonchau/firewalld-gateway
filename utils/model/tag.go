@@ -3,8 +3,10 @@ package model
 import (
 	"gorm.io/gorm"
 
-	"github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
+
+var tags_table_name = "tags"
 
 type Tag struct {
 	gorm.Model
@@ -20,14 +22,14 @@ type TagInfo struct {
 }
 
 func (*Tag) TableName() string {
-	return "tags"
+	return tags_table_name
 }
 
 func (*TagInfo) TableName() string {
-	return "tags"
+	return tags_table_name
 }
 
-func CreateTag(tagQuery *apis.TagEditQuery) (enconterError error) {
+func CreateTag(tagQuery *query.TagEditQuery) (enconterError error) {
 	if CheckTagIsExistWithName(tagQuery.Name) {
 		tag := &Tag{
 			Name:        tagQuery.Name,
@@ -38,7 +40,7 @@ func CreateTag(tagQuery *apis.TagEditQuery) (enconterError error) {
 			return nil
 		}
 	} else {
-		enconterError = apis.ErrTagExist
+		enconterError = query.ErrTagExist
 	}
 	return enconterError
 }
@@ -62,7 +64,7 @@ func GetTags(offset, limit int, sort string) (map[string]interface{}, error) {
 	return nil, result.Error
 }
 
-func UpdateTagWithID(query *apis.TagEditQuery) (enconterError error) {
+func UpdateTagWithID(query *query.TagEditQuery) (enconterError error) {
 	tag := &Tag{
 		Name:        query.Name,
 		Description: query.Description,

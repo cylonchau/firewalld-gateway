@@ -6,7 +6,7 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	api2 "github.com/cylonchau/firewalld-gateway/api"
 )
 
 /************************************************** ForwardPort area ***********************************************************/
@@ -20,7 +20,7 @@ import (
  * @return        error            error          	"Possible errors:
  * 														INVALID_ZONE
  */
-func (c *DbusClientSerivce) Listforwards(zone string) ([]apis.ForwardPort, error) {
+func (c *DbusClientSerivce) Listforwards(zone string) ([]api2.ForwardPort, error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -31,18 +31,18 @@ func (c *DbusClientSerivce) Listforwards(zone string) ([]apis.ForwardPort, error
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	c.printPath(apis.ZONE_GETFORWARDPORT)
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	call := obj.Call(apis.ZONE_GETFORWARDPORT, dbus.FlagNoAutoStart, zone)
+	c.printPath(api2.ZONE_GETFORWARDPORT)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
+	call := obj.Call(api2.ZONE_GETFORWARDPORT, dbus.FlagNoAutoStart, zone)
 
 	c.eventLogFormat.encounterError = call.Err
-	var forwards []apis.ForwardPort
+	var forwards []api2.ForwardPort
 	if c.eventLogFormat.encounterError == nil && len(call.Body) >= 0 {
 		list, ok := call.Body[0].([][]string)
 		if ok {
 			for _, value := range list {
-				var forward apis.ForwardPort
-				forward, c.eventLogFormat.encounterError = apis.SliceToStruct(value)
+				var forward api2.ForwardPort
+				forward, c.eventLogFormat.encounterError = api2.SliceToStruct(value)
 				if c.eventLogFormat.encounterError == nil {
 					forwards = append(forwards, forward)
 				} else {
@@ -71,7 +71,7 @@ func (c *DbusClientSerivce) Listforwards(zone string) ([]apis.ForwardPort, error
  * @return        error            error          	"Possible errors:
  * 														INVALID_ZONE
  */
-func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.ForwardPort, error) {
+func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]api2.ForwardPort, error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -81,24 +81,24 @@ func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.Forward
 	c.eventLogFormat.resourceType = "NAT forward"
 	c.eventLogFormat.encounterError = nil
 
-	var forwards []apis.ForwardPort
+	var forwards []api2.ForwardPort
 	var path dbus.ObjectPath
 
-	if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(api2.INTERFACE, path)
 
 		c.printResourceEventLog()
 
-		c.printPath(apis.CONFIG_GETFORWARDPORT)
-		call := obj.Call(apis.CONFIG_GETFORWARDPORT, dbus.FlagNoAutoStart)
+		c.printPath(api2.CONFIG_GETFORWARDPORT)
+		call := obj.Call(api2.CONFIG_GETFORWARDPORT, dbus.FlagNoAutoStart)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil && len(call.Body) >= 0 {
 			lists, ok := call.Body[0].([][]interface{})
 			if ok {
 				for _, value := range lists {
-					var forward apis.ForwardPort
-					if forward, c.eventLogFormat.encounterError = apis.SliceToStruct(value); c.eventLogFormat.encounterError == nil {
+					var forward api2.ForwardPort
+					if forward, c.eventLogFormat.encounterError = api2.SliceToStruct(value); c.eventLogFormat.encounterError == nil {
 						forwards = append(forwards, forward)
 					} else {
 						break
@@ -138,7 +138,7 @@ func (c *DbusClientSerivce) PermanentGetForwardPort(zone string) ([]apis.Forward
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) AddForwardPort(zone string, timeout uint32, forward *apis.ForwardPort) error {
+func (c *DbusClientSerivce) AddForwardPort(zone string, timeout uint32, forward *api2.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -149,12 +149,12 @@ func (c *DbusClientSerivce) AddForwardPort(zone string, timeout uint32, forward 
 	c.eventLogFormat.encounterError = nil
 	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
 	c.printResourceEventLog()
 
-	c.printPath(apis.ZONE_ADDFORWARDPORT)
-	call := obj.Call(apis.ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr, timeout)
+	c.printPath(api2.ZONE_ADDFORWARDPORT)
+	call := obj.Call(api2.ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr, timeout)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
@@ -178,7 +178,7 @@ func (c *DbusClientSerivce) AddForwardPort(zone string, timeout uint32, forward 
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) AddPermanentForwardPort(zone string, forward *apis.ForwardPort) error {
+func (c *DbusClientSerivce) AddPermanentForwardPort(zone string, forward *api2.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -189,12 +189,12 @@ func (c *DbusClientSerivce) AddPermanentForwardPort(zone string, forward *apis.F
 	c.eventLogFormat.encounterError = nil
 	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
 
-	path, _ := c.generatePath(zone, apis.ZONE_PATH)
-	obj := c.client.Object(apis.INTERFACE, path)
+	path, _ := c.generatePath(zone, api2.ZONE_PATH)
+	obj := c.client.Object(api2.INTERFACE, path)
 	c.printResourceEventLog()
 
-	c.printPath(apis.CONFIG_ZONE_ADDFORWARDPORT)
-	call := obj.Call(apis.CONFIG_ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
+	c.printPath(api2.CONFIG_ZONE_ADDFORWARDPORT)
+	call := obj.Call(api2.CONFIG_ZONE_ADDFORWARDPORT, dbus.FlagNoAutoStart, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil {
@@ -226,7 +226,7 @@ func (c *DbusClientSerivce) AddPermanentForwardPort(zone string, forward *apis.F
  * 													ALREADY_ENABLED,
  * 													INVALID_COMMAND"
  */
-func (c *DbusClientSerivce) RemoveForwardPort(zone string, forward *apis.ForwardPort) error {
+func (c *DbusClientSerivce) RemoveForwardPort(zone string, forward *api2.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -237,11 +237,11 @@ func (c *DbusClientSerivce) RemoveForwardPort(zone string, forward *apis.Forward
 	c.eventLogFormat.encounterError = nil
 	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 	c.printResourceEventLog()
 
-	c.printPath(apis.ZONE_REMOVEFORWARDPORT)
-	call := obj.Call(apis.ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
+	c.printPath(api2.ZONE_REMOVEFORWARDPORT)
+	call := obj.Call(api2.ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, zone, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil {
@@ -265,7 +265,7 @@ func (c *DbusClientSerivce) RemoveForwardPort(zone string, forward *apis.Forward
  * @return        error            error          "Possible errors:
  * 													ALREADY_ENABLED"
  */
-func (c *DbusClientSerivce) RemovePermanentForwardPort(zone string, forward *apis.ForwardPort) error {
+func (c *DbusClientSerivce) RemovePermanentForwardPort(zone string, forward *api2.ForwardPort) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -277,14 +277,14 @@ func (c *DbusClientSerivce) RemovePermanentForwardPort(zone string, forward *api
 	c.eventLogFormat.resource = fmt.Sprintf("%s => %s:%s", forward.Port, forward.ToAddr, forward.ToPort)
 
 	var path dbus.ObjectPath
-	path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH)
+	path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH)
 
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
+		obj := c.client.Object(api2.INTERFACE, path)
 
 		c.printResourceEventLog()
-		c.printPath(apis.CONFIG_ZONE_REMOVEFORWARDPORT)
-		call := obj.Call(apis.CONFIG_ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
+		c.printPath(api2.CONFIG_ZONE_REMOVEFORWARDPORT)
+		call := obj.Call(api2.CONFIG_ZONE_REMOVEFORWARDPORT, dbus.FlagNoAutoStart, forward.Port, forward.Protocol, forward.ToPort, forward.ToAddr)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
@@ -333,11 +333,11 @@ func (c *DbusClientSerivce) QueryForwardPort(zone, portProtocol, toHostPort stri
 	c.eventLogFormat.encounterError = enconterError
 
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, apis.PATH)
+		obj := c.client.Object(api2.INTERFACE, api2.PATH)
 		c.printResourceEventLog()
 
-		c.printPath(apis.ZONE_QUERYFORWARDPORT)
-		call := obj.Call(apis.ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, zone, port, protocol, toPort, toAddr)
+		c.printPath(api2.ZONE_QUERYFORWARDPORT)
+		call := obj.Call(api2.ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, zone, port, protocol, toPort, toAddr)
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil || call.Body[0].(bool) {
 			c.eventLogFormat.Format = QueryResourceSuccessFormat
@@ -379,12 +379,12 @@ func (c *DbusClientSerivce) PermanentQueryForwardPort(zone, portProtocol, toHost
 
 	if c.eventLogFormat.encounterError == nil {
 		var path dbus.ObjectPath
-		if path, c.eventLogFormat.encounterError = c.generatePath(zone, apis.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-			obj := c.client.Object(apis.INTERFACE, path)
+		if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+			obj := c.client.Object(api2.INTERFACE, path)
 
 			c.printResourceEventLog()
-			c.printPath(apis.CONFIG_ZONE_QUERYFORWARDPORT)
-			call := obj.Call(apis.CONFIG_ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, port, protocol, toPort, toAddr)
+			c.printPath(api2.CONFIG_ZONE_QUERYFORWARDPORT)
+			call := obj.Call(api2.CONFIG_ZONE_QUERYFORWARDPORT, dbus.FlagNoAutoStart, port, protocol, toPort, toAddr)
 			c.eventLogFormat.encounterError = call.Err
 
 			if enconterError == nil || call.Body[0].(bool) {

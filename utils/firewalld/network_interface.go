@@ -3,7 +3,7 @@ package firewalld
 import (
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	"github.com/cylonchau/firewalld-gateway/api"
 )
 
 /************************************************** Interface area ***********************************************************/
@@ -33,10 +33,10 @@ func (c *DbusClientSerivce) BindInterface(zone, interfaceName string) (string, e
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
 
-	c.printPath(apis.ZONE_ADDINTERFACE)
-	call := obj.Call(apis.ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
+	c.printPath(api.ZONE_ADDINTERFACE)
+	call := obj.Call(api.ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError != nil {
@@ -69,13 +69,13 @@ func (c *DbusClientSerivce) BindPermanentInterface(zone, interfaceName string) (
 	c.eventLogFormat.resource = interfaceName
 	c.eventLogFormat.encounterError = nil
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		c.printPath(apis.CONFIG_ZONE_ADDINTERFACE)
-		call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interfaceName)
+		obj := c.client.Object(api.INTERFACE, path)
+		c.printPath(api.CONFIG_ZONE_ADDINTERFACE)
+		call := obj.Call(api.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interfaceName)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
@@ -112,10 +112,10 @@ func (c *DbusClientSerivce) QueryInterface(zone, interfaceName string) bool {
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
 
-	c.printPath(apis.ZONE_QUERYINTERFACE)
-	call := obj.Call(apis.ZONE_QUERYINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
+	c.printPath(api.ZONE_QUERYINTERFACE)
+	call := obj.Call(api.ZONE_QUERYINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
 
 	if call.Body[0].(bool) {
 		c.eventLogFormat.Format = QueryResourceSuccessFormat
@@ -147,15 +147,15 @@ func (c *DbusClientSerivce) QueryPermanentInterface(zone, interfaceName string) 
 	c.eventLogFormat.resource = interfaceName
 	c.eventLogFormat.encounterError = nil
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
 		c.printResourceEventLog()
-		obj := c.client.Object(apis.INTERFACE, path)
+		obj := c.client.Object(api.INTERFACE, path)
 
-		c.printPath(apis.CONFIG_ZONE_ADDINTERFACE)
-		call := obj.Call(apis.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interfaceName)
+		c.printPath(api.CONFIG_ZONE_ADDINTERFACE)
+		call := obj.Call(api.CONFIG_ZONE_ADDINTERFACE, dbus.FlagNoAutoStart, interfaceName)
 
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
@@ -189,10 +189,10 @@ func (c *DbusClientSerivce) RemoveInterface(zone, interfaceName string) error {
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
 
-	c.printPath(apis.ZONE_REMOVEINTERFACE)
-	call := obj.Call(apis.ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
+	c.printPath(api.ZONE_REMOVEINTERFACE)
+	call := obj.Call(api.ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, zone, interfaceName)
 	c.eventLogFormat.encounterError = call.Err
 
 	if c.eventLogFormat.encounterError == nil {
@@ -225,15 +225,15 @@ func (c *DbusClientSerivce) PermanentRemoveInterface(zone, interfaceName string)
 	c.eventLogFormat.resource = interfaceName
 	c.eventLogFormat.encounterError = nil
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
 		c.printResourceEventLog()
-		obj := c.client.Object(apis.INTERFACE, path)
+		obj := c.client.Object(api.INTERFACE, path)
 
-		c.printPath(apis.CONFIG_ZONE_REMOVEINTERFACE)
-		call := obj.Call(apis.CONFIG_ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, interfaceName)
+		c.printPath(api.CONFIG_ZONE_REMOVEINTERFACE)
+		call := obj.Call(api.CONFIG_ZONE_REMOVEINTERFACE, dbus.FlagNoAutoStart, interfaceName)
 		c.eventLogFormat.encounterError = call.Err
 
 		if c.eventLogFormat.encounterError == nil {

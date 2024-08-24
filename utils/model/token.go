@@ -15,6 +15,7 @@ type Token struct {
 	SignedTo    string `form:"signed_to" json:"signed_to" gorm:"type:varchar(255)"`
 	SignedBy    string `form:"signed_by" json:"signed_by" gorm:"type:varchar(255)"`
 	Description string `json:"description" gorm:"type:varchar(255)"`
+	Roles       []Role `gorm:"many2many:token_roles;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 type TokenList struct {

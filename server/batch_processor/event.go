@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 )
 
@@ -62,19 +62,19 @@ func (e *Event) processEvent() error {
 	defaultZone := dbusClient.GetDefaultZone()
 	switch e.EventName {
 	case CREATE_PORT:
-		query := e.Task.(apis.PortQuery)
+		query := e.Task.(query.PortQuery)
 		incurredError = dbusClient.AddPort(&query.Port, defaultZone, query.Timeout)
 	case REMOVE_PORT:
-		query := e.Task.(apis.PortQuery)
+		query := e.Task.(query.PortQuery)
 		incurredError = dbusClient.RemovePort(&query.Port, defaultZone)
 	case CREATE_RICH:
-		query := e.Task.(apis.RichQuery)
+		query := e.Task.(query.RichQuery)
 		incurredError = dbusClient.AddRichRule(defaultZone, query.Rich, query.Timeout)
 	case CREATE_FORWARD:
-		query := e.Task.(apis.ForwardQuery)
+		query := e.Task.(query.ForwardQuery)
 		incurredError = dbusClient.AddForwardPort(defaultZone, query.Timeout, query.Forward)
 	case CREATE_SERVICE:
-		query := e.Task.(apis.ServiceQuery)
+		query := e.Task.(query.ServiceQuery)
 		incurredError = dbusClient.AddService(query.Zone, query.Service, query.Timeout)
 	case ENABLE_MASQUERADE:
 		query := e.Task.(string)

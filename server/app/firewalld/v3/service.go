@@ -5,30 +5,35 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
 type ServiceRouter struct{}
 
 func (this *ServiceRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/service")
-	portGroup.POST("/", this.batchAddService)
+	portGroup.POST("/", this.batchAddServiceRuntime)
 }
 
-// reload ...
-// @Summary reload
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v3/service [POST]
-func (this *ServiceRouter) batchAddService(c *gin.Context) {
-	var query = &code.BatchServiceQuery{}
+// batchAddServiceRuntime godoc
+// @Summary Add a service rule on firewalld runtime with delay timer.
+// @Description Add a service rule on firewalld runtime with delay timer.
+// @Tags firewalld service
+// @Accept json
+// @Produce json
+// @Param query body query.BatchServiceQuery  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v3/service/runtime [put]
+func (this *ServiceRouter) batchAddServiceRuntime(c *gin.Context) {
+	var query = &api_query.BatchServiceQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 	for _, item := range query.Services {
-		go func(p code.ServiceQuery) {
+		go func(p api_query.ServiceQuery) {
 			contexts := context.TODO()
 			contexts = context.WithValue(contexts, "action_obj", p)
 			contexts = context.WithValue(contexts, "delay_time", query.Delay)
@@ -36,5 +41,5 @@ func (this *ServiceRouter) batchAddService(c *gin.Context) {
 			go batchFunction(contexts)
 		}(item)
 	}
-	code.SuccessResponse(c, code.OK, code.BatchSuccessCreated)
+	api_query.SuccessResponse(c, api_query.OK, api_query.BatchSuccessCreated)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/praserx/ipconv"
 	"gorm.io/gorm"
 
-	"github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
 const host_table_name = "hosts"
@@ -57,7 +57,7 @@ func QueryHostWithID(uid int) (*Host, error) {
 	return nil, result.Error
 }
 
-func UpdateHostWithID(query *apis.HostQuery) (enconterError error) {
+func UpdateHostWithID(query *query.HostQuery) (enconterError error) {
 	var (
 		ip      uint32
 		version int

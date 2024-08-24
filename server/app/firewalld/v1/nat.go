@@ -1,9 +1,7 @@
 package v1
 
 import (
-	"fmt"
-
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
@@ -11,24 +9,29 @@ import (
 
 type NATRouter struct{}
 
-func (this *NATRouter) RegisterNATRouterAPI(g *gin.RouterGroup) {
+func (this *NATRouter) RegisterNATV1RouterAPI(g *gin.RouterGroup) {
 	natGroup := g.Group("/nat")
 
-	natGroup.POST("/", this.addForwardInRuntime)
+	natGroup.PUT("/", this.addForwardInRuntime)
 	natGroup.GET("/", this.getForwardInRuntime)
 	natGroup.DELETE("/", this.delForwardInRuntime)
 }
 
-// addForward ...
-// @Summary addForward
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/port/add [POST]
+// addForwardOnRuntime godoc
+// @Summary Add a nat rule at firewall runtime.
+// @Description Add a nat rule at firewall runtime.
+// @Tags firewalld NAT
+// @Accept json
+// @Produce json
+// @Param query  body  query.ForwardQuery  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v1/nat [put]
 func (this *NATRouter) addForwardInRuntime(c *gin.Context) {
 
-	var query = &code.ForwardQuery{}
+	var query = &api_query.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 	if query.Zone == "" {
@@ -37,60 +40,69 @@ func (this *NATRouter) addForwardInRuntime(c *gin.Context) {
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.AddForwardPort(query.Zone, query.Timeout, query.Forward); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, query)
+	api_query.SuccessResponse(c, api_query.OK, query)
 }
 
-// GetPort ...
-// @Summary GetPort
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/port/get [GET]
+// getForwardInRuntime godoc
+// @Summary Get nat rules at firewalld runtime.
+// @Description Get nat rules at firewalld runtime
+// @Tags firewalld NAT
+// @Accept  json
+// @Produce json
+// @Param query body query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v1/nat [get]
 func (this *NATRouter) getForwardInRuntime(c *gin.Context) {
 
-	var query = &code.Query{}
+	var query = &api_query.Query{}
 	err := c.Bind(query)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	forwards, err := dbusClient.Listforwards(query.Zone)
-	fmt.Printf("%+v", forwards)
 
 	if err != nil {
-		code.SuccessResponse(c, err, nil)
+		api_query.SuccessResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, forwards)
+	api_query.SuccessResponse(c, api_query.OK, forwards)
 }
 
-// delForwardInRuntime ...
-// @Summary delForwardInRuntime
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/port/add [DELETE]
+// delForwardInRuntime godoc
+// @Summary Remove a nat rule at firewalld runtime.
+// @Description Remove a nat rule at firewalld runtime.
+// @Tags firewalld NAT
+// @Accept  json
+// @Produce json
+// @Param  query  body  query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v1/nat [delete]
 func (this *NATRouter) delForwardInRuntime(c *gin.Context) {
 
-	var query = &code.ForwardQuery{}
+	var query = &api_query.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 	if query.Zone == "" {
@@ -99,14 +111,14 @@ func (this *NATRouter) delForwardInRuntime(c *gin.Context) {
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.RemoveForwardPort(query.Zone, query.Forward); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, query)
+	api_query.SuccessResponse(c, api_query.OK, query)
 }

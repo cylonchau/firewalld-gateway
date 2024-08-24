@@ -1,9 +1,7 @@
 package v1
 
 import (
-	"errors"
-
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
@@ -15,30 +13,33 @@ func (this *ServiceRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	serivceGroup := g.Group("/service")
 	serivceGroup.GET("/", this.getServicesAtRuntime)
 	serivceGroup.DELETE("/", this.deleteServicesAtRuntime)
-	serivceGroup.POST("/", this.addServicesAtRuntime)
-	serivceGroup.POST("/new", this.newServiceAtPermanent)
-	serivceGroup.GET("/list", this.listServicesAtRuntime)
+	serivceGroup.PUT("/", this.addServicesAtRuntime)
 
 }
 
-// getServicesAtRuntime ...
-// @Summary getServicesAtRuntime
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/service/get [GET]
+// getServicesAtRuntime godoc
+// @Summary List available service type on firewalld.
+// @Description List all service rule on firewalld.
+// @Tags firewalld service
+// @Accept  json
+// @Produce json
+// @Param query body query.Query false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v1/service [get]
 func (this *ServiceRouter) getServicesAtRuntime(c *gin.Context) {
 
-	var rich = &code.Query{}
+	var rich = &api_query.Query{}
 	err := c.BindQuery(rich)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(rich.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
@@ -46,137 +47,82 @@ func (this *ServiceRouter) getServicesAtRuntime(c *gin.Context) {
 	services, err := dbusClient.GetServices()
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	if len(services) <= 0 {
-		code.NotFount(c, code.ErrServiceNotFount, services)
+		api_query.NotFount(c, api_query.ErrServiceNotFount, services)
 		return
 	}
 
-	code.SuccessResponse(c, code.OK, services)
+	api_query.SuccessResponse(c, api_query.OK, services)
 }
 
-// addServicesAtRuntime ...
-// @Summary addServicesAtRuntime
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/service/add [GET]
+// addServicesAtRuntime godoc
+// @Summary Add a service rule on firewalld runtime.
+// @Description Add a service rule on firewalld runtime.
+// @Tags firewalld service
+// @Accept json
+// @Produce json
+// @Param query body query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v1/service [put]
 func (this *ServiceRouter) addServicesAtRuntime(c *gin.Context) {
 
-	var query = &code.Query{}
+	var query = &api_query.Query{}
 	err := c.BindJSON(query)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 	err = dbusClient.AddService(query.Zone, query.Service, query.Timeout)
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, nil)
+	api_query.SuccessResponse(c, api_query.OK, nil)
 }
 
-// listServicesAtRuntime ...
-// @Summary listServicesAtRuntime
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/service/list [GET]
-func (this *ServiceRouter) listServicesAtRuntime(c *gin.Context) {
-
-	var query = &code.Query{}
-	err := c.Bind(query)
-
-	if err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-
-	services, err := dbusClient.GetServices()
-	if err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	if len(services) <= 0 {
-		code.NotFount(c, errors.New("list of available services is not found."), nil)
-		return
-	}
-
-	code.SuccessResponse(c, code.OK, services)
-}
-
-// deleteServicesAtRuntime ...
-// @Summary deleteServicesAtRuntime
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/service/list [DELETE]
+// deleteServicesAtRuntime godoc
+// @Summary Remove a service rule on firewalld runtime.
+// @Description Remove a service rule on firewalld runtime.
+// @Tags firewalld service
+// @Accept json
+// @Produce json
+// @Param query body query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v1/service [delete]
 func (this *ServiceRouter) deleteServicesAtRuntime(c *gin.Context) {
 
-	var query = &code.Query{}
+	var query = &api_query.Query{}
 	err := c.Bind(query)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err := dbusClient.RemoveService(query.Zone, query.Service); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, nil)
-}
-
-// newServiceAtPermanent ...
-// @Summary newServiceAtPermanent
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/service/list [POST]
-func (this *ServiceRouter) newServiceAtPermanent(c *gin.Context) {
-
-	var query = &code.ServiceSettingQuery{}
-
-	if err := c.BindJSON(query); err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Host)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-
-	err = dbusClient.AddNewService(query.ServiceName, query.Setting)
-	if err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-	code.SuccessResponse(c, code.OK, query.Setting)
+	api_query.SuccessResponse(c, api_query.OK, nil)
 }

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	q "github.com/cylonchau/firewalld-gateway/apis"
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/api"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
@@ -16,58 +16,234 @@ type SettingRouter struct{}
 
 func (this *SettingRouter) RegisterPortAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/setting")
-
-	portGroup.PUT("/reload", this.reload)
-	portGroup.PUT("/flush", this.flush)
-	portGroup.POST("/addsetting", this.addZoneSetting)
-	portGroup.DELETE("/remove", this.removeZone)
-	portGroup.GET("/list", this.listZone)
-	portGroup.GET("/default", this.defaultZone)
-	portGroup.GET("/policy", this.defaultPolicy)
-	portGroup.POST("/setdefaultzone", this.setDefaultZone)
+	portGroup.GET("/", this.listZone)
+	portGroup.PUT("/", this.addZoneSetting)
+	portGroup.DELETE("/", this.removeZone)
+	portGroup.GET("/dz", this.defaultZone)
+	portGroup.GET("/dp", this.defaultPolicy)
+	portGroup.POST("/sdz", this.setDefaultZone)
+	portGroup.POST("/reload", this.reload)
+	portGroup.POST("/flush", this.flush)
 
 }
 
-// reload ...
-// @Summary reload
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/port/reload [PUT]
-func (this *SettingRouter) reload(c *gin.Context) {
+// listZone godoc
+// @Summary List zone.
+// @Description List zone.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param  query  body  query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting [get]
+func (this *SettingRouter) listZone(c *gin.Context) {
 
-	var query = &code.Query{}
-	if err := c.ShouldBind(query); err != nil {
-		code.APIResponse(c, err, nil)
+	var query = &api_query.Query{}
+	if err := c.BindQuery(query); err != nil {
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
+		return
+	}
+	defer dbusClient.Destroy()
+
+	zones, err := dbusClient.GetZones()
+	if err != nil {
+		api_query.APIResponse(c, err, nil)
+		return
+	}
+	api_query.SuccessResponse(c, api_query.OK, zones)
+}
+
+// defaultZone godoc
+// @Summary Get default zone.
+// @Description Get default zone.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param  query  body  query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting/dz [get]
+func (this *SettingRouter) defaultZone(c *gin.Context) {
+
+	var query = &api_query.Query{}
+	if err := c.BindQuery(query); err != nil {
+		api_query.APIResponse(c, err, nil)
+		return
+	}
+
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
+	if err != nil {
+		api_query.ConnectDbusService(c, err)
+		return
+	}
+	defer dbusClient.Destroy()
+
+	zone := dbusClient.GetDefaultZone()
+
+	api_query.SuccessResponse(c, api_query.OK, zone)
+}
+
+// defaultPolicy godoc
+// @Summary Get default policy.
+// @Description Get default policy.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param  query  body  query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting/dp [get]
+func (this *SettingRouter) defaultPolicy(c *gin.Context) {
+	var query = &api_query.Query{}
+	if err := c.BindQuery(query); err != nil {
+		api_query.APIResponse(c, err, nil)
+		return
+	}
+
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
+	if err != nil {
+		api_query.ConnectDbusService(c, err)
+		return
+	}
+	defer dbusClient.Destroy()
+
+	zone := dbusClient.GetDefaultPolicy()
+
+	api_query.SuccessResponse(c, api_query.OK, zone)
+}
+
+// reload godoc
+// @Summary Reload firewalld.
+// @Description Reload firewalld.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param ip query string true "ip"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting/reload [post]
+func (this *SettingRouter) reload(c *gin.Context) {
+
+	var query = &api_query.Query{}
+	if err := c.Bind(query); err != nil {
+		api_query.APIResponse(c, err, nil)
+		return
+	}
+
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
+	if err != nil {
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.Reload(); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, nil)
+	api_query.SuccessResponse(c, api_query.OK, nil)
 }
 
-// addZoneSetting ...
-// @Summary addZoneSetting
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/port/reload [PUT]
-func (this *SettingRouter) addZoneSetting(c *gin.Context) {
+// setDefaultZone godoc
+// @Summary Set default zone in firewalld.
+// @Description Set default zone in firewalld.
+// @Tags firewalld setting
+// @Accept json
+// @Produce json
+// @Param ip query string true "ip"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting/sdz [post]
+func (this *SettingRouter) setDefaultZone(c *gin.Context) {
 
-	var query = &code.ZoneSettingQuery{}
-	if err := c.BindJSON(query); err != nil {
-		code.APIResponse(c, err, nil)
+	var query = &api_query.Query{}
+	if err := c.BindQuery(query); err != nil {
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	var setting = &q.Settings{}
+
+	if query.Zone == "" {
+		query.Zone = "public"
+	}
+
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
+	if err != nil {
+		api_query.ConnectDbusService(c, err)
+		return
+	}
+	defer dbusClient.Destroy()
+
+	if err := dbusClient.SetDefaultZone(query.Zone); err != nil {
+		if strings.Contains(err.Error(), "INVALID_ZONE") {
+			api_query.NotFount(c, api_query.ErrZoneNotFount, err)
+			return
+		}
+		api_query.APIResponse(c, api_query.InternalServerError, err)
+		return
+	}
+
+	api_query.SuccessResponse(c, api_query.OK, query.Zone)
+}
+
+// flush godoc
+// @Summary Flush all firewalld rules to default.
+// @Description Flush all firewalld rules to default.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param query body query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting/flush [post]
+func (this *SettingRouter) flush(c *gin.Context) {
+	var query = &api_query.Query{}
+	if err := c.BindQuery(query); err != nil {
+		api_query.APIResponse(c, err, nil)
+		return
+	}
+
+	if query.Zone == "" {
+		query.Zone = "public"
+	}
+
+	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
+	if err != nil {
+		api_query.ConnectDbusService(c, err)
+		return
+	}
+	defer dbusClient.Destroy()
+	if err := dbusClient.RuntimeFlush(query.Zone); err != nil {
+		api_query.APIResponse(c, api_query.InternalServerError, err)
+		return
+	}
+
+	api_query.SuccessResponse(c, api_query.OK, query.Zone)
+}
+
+// addZoneSetting godoc
+// @Summary Add setting rule in firewalld.
+// @Description Add setting rule in firewalld.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param query  body  query.ZoneSettingQuery  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/setting [put]
+func (this *SettingRouter) addZoneSetting(c *gin.Context) {
+	var query = &api_query.ZoneSettingQuery{}
+	if err := c.BindJSON(query); err != nil {
+		api_query.APIResponse(c, err, nil)
+		return
+	}
+	var setting = &api.Settings{}
 	var richs []string
 	for _, n := range query.Setting.Rule {
 		richs = append(richs, n.ToString())
@@ -79,185 +255,46 @@ func (this *SettingRouter) addZoneSetting(c *gin.Context) {
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.AddZone(setting); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, query.Setting)
+	api_query.SuccessResponse(c, api_query.OK, query.Setting)
 }
 
-// removeZone ...
-// @Summary removeZone
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/port/remove [PUT]
+// removeZone godoc
+// @Summary Remove a setting rules in firewalld.
+// @Description Remove a setting rules in firewalld.
+// @Tags firewalld setting
+// @Accept  json
+// @Produce json
+// @Param  query  body  query.RemoveQuery   false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Router /fw/v2/setting [delete]
 func (this *SettingRouter) removeZone(c *gin.Context) {
 
-	var query = &code.RemoveQuery{}
+	var query = &api_query.RemoveQuery{}
 	if err := c.BindJSON(query); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.RemoveZone(query.Name); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, query.Name)
-}
-
-// listZone ...
-// @Summary listZone
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/setting/list [GET]
-func (this *SettingRouter) listZone(c *gin.Context) {
-
-	var query = &code.Query{}
-	if err := c.BindQuery(query); err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-
-	zones, err := dbusClient.GetZones()
-	if err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-	code.SuccessResponse(c, code.OK, zones)
-}
-
-// defaultZone ...
-// @Summary defaultZone
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/setting/default [GET]
-func (this *SettingRouter) defaultZone(c *gin.Context) {
-
-	var query = &code.Query{}
-	if err := c.BindQuery(query); err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-
-	zone := dbusClient.GetDefaultZone()
-
-	code.SuccessResponse(c, code.OK, zone)
-}
-
-// default policy ...
-// @Summary default policy
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/setting/policy [GET]
-func (this *SettingRouter) defaultPolicy(c *gin.Context) {
-
-	var query = &code.Query{}
-	if err := c.BindQuery(query); err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-
-	zone := dbusClient.GetDefaultPolicy()
-
-	code.SuccessResponse(c, code.OK, zone)
-}
-
-// flushRuntime ...
-// @Summary flushRuntime
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/setting/flushruntime [PUT]
-func (this *SettingRouter) flush(c *gin.Context) {
-	var query = &code.Query{}
-	if err := c.BindQuery(query); err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	if query.Zone == "" {
-		query.Zone = "public"
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-	if err := dbusClient.RuntimeFlush(query.Zone); err != nil {
-		code.APIResponse(c, code.InternalServerError, err)
-		return
-	}
-
-	code.SuccessResponse(c, code.OK, query.Zone)
-}
-
-// setDefaultZone ...
-// @Summary setDefaultZone
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/setting/default [PUT]
-func (this *SettingRouter) setDefaultZone(c *gin.Context) {
-
-	var query = &code.Query{}
-	if err := c.BindQuery(query); err != nil {
-		code.APIResponse(c, err, nil)
-		return
-	}
-
-	if query.Zone == "" {
-		query.Zone = "public"
-	}
-
-	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
-	if err != nil {
-		code.ConnectDbusService(c, err)
-		return
-	}
-	defer dbusClient.Destroy()
-
-	if err := dbusClient.SetDefaultZone(query.Zone); err != nil {
-		if strings.Contains(err.Error(), "INVALID_ZONE") {
-			code.NotFount(c, code.ErrZoneNotFount, err)
-			return
-		}
-		code.APIResponse(c, code.InternalServerError, err)
-		return
-	}
-
-	code.SuccessResponse(c, code.OK, query.Zone)
+	api_query.SuccessResponse(c, api_query.OK, query.Name)
 }

@@ -2,9 +2,13 @@
 
 Uranus is a Linux firewalld central controller. In Greek mythology, Uranus king of gods. The firewall gateway is the Uranus for iptables.
 
+## Quick start
+
+https://www.oomkill.com/2024/08/uranus-installation/
+
 ## Show
 
-### Show picture
+### Show picture：:
 
 ▶ [Click](#Screenshot) ◀
 
@@ -68,7 +72,7 @@ if you think update you dbus-daemon verion to lasest, can use `dbus.spec` make y
 
 ## use
 
-[HTTP API DOC](https://documenter.getpostman.com/view/12796679/UV5agGNr)
+Swagger API Doc: host:port/swagger/index.html
 
 - v1 runtime resource.
 - v2 permanent resource.
@@ -116,6 +120,21 @@ To edit /etc/dbus-1/system.conf, example.
 -v 5 // full log
 -v 4 // info log
 -v 2 // no log
+```
+
+## Run
+
+### migration
+
+```bash
+make build && \
+    ./_output/firewalld-gateway  --migration --sql-driver=sqlite --config firewalld-gateway.toml -v 5
+```
+### Run
+
+```bash
+make build && \
+    ./_output/firewalld-gateway --sql-driver=sqlite  --config firewalld-gateway.toml -v 5
 ```
 
 ## Screenshot

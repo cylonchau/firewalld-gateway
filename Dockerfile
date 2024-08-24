@@ -10,7 +10,7 @@ RUN \
     upx -1 _output/firewalld-gateway && \
     chmod +x _output/firewalld-gateway
 
-FROM nginx AS runner
+FROM nginx:1.20 AS runner
 WORKDIR /uranus
 ARG S6_OVERLAY_VERSION=3.1.5.0
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
@@ -19,13 +19,14 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLA
 RUN apt update && apt install xz-utils procps iproute2 -y && \
     tar -Jxpf /tmp/s6-overlay-x86_64.tar.xz -C / && \
     tar -Jxpf /tmp/s6-overlay-noarch.tar.xz -C / && \
-    rm -f /tmp/s6-overlay-x86_64.tar.xz && rm -f /tmp/s6-overlay-noarch.tar.xz
+    rm -f /tmp/s6-overlay-x86_64.tar.xz && \
+    rm -f /tmp/s6-overlay-noarch.tar.xz
 ENTRYPOINT ["/init"]
 RUN mkdir /etc/services.d/
 COPY --from=builder /uranus/_output/firewalld-gateway ./bin/
 COPY --from=builder /uranus/firewalld-gateway.toml .
-COPY --from=builder /uranus/dist /var/run/
-COPY --from=builder /uranus/uranus.nginx.conf /etc/nginx/conf.d/
+COPY --from=builder /uranus/dist /var/run/dist/
+COPY --from=builder /uranus/uranus.nginx-2953.conf /etc/nginx/conf.d/fw.conf
 COPY --from=builder /uranus/s6/ /etc/s6-overlay/s6-rc.d/
 COPY --from=builder /uranus/s6/ /etc/services.d/
 ENV PATH "$PATH:/uranus/bin"

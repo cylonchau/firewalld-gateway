@@ -10,37 +10,37 @@ import (
 	json "github.com/json-iterator/go"
 	"gorm.io/gorm"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
-	queryapi "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/api"
+	queryapi "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
 var rich_table_name = "riches"
 
 type Rich struct {
 	gorm.Model
-	Family      string            `form:"family" json:"family,omitempty" gorm:"type:char(4)"`
-	Source      *apis.Source      `form:"source" json:"source,omitempty" gorm:"json"`
-	Destination *apis.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
-	Port        []*apis.Port      `form:"port" json:"port,omitempty" gorm:"json"`
-	Protocol    *apis.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
-	Action      string            `form:"action" json:"action,omitempty" gorm:"type:varchar(30)"`
-	Limit       uint16            `form:"limit" json:"limit,omitempty" gorm:"type:varchar(255)"`
-	LimitUnit   string            `form:"limit_unit" json:"limit_unit,omitempty" gorm:"type:char(1)"`
-	TemplateID  int               `form:"template_id" json:"template_id,omitempty" gorm:"type:int"`
+	Family      string           `form:"family" json:"family,omitempty" gorm:"type:char(4)"`
+	Source      *api.Source      `form:"source" json:"source,omitempty" gorm:"json"`
+	Destination *api.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
+	Port        []*api.Port      `form:"port" json:"port,omitempty" gorm:"json"`
+	Protocol    *api.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
+	Action      string           `form:"action" json:"action,omitempty" gorm:"type:varchar(30)"`
+	Limit       uint16           `form:"limit" json:"limit,omitempty" gorm:"type:varchar(255)"`
+	LimitUnit   string           `form:"limit_unit" json:"limit_unit,omitempty" gorm:"type:char(1)"`
+	TemplateID  int              `form:"template_id" json:"template_id,omitempty" gorm:"type:int"`
 }
 
 type RichList struct {
-	ID          int               `json:"id"`
-	Family      string            `form:"family" json:"family,omitempty"`
-	Source      *apis.Source      `form:"source" json:"source,omitempty" gorm:"json"`
-	Destination *apis.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
-	Port        []*apis.Port      `form:"port" json:"port,omitempty" gorm:"json"`
-	Protocol    *apis.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
-	Action      string            `form:"action" json:"action,omitempty"`
-	Limit       uint16            `form:"limit" json:"limit,omitempty"`
-	LimitUnit   string            `form:"limit_unit" json:"limit_unit,omitempty"`
-	TemplateID  int               `form:"template_id" json:"template_id,omitempty"`
-	Template    string            `json:"template"`
+	ID          int              `json:"id"`
+	Family      string           `form:"family" json:"family,omitempty"`
+	Source      *api.Source      `form:"source" json:"source,omitempty" gorm:"json"`
+	Destination *api.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
+	Port        []*api.Port      `form:"port" json:"port,omitempty" gorm:"json"`
+	Protocol    *api.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
+	Action      string           `form:"action" json:"action,omitempty"`
+	Limit       uint16           `form:"limit" json:"limit,omitempty"`
+	LimitUnit   string           `form:"limit_unit" json:"limit_unit,omitempty"`
+	TemplateID  int              `form:"template_id" json:"template_id,omitempty"`
+	Template    string           `json:"template"`
 }
 
 func (*RichList) TableName() string {
@@ -72,15 +72,15 @@ func (r *RichList) Scan(value interface{}) error {
 
 				r.Port = result.Port
 			}
-			if !(result.Source == &apis.Source{}) {
+			if !(result.Source == &api.Source{}) {
 				r.Source = result.Source
 			}
 
-			if !(result.Destination == &apis.Destination{}) {
+			if !(result.Destination == &api.Destination{}) {
 				r.Destination = result.Destination
 			}
 
-			if (result.Protocol == &apis.Protocol{}) {
+			if (result.Protocol == &api.Protocol{}) {
 				r.Protocol = result.Protocol
 			}
 		}
@@ -93,25 +93,25 @@ func (r *RichList) Value() (value driver.Value, err error) {
 }
 
 func CreateRich(query *queryapi.RichEditQuery) (enconterError error) {
-	ports := []*apis.Port{}
+	ports := []*api.Port{}
 	if len(query.Port) > 0 {
 		for _, value := range query.Port {
 			s := strings.Split(value, "/")
-			port := &apis.Port{Port: s[0], Protocol: s[1]}
+			port := &api.Port{Port: s[0], Protocol: s[1]}
 			ports = append(ports, port)
 		}
 	}
 
 	rich := &Rich{
 		Family: query.Family,
-		Source: &apis.Source{
+		Source: &api.Source{
 			Address: query.Source,
 		},
-		Destination: &apis.Destination{
+		Destination: &api.Destination{
 			Address: query.Destination,
 		},
 		Port: ports,
-		Protocol: &apis.Protocol{
+		Protocol: &api.Protocol{
 			Value: query.Protocol,
 		},
 		Action:     query.Action,
@@ -186,25 +186,25 @@ func isEmptyStruct(s interface{}) bool {
 }
 
 func UpdateRichWithID(query *queryapi.RichEditQuery) (enconterError error) {
-	ports := []*apis.Port{}
+	ports := []*api.Port{}
 	if len(query.Port) > 0 {
 		for _, value := range query.Port {
 			s := strings.Split(value, "/")
-			port := &apis.Port{Port: s[0], Protocol: s[1]}
+			port := &api.Port{Port: s[0], Protocol: s[1]}
 			ports = append(ports, port)
 		}
 	}
 
 	rich := &Rich{
 		Family: query.Family,
-		Source: &apis.Source{
+		Source: &api.Source{
 			Address: query.Source,
 		},
-		Destination: &apis.Destination{
+		Destination: &api.Destination{
 			Address: query.Destination,
 		},
 		Port: ports,
-		Protocol: &apis.Protocol{
+		Protocol: &api.Protocol{
 			Value: query.Protocol,
 		},
 		Action:     query.Action,

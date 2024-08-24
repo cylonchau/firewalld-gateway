@@ -1,32 +1,37 @@
 package v2
 
 import (
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/firewalld"
 
 	"github.com/gin-gonic/gin"
 )
 
-type NatRouter struct{}
+type NATRouter struct{}
 
-func (this *NatRouter) RegisterPortAPI(g *gin.RouterGroup) {
+func (this *NATRouter) RegisterNATV2API(g *gin.RouterGroup) {
 	portGroup := g.Group("/nat")
 
-	portGroup.POST("/", this.addForwardAtPermanent)
-	portGroup.GET("/", this.getForwardAtPermanent)
-	portGroup.DELETE("/", this.delForwardAtPermanent)
+	portGroup.PUT("/", this.addForwardInPermanent)
+	portGroup.GET("/", this.getForwardInPermanent)
+	portGroup.DELETE("/", this.delForwardInPermanent)
 }
 
-// addForwardAtPermanent ...
-// @Summary addForwardAtPermanent
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v2/port/add [POST]
-func (this *NatRouter) addForwardAtPermanent(c *gin.Context) {
+// addForwardInPermanent godoc
+// @Summary Add a nat rule at firewall permanent.
+// @Description Add a nat rule at firewall permanent.
+// @Tags firewalld NAT
+// @Accept json
+// @Produce json
+// @Param query  body  query.ForwardQuery  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/nat [put]
+func (this *NATRouter) addForwardInPermanent(c *gin.Context) {
 
-	var query = &code.ForwardQuery{}
+	var query = &api_query.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 	if query.Zone == "" {
@@ -35,36 +40,42 @@ func (this *NatRouter) addForwardAtPermanent(c *gin.Context) {
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.AddPermanentForwardPort(query.Zone, query.Forward); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, query)
+	api_query.SuccessResponse(c, api_query.OK, query)
 }
 
-// getForwardAtPermanent ...
-// @Summary getForwardAtPermanent
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/port/get [GET]
-func (this *NatRouter) getForwardAtPermanent(c *gin.Context) {
+// getForwardInPermanent godoc
+// @Summary Get nat rules at firewalld permanent.
+// @Description Get nat rules at firewalld permanent.
+// @Tags firewalld NAT
+// @Accept json
+// @Produce json
+// @Param ip query string true "ip"
+// @Param zone query string false "zone"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/nat [get]
+func (this *NATRouter) getForwardInPermanent(c *gin.Context) {
 
-	var query = &code.Query{}
+	var query = &api_query.Query{}
 	err := c.Bind(query)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
@@ -72,28 +83,28 @@ func (this *NatRouter) getForwardAtPermanent(c *gin.Context) {
 	forwards, err := dbusClient.PermanentGetForwardPort(query.Zone)
 
 	if err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 
-	if len(forwards) <= 0 {
-		code.NotFount(c, code.ErrForwardNotFount, nil)
-		return
-	}
-
-	code.SuccessResponse(c, code.OK, forwards)
+	api_query.SuccessResponse(c, api_query.OK, forwards)
 }
 
-// delForwardAtPermanent ...
-// @Summary delForwardAtPermanent
-// @Produce  json
-// @Success 200 {object} internal.Response
-// @Router /fw/v1/port/delete [DELETE]
-func (this *NatRouter) delForwardAtPermanent(c *gin.Context) {
+// delForwardInPermanent godoc
+// @Summary Remove a nat rule at firewalld permanent.
+// @Description Remove a nat rule at firewalld permanent.
+// @Tags firewalld NAT
+// @Accept json
+// @Produce json
+// @Param query  body  query.Query  false "body"
+// @securityDefinitions.apikey BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/v2/nat [delete]
+func (this *NATRouter) delForwardInPermanent(c *gin.Context) {
 
-	var query = &code.ForwardQuery{}
+	var query = &api_query.ForwardQuery{}
 	if err := c.ShouldBind(query); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
 	if query.Zone == "" {
@@ -102,14 +113,14 @@ func (this *NatRouter) delForwardAtPermanent(c *gin.Context) {
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {
-		code.ConnectDbusService(c, err)
+		api_query.ConnectDbusService(c, err)
 		return
 	}
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.RemovePermanentForwardPort(query.Zone, query.Forward); err != nil {
-		code.APIResponse(c, err, nil)
+		api_query.APIResponse(c, err, nil)
 		return
 	}
-	code.SuccessResponse(c, code.OK, query)
+	api_query.SuccessResponse(c, api_query.OK, query)
 }

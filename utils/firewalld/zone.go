@@ -7,7 +7,7 @@ import (
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	api2 "github.com/cylonchau/firewalld-gateway/api"
 )
 
 func (c *DbusClientSerivce) checkZoneName(name string) error {
@@ -22,11 +22,13 @@ func (c *DbusClientSerivce) GetDefaultZone() string {
 	return c.defaultZone
 }
 
-// @title         SetDefaultZone
-// @description   Set default zone for connections and interfaces where no zone has been selected to zone.
-// @middlewares      	  author           2021-09-26
-// @param 		  zone			   zone name
-// @return        error            error          ""
+/*
+title         SetDefaultZone
+description   Set default zone for connections and interfaces where no zone has been selected to zone. This is a runtime and permanent change.
+middlewares   author  cylon    2021-09-26
+param 		  zone			   zone name
+return        error            error          ""
+*/
 func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
 
 	//print log
@@ -36,10 +38,10 @@ func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
-	c.printPath(apis.INTERFACE_SETDEFAULTZONE)
-	call := obj.Call(apis.INTERFACE_SETDEFAULTZONE, dbus.FlagNoAutoStart, zone)
+	c.printPath(api2.INTERFACE_SETDEFAULTZONE)
+	call := obj.Call(api2.INTERFACE_SETDEFAULTZONE, dbus.FlagNoAutoStart, zone)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil {
@@ -52,11 +54,11 @@ func (c *DbusClientSerivce) SetDefaultZone(zone string) (err error) {
 	return c.eventLogFormat.encounterError
 }
 
-// @title         GetZones
-// @description   Return runtime settings of given zone.
-// @middlewares      	  author           2021-09-26
-// @return        zones            []string       "Return array of names (s) of predefined zones known to current runtime environment."
-// @return        error            error          ""
+// ###title         GetZones
+// ###description   Return runtime settings of given zone.
+// ###middlewares      	  author           2021-09-26
+// ###return        zones            []string       "Return array of names (s) of predefined zones known to current runtime environment."
+// ###return        error            error          ""
 func (c *DbusClientSerivce) GetZones() ([]string, error) {
 
 	//print log
@@ -65,10 +67,10 @@ func (c *DbusClientSerivce) GetZones() ([]string, error) {
 	c.eventLogFormat.encounterError = nil
 
 	c.printResourceEventLog()
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
-	c.printPath(apis.ZONE_GETZONES)
-	call := obj.Call(apis.ZONE_GETZONES, dbus.FlagNoAutoStart)
+	c.printPath(api2.ZONE_GETZONES)
+	call := obj.Call(api2.ZONE_GETZONES, dbus.FlagNoAutoStart)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
@@ -84,11 +86,11 @@ func (c *DbusClientSerivce) GetZones() ([]string, error) {
 	return nil, call.Err
 }
 
-// @title         getZoneId
-// @description   Return runtime settings of given zone.
-// @middlewares      	  author           2021-09-26
-// @param         zone		       string         "zone name."
-// @return        error            error          "Possible errors: INVALID_ZONE"
+// ###title         getZoneId
+// ###description   Return runtime settings of given zone.
+// ###middlewares      	  author           2021-09-26
+// ###param         zone		       string         "zone name."
+// ###return        error            error          "Possible errors: INVALID_ZONE"
 func (c *DbusClientSerivce) getZoneId(zone string) int {
 	var (
 		zoneArray []string
@@ -108,11 +110,11 @@ func (c *DbusClientSerivce) getZoneId(zone string) int {
 	}
 }
 
-// @title         GetZoneSettings
-// @description   Return runtime settings of given zone.
-// @middlewares      	  author           2021-09-26
-// @param         zone		       string         "zone name."
-// @return        error            error          "Possible errors: INVALID_ZONE"
+// ###title         GetZoneSettings
+// ###description   Return runtime settings of given zone.
+// ###middlewares      	  author           2021-09-26
+// ###param         zone		       string         "zone name."
+// ###return        error            error          "Possible errors: INVALID_ZONE"
 func (c *DbusClientSerivce) GetZoneSettings(zone string) error {
 
 	//print log
@@ -123,9 +125,9 @@ func (c *DbusClientSerivce) GetZoneSettings(zone string) error {
 
 	if c.eventLogFormat.encounterError = c.checkZoneName(zone); c.eventLogFormat.encounterError == nil {
 		c.printResourceEventLog()
-		obj := c.client.Object(apis.INTERFACE, apis.PATH)
-		c.printPath(apis.INTERFACE_GETZONESETTINGS)
-		call := obj.Call(apis.INTERFACE_GETZONESETTINGS, dbus.FlagNoAutoStart, zone)
+		obj := c.client.Object(api2.INTERFACE, api2.PATH)
+		c.printPath(api2.INTERFACE_GETZONESETTINGS)
+		call := obj.Call(api2.INTERFACE_GETZONESETTINGS, dbus.FlagNoAutoStart, zone)
 		c.eventLogFormat.encounterError = call.Err
 
 		if c.eventLogFormat.encounterError == nil {
@@ -138,11 +140,11 @@ func (c *DbusClientSerivce) GetZoneSettings(zone string) error {
 	return c.eventLogFormat.encounterError
 }
 
-// @title         RemoveZone
-// @description   Return runtime settings of given zone.
-// @middlewares      	  author           2021-09-26
-// @param         zone		       string         "zone name."
-// @return        error            error          "Possible errors: INVALID_ZONE"
+// ###title         RemoveZone
+// ###description   Return runtime settings of given zone.
+// ###middlewares      	  author           2021-09-26
+// ###param         zone		       string         "zone name."
+// ###return        error            error          "Possible errors: INVALID_ZONE"
 func (c *DbusClientSerivce) RemoveZone(zone string) error {
 
 	//print log
@@ -153,14 +155,14 @@ func (c *DbusClientSerivce) RemoveZone(zone string) error {
 
 	if c.eventLogFormat.encounterError = c.checkZoneName(zone); c.eventLogFormat.encounterError == nil {
 
-		path, err := c.generatePath(zone, apis.ZONE_PATH)
+		path, err := c.generatePath(zone, api2.ZONE_PATH)
 		c.eventLogFormat.encounterError = err
 		if c.eventLogFormat.encounterError == nil {
 			c.printResourceEventLog()
-			obj := c.client.Object(apis.INTERFACE, path)
+			obj := c.client.Object(api2.INTERFACE, path)
 
-			c.printPath(apis.INTERFACE)
-			call := obj.Call(apis.CONFIG_REMOVEZONE, dbus.FlagNoAutoStart)
+			c.printPath(api2.INTERFACE)
+			call := obj.Call(api2.CONFIG_REMOVEZONE, dbus.FlagNoAutoStart)
 			c.eventLogFormat.encounterError = call.Err
 			if c.eventLogFormat.encounterError == nil {
 				c.eventLogFormat.Format = RemoveResourceSuccessFormat
@@ -174,12 +176,12 @@ func (c *DbusClientSerivce) RemoveZone(zone string) error {
 	return c.eventLogFormat.encounterError
 }
 
-// @title         AddZone
-// @description   Add zone with given settings into permanent configuration.
-// @middlewares      	  author           2021-09-27
-// @param         name		       string         "Is an optional start and end tag and is used to give a more readable name."
-// @return        error            error          "Possible errors: NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
-func (c *DbusClientSerivce) AddZone(setting *apis.Settings) error {
+// ###title         AddZone
+// ###description   Add zone with given settings into permanent configuration.
+// ###middlewares      	  author           2021-09-27
+// ###param         name		       string         "Is an optional start and end tag and is used to give a more readable name."
+// ###return        error            error          "Possible errors: NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
+func (c *DbusClientSerivce) AddZone(setting *api2.Settings) error {
 
 	// print log
 	c.eventLogFormat.Format = CreateResourceStartFormat
@@ -189,10 +191,10 @@ func (c *DbusClientSerivce) AddZone(setting *apis.Settings) error {
 
 	if c.eventLogFormat.encounterError = c.checkZoneName(setting.Short); c.eventLogFormat.encounterError == nil {
 		c.printResourceEventLog()
-		obj := c.client.Object(apis.INTERFACE, apis.CONFIG_PATH)
+		obj := c.client.Object(api2.INTERFACE, api2.CONFIG_PATH)
 
-		c.printPath(apis.CONFIG_ADDZONE)
-		call := obj.Call(apis.CONFIG_ADDZONE, dbus.FlagNoAutoStart, setting.Short, setting)
+		c.printPath(api2.CONFIG_ADDZONE)
+		call := obj.Call(api2.CONFIG_ADDZONE, dbus.FlagNoAutoStart, setting.Short, setting)
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil {
 			c.eventLogFormat.Format = CreateResourceSuccessFormat
@@ -205,11 +207,11 @@ func (c *DbusClientSerivce) AddZone(setting *apis.Settings) error {
 	return c.eventLogFormat.encounterError
 }
 
-// @title         GetZoneOfInterface
-// @description   temporary add a firewalld port
-// @middlewares      	  author           2021-09-27
-// @param         iface    		   string         "e.g. eth0, iface is device name."
-// @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
+// ###title         GetZoneOfInterface
+// ###description   temporary add a firewalld port
+// ###middlewares      	  author           2021-09-27
+// ###param         iface    		   string         "e.g. eth0, iface is device name."
+// ###return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
 func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
 
 	// print log
@@ -219,10 +221,10 @@ func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
-	c.printPath(apis.ZONE_GETZONEOFINTERFACE)
-	call := obj.Call(apis.ZONE_GETZONEOFINTERFACE, dbus.FlagNoAutoStart, iface)
+	c.printPath(api2.ZONE_GETZONEOFINTERFACE)
+	call := obj.Call(api2.ZONE_GETZONEOFINTERFACE, dbus.FlagNoAutoStart, iface)
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
 		name, ok := call.Body[0].(string)
@@ -240,11 +242,11 @@ func (c *DbusClientSerivce) GetZoneOfInterface(iface string) string {
 	return ""
 }
 
-// @title         GetZoneOfInterface
-// @description   temporary add a firewalld port
-// @middlewares        author           2023-04-22
-// @param         iface    		   string         "e.g. eth0, iface is device name."
-// @return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
+// ###title         GetZoneOfInterface
+// ###description   temporary add a firewalld port
+// ###middlewares        author           2023-04-22
+// ###param         iface    		   string         "e.g. eth0, iface is device name."
+// ###return        zoneName         string         "Return name (s) of zone the interface is bound to or empty string.."
 func (c *DbusClientSerivce) GetDefaultPolicy() string {
 
 	// print log
@@ -254,11 +256,11 @@ func (c *DbusClientSerivce) GetDefaultPolicy() string {
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 	var path dbus.ObjectPath
-	path, c.eventLogFormat.encounterError = c.generatePath(c.defaultZone, apis.ZONE_PATH)
+	path, c.eventLogFormat.encounterError = c.generatePath(c.defaultZone, api2.ZONE_PATH)
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		c.printPath(apis.CONFIG_DEFAULT_POLICY)
-		call := obj.Call(apis.CONFIG_DEFAULT_POLICY, dbus.FlagNoAutoStart)
+		obj := c.client.Object(api2.INTERFACE, path)
+		c.printPath(api2.CONFIG_DEFAULT_POLICY)
+		call := obj.Call(api2.CONFIG_DEFAULT_POLICY, dbus.FlagNoAutoStart)
 		c.eventLogFormat.encounterError = call.Err
 		if c.eventLogFormat.encounterError == nil && len(call.Body) > 0 {
 			name, ok := call.Body[0].(string)

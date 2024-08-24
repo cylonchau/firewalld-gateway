@@ -16,7 +16,7 @@ max_open_connection = 100
 max_idle_connection = 100
 
 [sqlite]
-file = "/uranus/uranus"
+file = "uranus"
 database = "uranus"
 max_open_connection = 100
 max_idle_connection = 100

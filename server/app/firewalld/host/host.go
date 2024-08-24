@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/cylonchau/firewalld-gateway/server/apis"
+	query2 "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	hostModel "github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
@@ -21,80 +21,80 @@ func (h *Host) RegisterHostAPI(g *gin.RouterGroup) {
 func (h *Host) createHost(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &apis.HostQuery{}
+	query := &query2.HostQuery{}
 	enconterError = c.ShouldBindJSON(&query)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		apis.APIResponse(c, enconterError, nil)
+		query2.APIResponse(c, enconterError, nil)
 		return
 	}
 
 	if enconterError = hostModel.CreateHost(query.IP, query.Hostname, query.TagId); enconterError != nil {
-		apis.API409Response(c, enconterError)
+		query2.API409Response(c, enconterError)
 		return
 	}
 
-	apis.SuccessResponse(c, apis.OK, nil)
+	query2.SuccessResponse(c, query2.OK, nil)
 }
 
 func (h *Host) updateHostWithID(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &apis.HostQuery{}
+	query := &query2.HostQuery{}
 	enconterError = c.ShouldBindJSON(&query)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		apis.APIResponse(c, enconterError, nil)
+		query2.APIResponse(c, enconterError, nil)
 		return
 	}
 
 	if query.ID > 0 {
 		if enconterError = hostModel.UpdateHostWithID(query); enconterError != nil {
-			apis.API409Response(c, enconterError)
+			query2.API409Response(c, enconterError)
 			return
 		}
 
-		apis.SuccessResponse(c, apis.OK, nil)
+		query2.SuccessResponse(c, query2.OK, nil)
 		return
 	}
-	apis.APIResponse(c, errors.New("invaild id"), nil)
+	query2.APIResponse(c, errors.New("invaild id"), nil)
 }
 
 func (h *Host) listHost(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &apis.ListHostQuery{}
+	query := &query2.ListHostQuery{}
 	enconterError = c.Bind(&query)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		apis.APIResponse(c, enconterError, nil)
+		query2.APIResponse(c, enconterError, nil)
 		return
 	}
 	list, enconterError := hostModel.GetHosts(int(query.Offset), int(query.Limit), query.Sort)
 	if enconterError != nil {
-		apis.API500Response(c, enconterError)
+		query2.API500Response(c, enconterError)
 		return
 	}
 
-	apis.SuccessResponse(c, apis.OK, list)
+	query2.SuccessResponse(c, query2.OK, list)
 }
 
 func (h *Host) deleteHostWithID(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &apis.IDQuery{}
+	query := &query2.IDQuery{}
 	enconterError = c.Bind(&query)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		apis.APIResponse(c, enconterError, nil)
+		query2.APIResponse(c, enconterError, nil)
 		return
 	}
 	enconterError = hostModel.DeleteHostWithID(query.ID)
 	if enconterError != nil {
-		apis.API500Response(c, enconterError)
+		query2.API500Response(c, enconterError)
 		return
 	}
-	apis.SuccessResponse(c, apis.OK, nil)
+	query2.SuccessResponse(c, query2.OK, nil)
 }

@@ -19,9 +19,10 @@ var DB *gorm.DB
 func InitDB(driver string) error {
 	var enconterError error
 	switch driver {
+	case "mysql":
 	case "sqlite":
 		newLogger := logger.New(
-			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			log.New(os.Stdout, "\n", log.LstdFlags),
 			logger.Config{
 				LogLevel: logger.Info,
 				Colorful: true,

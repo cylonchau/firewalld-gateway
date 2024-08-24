@@ -3,9 +3,17 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	code "github.com/cylonchau/firewalld-gateway/server/apis"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
+// ping godoc
+// @Summary Return process status.
+// @Description Return process status.
+// @Tags Health
+// @Accept  json
+// @Produce json
+// @Success 200 {object} interface{}
+// @Router /ping [get]
 func ping(c *gin.Context) {
-	code.SuccessResponse(c, code.OK, "pong")
+	query.SuccessResponse(c, query.OK, "pong")
 }

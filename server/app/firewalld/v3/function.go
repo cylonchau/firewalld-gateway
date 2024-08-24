@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/cylonchau/firewalld-gateway/server/apis"
 	"github.com/cylonchau/firewalld-gateway/server/batch_processor"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
 func batchFunction(c context.Context) {
@@ -16,8 +16,8 @@ func batchFunction(c context.Context) {
 	tName := batch_processor.RandName()
 	switch b.(type) {
 
-	case apis.ZoneDst:
-		obj := b.(apis.ZoneDst)
+	case query.ZoneDst:
+		obj := b.(query.ZoneDst)
 		var event batch_processor.Event
 		switch eventName {
 		case batch_processor.ENABLE_MASQUERADE,
@@ -36,8 +36,8 @@ func batchFunction(c context.Context) {
 		} else {
 			batch_processor.P.Add(tName, event)
 		}
-	case apis.PortQuery:
-		port := b.(apis.PortQuery)
+	case query.PortQuery:
+		port := b.(query.PortQuery)
 		delayTime := b.(int)
 		eventName := b.(string)
 		event := batch_processor.Event{
@@ -51,8 +51,8 @@ func batchFunction(c context.Context) {
 		} else {
 			batch_processor.P.Add(tName, event)
 		}
-	case apis.ServiceQuery:
-		service := b.(apis.ServiceQuery)
+	case query.ServiceQuery:
+		service := b.(query.ServiceQuery)
 		event := batch_processor.Event{
 			EventName: eventName,
 			Host:      service.Ip,
@@ -64,7 +64,7 @@ func batchFunction(c context.Context) {
 		} else {
 			batch_processor.P.Add(tName, event)
 		}
-	case apis.BatchSettingQuery:
+	case query.BatchSettingQuery:
 		var event batch_processor.Event
 		switch eventName {
 		case batch_processor.RELOAD_FIREWALD:

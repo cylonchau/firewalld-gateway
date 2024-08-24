@@ -3,18 +3,12 @@ package firewalld
 import (
 	"github.com/godbus/dbus/v5"
 
-	"github.com/cylonchau/firewalld-gateway/apis"
+	api2 "github.com/cylonchau/firewalld-gateway/api"
 )
 
 /************************************************** rich rule area ***********************************************************/
 
-// @title         GetRichRules
-// @description   Get list of rich-language rules in zone.
-// @middlewares      	  author           2021-09-29
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @return        zoneName         string         "Returns name of zone to which the interface was bound."
-// @return        error            error          "Possible errors: INVALID_ZONE"
-func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, err error) {
+func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*api2.Rule, err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -25,17 +19,17 @@ func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, er
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
-	c.printPath(apis.ZONE_GETRICHRULES)
-	call := obj.Call(apis.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
+	c.printPath(api2.ZONE_GETRICHRULES)
+	call := obj.Call(api2.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
 	c.eventLogFormat.encounterError = call.Err
 
 	if c.eventLogFormat.encounterError == nil {
 		list, ok := call.Body[0].([]string)
 		if ok {
 			for _, value := range list {
-				ruleList = append(ruleList, apis.StringToRule(value))
+				ruleList = append(ruleList, api2.StringToRule(value))
 			}
 			c.eventLogFormat.Format = ListResourceSuccessFormat
 			c.eventLogFormat.resource = ruleList
@@ -46,14 +40,39 @@ func (c *DbusClientSerivce) GetRichRules(zone string) (ruleList []*apis.Rule, er
 	return nil, c.eventLogFormat.encounterError
 }
 
-// @title         AddRichRule
-// @description   temporary Add rich language rule into zone.
-// @middlewares      	  author           2021-09-29
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         rule    	   	   rule	          "rule, rule is rule struct."
-// @param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
-// @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout uint32) error {
+func (c *DbusClientSerivce) GetPermanentRichRules(zone string) (ruleList []*api2.Rule, err error) {
+	if zone == "" {
+		zone = c.GetDefaultZone()
+	}
+
+	// print log
+	c.eventLogFormat.Format = ListResourceStartFormat
+	c.eventLogFormat.resourceType = "rich"
+	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
+
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
+
+	c.printPath(api2.CONFIG_ZONE_GETRICHRULES)
+	call := obj.Call(api2.ZONE_GETRICHRULES, dbus.FlagNoAutoStart, zone)
+	c.eventLogFormat.encounterError = call.Err
+
+	if c.eventLogFormat.encounterError == nil {
+		list, ok := call.Body[0].([]string)
+		if ok {
+			for _, value := range list {
+				ruleList = append(ruleList, api2.StringToRule(value))
+			}
+			c.eventLogFormat.Format = ListResourceSuccessFormat
+			c.eventLogFormat.resource = ruleList
+			c.printResourceEventLog()
+			return
+		}
+	}
+	return nil, c.eventLogFormat.encounterError
+}
+
+func (c *DbusClientSerivce) AddRichRule(zone string, rule *api2.Rule, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -65,9 +84,9 @@ func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout ui
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	c.printPath(apis.ZONE_ADDRICHRULE)
-	call := obj.Call(apis.ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString(), timeout)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
+	c.printPath(api2.ZONE_ADDRICHRULE)
+	call := obj.Call(api2.ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString(), timeout)
 
 	c.eventLogFormat.encounterError = call.Err
 	if c.eventLogFormat.encounterError != nil {
@@ -80,13 +99,7 @@ func (c *DbusClientSerivce) AddRichRule(zone string, rule *apis.Rule, timeout ui
 	return nil
 }
 
-// @title         PermanentAddRichRule
-// @description   Permanently Add rich language rule into zone.
-// @middlewares      	  author           2021-10-05
-// @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
-// @param         rule    	   	   rule	          "rule, rule is rule struct."
-// @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) AddPermanentRichRule(zone string, rule *apis.Rule) error {
+func (c *DbusClientSerivce) AddPermanentRichRule(zone string, rule *api2.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -98,14 +111,14 @@ func (c *DbusClientSerivce) AddPermanentRichRule(zone string, rule *apis.Rule) e
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api2.ZONE_PATH)
 	c.eventLogFormat.encounterError = err
 
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		c.printPath(apis.CONFIG_ZONE_ADDRICHRULE)
+		obj := c.client.Object(api2.INTERFACE, path)
+		c.printPath(api2.CONFIG_ZONE_ADDRICHRULE)
 
-		call := obj.Call(apis.CONFIG_ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+		call := obj.Call(api2.CONFIG_ZONE_ADDRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
 
 		if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil {
 			c.eventLogFormat.Format = CreatePermanentResourceSuccessFormat
@@ -118,13 +131,7 @@ func (c *DbusClientSerivce) AddPermanentRichRule(zone string, rule *apis.Rule) e
 	return nil
 }
 
-// @title         RemoveRichRule
-// @description   temporary Remove rich rule from zone.
-// @middlewares      	  author           2021-10-05
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         rule    	   	   rule	          "rule, rule is rule struct."
-// @return        error            error          "Possible errors: INVALID_ZONE, INVALID_RULE, NOT_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
+func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *api2.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -137,10 +144,10 @@ func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
 
 	c.printResourceEventLog()
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 
-	c.printPath(apis.ZONE_REOMVERICHRULE)
-	call := obj.Call(apis.ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
+	c.printPath(api2.ZONE_REOMVERICHRULE)
+	call := obj.Call(api2.ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
 
 	if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError != nil {
 		c.eventLogFormat.Format = RemoveResourceFailedFormat
@@ -152,13 +159,7 @@ func (c *DbusClientSerivce) RemoveRichRule(zone string, rule *apis.Rule) error {
 	return nil
 }
 
-// @title         PermanentAddRichRule
-// @description   Permanently Add rich language rule into zone.
-// @middlewares      	  author           2021-10-05
-// @param         zone    	       sting 		  "If zone is empty string, use default zone. e.g. public|dmz..  ""
-// @param         rule    	   	   rule	          "rule, rule is rule struct."
-// @return        error            error          "Possible errors: ALREADY_ENABLED"
-func (c *DbusClientSerivce) RemovePermanentRichRule(zone string, rule *apis.Rule) error {
+func (c *DbusClientSerivce) RemovePermanentRichRule(zone string, rule *api2.Rule) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -168,13 +169,13 @@ func (c *DbusClientSerivce) RemovePermanentRichRule(zone string, rule *apis.Rule
 	c.eventLogFormat.resource = rule.ToString()
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api2.ZONE_PATH)
 
 	c.eventLogFormat.encounterError = err
 	if c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		c.printPath(apis.CONFIG_ZONE_REOMVERICHRULE)
-		call := obj.Call(apis.CONFIG_ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+		obj := c.client.Object(api2.INTERFACE, path)
+		c.printPath(api2.CONFIG_ZONE_REOMVERICHRULE)
+		call := obj.Call(api2.CONFIG_ZONE_REOMVERICHRULE, dbus.FlagNoAutoStart, rule.ToString())
 
 		if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil {
 			c.eventLogFormat.Format = RemovePermanentResourceSuccessFormat
@@ -187,13 +188,7 @@ func (c *DbusClientSerivce) RemovePermanentRichRule(zone string, rule *apis.Rule
 	return c.eventLogFormat.encounterError
 }
 
-// @title         PermanentQueryRichRule
-// @description   Check Permanent Configurtion whether rich rule rule has been added in zone.
-// @middlewares      	  author           2021-10-05
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         rule    	   	   rule	          "rule, rule is rule struct."
-// @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"
-func (c *DbusClientSerivce) QueryPermanentRichRule(zone string, rule *apis.Rule) bool {
+func (c *DbusClientSerivce) QueryPermanentRichRule(zone string, rule *api2.Rule) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -205,12 +200,12 @@ func (c *DbusClientSerivce) QueryPermanentRichRule(zone string, rule *apis.Rule)
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	path, err := c.generatePath(zone, apis.ZONE_PATH)
+	path, err := c.generatePath(zone, api2.ZONE_PATH)
 
 	if c.eventLogFormat.encounterError = err; c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(apis.INTERFACE, path)
-		c.printPath(apis.CONFIG_ZONE_QUERYRICHRULE)
-		call := obj.Call(apis.CONFIG_ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
+		obj := c.client.Object(api2.INTERFACE, path)
+		c.printPath(api2.CONFIG_ZONE_QUERYRICHRULE)
+		call := obj.Call(api2.CONFIG_ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, rule.ToString())
 
 		if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil && (len(call.Body) == 0 || call.Body[0].(bool)) {
 			c.eventLogFormat.Format = QueryPermanentResourceSuccessFormat
@@ -223,13 +218,7 @@ func (c *DbusClientSerivce) QueryPermanentRichRule(zone string, rule *apis.Rule)
 	return false
 }
 
-// @title         QueryRichRule
-// @description   Check whether rich rule is already has.
-// @middlewares      	  author           2021-10-05
-// @param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// @param         rule    	   	   rule	          "rule, rule is rule struct."
-// @return        bool             bool           "Possible errors: INVALID_ZONE, INVALID_RULE"
-func (c *DbusClientSerivce) QueryRichRule(zone string, rule *apis.Rule) bool {
+func (c *DbusClientSerivce) QueryRichRule(zone string, rule *api2.Rule) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -241,9 +230,9 @@ func (c *DbusClientSerivce) QueryRichRule(zone string, rule *apis.Rule) bool {
 	c.eventLogFormat.encounterError = nil
 	c.printResourceEventLog()
 
-	obj := c.client.Object(apis.INTERFACE, apis.PATH)
-	c.printPath(apis.ZONE_QUERYRICHRULE)
-	call := obj.Call(apis.ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
+	c.printPath(api2.ZONE_QUERYRICHRULE)
+	call := obj.Call(api2.ZONE_QUERYRICHRULE, dbus.FlagNoAutoStart, zone, rule.ToString())
 
 	if c.eventLogFormat.encounterError = call.Err; c.eventLogFormat.encounterError == nil && call.Body[0].(bool) {
 		c.eventLogFormat.Format = QueryResourceSuccessFormat
