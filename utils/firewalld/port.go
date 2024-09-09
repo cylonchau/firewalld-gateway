@@ -1,8 +1,9 @@
+//go:build !swagger
+// +build !swagger
+
 package firewalld
 
 import (
-	"fmt"
-
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
 
@@ -10,16 +11,16 @@ import (
 )
 
 /************************************************** port area ***********************************************************/
-/*
- ##title         addPort
- ##description   temporary add a firewalld port
- ##middlewares   author           2021-09-29
- ##param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
- ##param         zone    		  string         "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
- ##param         timeout    	  int	          "Timeout, 0 is the permanent effect of the currently service startup state."
- ##return        zoneName         string         "Returns name of zone to which the protocol was added."
- ##return        error            error          "Possible errors: INVALID_ZONE, INVALID_PORT, MISSING_PROTOCOL, INVALID_PROTOCOL, ALREADY_ENABLED, INVALID_COMMAND."
-*/
+// addPort
+// :description   temporary add a firewalld port
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
+// :param         zone    		  string          "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
+// :param         timeout    	  int	          "Timeout, 0 is the permanent effect of the currently service startup state."
+// :return        zoneName         string         "Returns name of zone to which the protocol was added."
+// :return        error            error          "Possible errors: INVALID_ZONE, INVALID_PORT, MISSING_PROTOCOL, INVALID_PROTOCOL, ALREADY_ENABLED, INVALID_COMMAND."
+
 func (c *DbusClientSerivce) AddPort(port *api2.Port, zone string, timeout uint32) error {
 
 	if zone == "" {
@@ -37,20 +38,19 @@ func (c *DbusClientSerivce) AddPort(port *api2.Port, zone string, timeout uint32
 	return nil
 }
 
-// ##title         PermanentAddPort
-// ##description   Permanently add port & procotol to list of ports of zone.
-// ##middlewares   author           2021-09-29
-// ##param         portProtocol     string      "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
-// ##param         zone    		    string       "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
-// ##return        error            error       "Possible errors: ALREADY_ENABLED."
-func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (enconterError error) {
+// PermanentAddPort
+// :description   Permanently add port & procotol to list of ports of zone.
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         port             string      "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
+// :param         zone    		   string      "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
+// :return        error            error       "Possible errors: ALREADY_ENABLED."
+func (c *DbusClientSerivce) PermanentAddPort(port string, zone string) (enconterError error) {
 	if enconterError = checkPort(port); enconterError == nil {
 		if zone == "" {
 			zone = c.GetDefaultZone()
 		}
-
 		port, protocol := splitPortProtocol(port)
-		fmt.Println(port, protocol)
 		if path, enconterError := c.generatePath(zone, api2.ZONE_PATH); enconterError == nil {
 			obj := c.client.Object(api2.INTERFACE, path)
 			c.printPath(api2.CONFIG_ZONE_ADDPORT)
@@ -67,15 +67,14 @@ func (c *DbusClientSerivce) PermanentAddPort(port, zone string) (enconterError e
 	return enconterError
 }
 
-/*
-##title         GetPort
-##description   temporary get a firewalld port list
-##middlewares   author    2021-10-05
-##param      zone       string  "The empty string is usage default zone, is currently firewalld defualt zone."  - e.g. public|dmz..
-##return     []list     Port     "Returns port list of zone."
-##return     error      error    "Possible errors:
-  - INVALID_ZONE"
-*/
+// GetPort
+// :description   temporary get a firewalld port list
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         zone       string  "The empty string is usage default zone, is currently firewalld defualt zone."  - e.g. public|dmz..
+// :return        []list     Port     "Returns port list of zone."
+// :return        error      error    "Possible errors:
+//   - INVALID_ZONE"
 func (c *DbusClientSerivce) GetPorts(zone string) (relits []api2.Port, enconterError error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -102,15 +101,14 @@ func (c *DbusClientSerivce) GetPorts(zone string) (relits []api2.Port, enconterE
 	return
 }
 
-/*
-##title         PermanentGetPort
-##description   get Permanent configurtion a firewalld port list.
-##middlewares   author   2021-10-05
-##param         zone     string  "The empty string is usage default zone, is currently firewalld defualt zone" - e.g. public|dmz..
-##return        []list   Port    "Returns port list of zone."
-##return        error    error   "Possible errors:"
-  - INVALID_ZONE
-*/
+// PermanentGetPort
+// :description   get Permanent configurtion a firewalld port list.
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         zone     string  "The empty string is usage default zone, is currently firewalld defualt zone" - e.g. public|dmz..
+// :return        []list   Port    "Returns port list of zone."
+// :return        error    error   "Possible errors:"
+//   - INVALID_ZONE
 func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []api2.Port, enconterError error) {
 
 	if zone == "" {
@@ -140,21 +138,22 @@ func (c *DbusClientSerivce) PermanentGetPort(zone string) (list []api2.Port, enc
 	return nil, enconterError
 }
 
-/*
-##title         RemovePort
-##description   temporary delete a firewalld port
-##middlewares   author           2021-10-05
-##param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
-##param         zone    		 string         "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
-##return        bool             string         "Returns name of zone from which the port was removed."
-##return        error            error          "Possible errors:
-  - INVALID_ZONE,
-  - INVALID_PORT,
-  - MISSING_PROTOCOL,
-  - INVALID_PROTOCOL,
-  - NOT_ENABLED,
-  - INVALID_COMMAND"
-*/
+// RemovePort
+// :description   temporary delete a firewalld port
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         port          string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
+// :param         zone    	    string         "e.g. public|dmz.. The empty string is usage default zone, is currently firewalld defualt zone"
+// :return        bool          string         "Returns name of zone from which the port was removed."
+// :return        error         error          "Possible errors:
+//   - INVALID_ZONE,
+//   - INVALID_PORT,
+//   - MISSING_PROTOCOL,
+//   - INVALID_PROTOCOL,
+//   - NOT_ENABLED,
+//   - INVALID_COMMAND"
+//
+// swagger: ignore
 func (c *DbusClientSerivce) RemovePort(port *api2.Port, zone string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -173,23 +172,21 @@ func (c *DbusClientSerivce) RemovePort(port *api2.Port, zone string) error {
 	return nil
 }
 
-/*
-##title         PermanentRemovePort
-##description   Permanently delete (port, protocol) from list of ports of zone.
-##middlewares   author           2021-10-05
-##param         portProtocol     string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
-##param         zone    		 string         "The empty string is usage default zone, is currently firewalld defualt zone" - e.g. public|dmz.."
-##return        bool             string         "Returns name of zone from which the port was removed."
-##return        error            error          "Possible errors:
-  - NOT_ENABLED"
-*/
+// PermanentRemovePort
+// :description   Permanently delete (port, protocol) from list of ports of zone.
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         port         string         "e.g. 80/tcp, 1000-1100/tcp, 80, 1000-1100 default protocol tcp"
+// :param         zone    	   string         "The empty string is usage default zone, is currently firewalld defualt zone" - e.g. public|dmz.."
+// :return        bool         string         "Returns name of zone from which the port was removed."
+// :return        error        error          "Possible errors:
+//   - NOT_ENABLED"
 func (c *DbusClientSerivce) PermanentRemovePort(port, zone string) (enconterError error) {
 	if enconterError = checkPort(port); enconterError == nil {
 		if zone == "" {
 			zone = c.GetDefaultZone()
 		}
 		port, protocol := splitPortProtocol(port)
-		fmt.Println(port, protocol)
 		var path dbus.ObjectPath
 		if path, enconterError = c.generatePath(zone, api2.ZONE_PATH); enconterError == nil {
 			obj := c.client.Object(api2.INTERFACE, path)
@@ -199,7 +196,6 @@ func (c *DbusClientSerivce) PermanentRemovePort(port, zone string) (enconterErro
 
 			call := obj.Call(api2.CONFIG_ZONE_REMOVEPORT, dbus.FlagNoAutoStart, port, protocol)
 			enconterError = call.Err
-			fmt.Println(call.Err)
 			if enconterError == nil {
 				return nil
 			}

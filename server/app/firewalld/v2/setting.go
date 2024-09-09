@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/cylonchau/firewalld-gateway/api"
@@ -251,7 +250,6 @@ func (this *SettingRouter) addZoneSetting(c *gin.Context) {
 
 	deepcopier.Copy(query.Setting).To(setting)
 	setting.Rule = richs
-	fmt.Printf("%#v", setting)
 
 	dbusClient, err := firewalld.NewDbusClientService(query.Ip)
 	if err != nil {

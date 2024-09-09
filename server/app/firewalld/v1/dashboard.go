@@ -43,7 +43,7 @@ func (this *DashboardRouter) getRuntimeStatus(c *gin.Context) {
 		richCount = len(richs)
 		if ports, err := dbusClient.GetPorts(defaultZone); err == nil {
 			portCount = len(ports)
-			if services, err := dbusClient.GetServices(); err == nil {
+			if services, err := dbusClient.ListServices(); err == nil {
 				serviceCount = len(services)
 				if b, err := dbusClient.QueryMasquerade(defaultZone); err == nil {
 					natStatus = b

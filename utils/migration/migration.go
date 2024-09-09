@@ -122,6 +122,7 @@ func initialData(db *gorm.DB) {
 
 	db.Create(&model.Role{Name: "audit_viewer", Routers: audit_r_router_ids})
 
+	db.Create(&model.User{Username: "admin", Password: model.EncryptPassword("admin")})
 }
 
 func SQLite() (*gorm.DB, error) {

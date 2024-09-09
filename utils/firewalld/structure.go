@@ -157,10 +157,11 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 	return encounterError
 }
 
-// ###title         Reload
-// ###description   temporary Add rich language rule into zone.
-// ###middlewares   author 2021-10-05
-// ###return        error  error   "Possible errors: ALREADY_ENABLED"
+// :title         Reload
+// :description   genarate dbus path
+// :Create        author   2021-10-05
+// :Update        author   2024-09-06
+// :return        error  error   "Possible errors: ALREADY_ENABLED"
 func (c *DbusClientSerivce) generatePath(zone, interfacePath string) (dbus.ObjectPath, error) {
 	zoneid := c.getZoneId(zone)
 	if zoneid < 0 {

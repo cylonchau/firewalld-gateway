@@ -1,6 +1,8 @@
 package router
 
 import (
+	"embed"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
@@ -17,3 +19,14 @@ import (
 func ping(c *gin.Context) {
 	query.SuccessResponse(c, query.OK, "pong")
 }
+
+//go:embed dist/*
+var distHandle embed.FS
+
+//func dist() http.FileSystem {
+//	//fsys, err := fs.Sub(distHandle, "dist")
+//	//if err != nil {
+//	//	panic(err)
+//	//}
+//	return http.FS(fsys)
+//}

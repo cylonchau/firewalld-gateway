@@ -1,3 +1,6 @@
+//go:build !swagger
+// +build !swagger
+
 package firewalld
 
 import (
@@ -10,17 +13,18 @@ import (
 
 /************************************************** service area ***********************************************************/
 
-// ##title         NewService
-// ##description   create new service with given settings into permanent configuration.
-// ##middlewares      	  author           2021-10-23
-// ##param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ##param         service          string         "service name e.g. http|ssh|ftp.."
-// ##param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
-// ##return        zoneName         string         "Returns name of zone to which the service was added."
-// ##return        error            error          "Possible errors:
+// :title         ListServices
+// :description   Return array of avliable of services in permanent configuration.
+// :Create        author   2021-10-23
+// :Update        author   2024-09-06
+// :param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service         string         "service name e.g. http|ssh|ftp.."
+// :param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
+// :return        zoneName        string         "Returns name of zone to which the service was added."
+// :return        error           error          "Possible errors:
 //
 //	INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) GetServices() (list []string, err error) {
+func (c *DbusClientSerivce) ListServices() (list []string, err error) {
 	obj := c.client.Object(api2.INTERFACE, api2.PATH)
 	c.printPath(api2.INTERFACE_LISTSERVICES)
 
@@ -49,12 +53,13 @@ func (c *DbusClientSerivce) GetServices() (list []string, err error) {
 	return nil, call.Err
 }
 
-// ###title         NewService
-// ###description   in runtime configuration.
-// ###middlewares      	  author           2021-10-23
-// ###param         service    	   string         		"service name."
-// ###param         setting          *ServiceSetting      "service configruate"
-// ###return        error            error          		"Possible errors:
+// :title         NewService
+// :description   in runtime configuration.
+// :Create        author   2021-10-23
+// :Update        author   2024-09-06
+// :param         service    	 string         		"service name."
+// :param         setting        *ServiceSetting      "service configruate"
+// :return        error          error          		"Possible errors:
 //
 //	NAME_CONFLICT, INVALID_NAME, INVALID_TYPE"
 func (c *DbusClientSerivce) AddNewService(name string, setting *api2.ServiceSetting) error {
@@ -84,15 +89,16 @@ func (c *DbusClientSerivce) AddNewService(name string, setting *api2.ServiceSett
 	return nil
 }
 
-// ###title         AddService
-// ###description   temporary Add service into zone.
-// ###middlewares      	  author           2021-09-29
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###param         service          string         "service name e.g. http|ssh|ftp.."
-// ###param         timeout    	   int	          "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
-// ###return        zoneName         string         "Returns name of zone to which the service was added."
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) error {
+// :title         AddServiceRuntime
+// :description   Add service into zone (runtime).
+// :Create        author   2021-09-29
+// :Update        author   2024-09-07
+// :param         zone          string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service       string         "service name e.g. http|ssh|ftp.."
+// :param         timeout    	int	           "Timeout, if timeout is non-zero, the operation will be active only for the amount of seconds."
+// :return        zoneName      string         "Returns name of zone to which the service was added."
+// :return        error         error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+func (c *DbusClientSerivce) AddServiceRuntime(zone, service string, timeout uint32) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -122,13 +128,14 @@ func (c *DbusClientSerivce) AddService(zone, service string, timeout uint32) err
 	return c.eventLogFormat.encounterError
 }
 
-// ###title         PermanentAddService
-// ###description   Permanent Add service into zone.
-// ###middlewares      	  author           2021-09-29
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###param         service          string         "service name e.g. http|ssh|ftp.."
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) PermanentAddService(zone, service string) error {
+// :title         AddPermanentService
+// :description   Permanently add service to list of services used in zone.
+// :Create        author      2021-09-29
+// :Update        author      2024-09-06
+// :param         zone        string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service     string         "service name e.g. http|ssh|ftp.."
+// :return        error       error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+func (c *DbusClientSerivce) AddPermanentService(zone, service string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
@@ -157,12 +164,13 @@ func (c *DbusClientSerivce) PermanentAddService(zone, service string) error {
 	return c.eventLogFormat.encounterError
 }
 
-// ###title         QueryService
-// ###description   temporary check whether service has been added for zone..
-// ###middlewares      	  author           2021-10-05
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###param         service          string         "service name e.g. http|ssh|ftp.."
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// :title         QueryService
+// :description   temporary check whether service has been added for zone..
+// :Create        author   2021-10-05
+// :Update        author   2024-09-06
+// :param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service          string         "service name e.g. http|ssh|ftp.."
+// :return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -188,12 +196,13 @@ func (c *DbusClientSerivce) QueryService(zone, service string) bool {
 	return true
 }
 
-// ###title         PermanentQueryService
-// ###description   Permanent Return whether Add service in rich rules in zone.
-// ###middlewares      	  author           2021-10-05
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###param         service          string         "service name e.g. http|ssh|ftp.."
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+// :title         PermanentQueryService
+// :description   Permanent Return whether Add service in rich rules in zone.
+// :Create        author   2021-10-05
+// :Update        author   2024-09-06
+// :param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service          string         "service name e.g. http|ssh|ftp.."
+// :return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
 func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 	if zone == "" {
 		zone = c.GetDefaultZone()
@@ -223,17 +232,17 @@ func (c *DbusClientSerivce) PermanentQueryService(zone, service string) bool {
 	return false
 }
 
-// ###title         RemoveService
-// ###description   temporary Remove service from zone.
-// ###middlewares      	  author           2021-10-05
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###param         service          string         "service name e.g. http|ssh|ftp.."
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) RemoveService(zone, service string) error {
+// :title         RemoveService
+// :description   Remove service from zone (runtime).
+// :Create        author   2021-10-05
+// :Update        author   2024-09-07
+// :param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service          string         "service name e.g. http|ssh|ftp.."
+// :return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+func (c *DbusClientSerivce) RemoveRuntimeService(zone, service string) error {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
-
 	// print log
 	c.eventLogFormat.Format = RemoveResourceStartFormat
 	c.eventLogFormat.resourceType = "service"
@@ -256,16 +265,15 @@ func (c *DbusClientSerivce) RemoveService(zone, service string) error {
 	return nil
 }
 
-// ###title         PermanentAddService
-// ###description   Permanent Add service into zone.
-// ###middlewares      	  author           2021-09-29
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###param         service          string         "service name e.g. http|ssh|ftp.."
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) RemovePermanentService(zone, service string) error {
-	if zone == "" {
-		zone = c.GetDefaultZone()
-	}
+// :title         Permanently remove service from list of services used in zone.
+// :description   PPermanently remove service from list of services used in zone.
+// :Create        author   2021-09-29
+// :Update        author   2024-09-06
+// :param         zone     string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :param         service  string         "service name e.g. http|ssh|ftp.."
+// :return        error    error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+func (c *DbusClientSerivce) RemovePermanentService(service string) error {
+	zone := c.GetDefaultZone()
 
 	// print log
 	c.eventLogFormat.Format = RemovePermanentResourceStartFormat
@@ -292,41 +300,81 @@ func (c *DbusClientSerivce) RemovePermanentService(zone, service string) error {
 	return c.eventLogFormat.encounterError
 }
 
-// ###title         PermanentGetServices
-// ###description   get permanently service in zone.
-// ###middlewares      	  author           2021-10-21
-// ###param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
-// ###return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
-func (c *DbusClientSerivce) GetPermanentServices(zone, service string) error {
+// :title         PermanentGetServices
+// :description   Get list of service names used in zone (permanent).
+// :Create        author   2021-10-21
+// :Update        author   2024-09-06
+// :param         zone    		   string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :return        error            error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+func (c *DbusClientSerivce) GetPermanentServices() (list []string, err error) {
+	zone := c.GetDefaultZone()
+
+	// print log
+	c.eventLogFormat.Format = ListPermanentResourceStartFormat
+	c.eventLogFormat.resourceType = "service"
+	c.eventLogFormat.encounterError = nil
+	var path dbus.ObjectPath
+	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
+		obj := c.client.Object(api2.INTERFACE, path)
+		c.printResourceEventLog()
+
+		c.printPath(api2.CONFIG_ZONE_GETSERVICES)
+		call := obj.Call(api2.CONFIG_ZONE_GETSERVICES, dbus.FlagNoAutoStart)
+		c.eventLogFormat.encounterError = call.Err
+		if c.eventLogFormat.encounterError == nil {
+			services, ok := call.Body[0].([]string)
+			if ok {
+				c.eventLogFormat.Format = ListPermanentResourceSuccessFormat
+				c.eventLogFormat.resource = services
+				c.printResourceEventLog()
+				return services, nil
+			} else {
+				c.eventLogFormat.encounterError = errors.New("reflect resource failed")
+			}
+		}
+	}
+
+	c.eventLogFormat.Format = ListPermanentResourceFailedFormat
+	c.printResourceEventLog()
+	return nil, c.eventLogFormat.encounterError
+}
+
+// :title         GetRuntimeServices
+// :description   Get list of service names used in zone (runtime).
+// :Create        author      2024-09-07
+// :Update        author      2024-09-07
+// :param         zone        string         "If zone is empty string, use default zone. e.g. public|dmz..  "
+// :return        error       error          "Possible errors: INVALID_ZONE, INVALID_SERVICE, ALREADY_ENABLED, INVALID_COMMAND"
+func (c *DbusClientSerivce) GetRuntimeServices(zone string) (list []string, err error) {
 	if zone == "" {
 		zone = c.GetDefaultZone()
 	}
 
 	// print log
-	c.eventLogFormat.Format = RemovePermanentResourceStartFormat
+	c.eventLogFormat.Format = ListResourceStartFormat
 	c.eventLogFormat.resourceType = "service"
-	c.eventLogFormat.resource = service
 	c.eventLogFormat.encounterError = nil
+	c.printResourceEventLog()
 
-	var path dbus.ObjectPath
-	if path, c.eventLogFormat.encounterError = c.generatePath(zone, api2.ZONE_PATH); c.eventLogFormat.encounterError == nil {
-		obj := c.client.Object(api2.INTERFACE, path)
+	obj := c.client.Object(api2.INTERFACE, api2.PATH)
+	c.printResourceEventLog()
 
-		c.printResourceEventLog()
-
-		c.printPath(api2.CONFIG_ZONE_GETSERVICES)
-		call := obj.Call(api2.CONFIG_ZONE_GETSERVICES, dbus.FlagNoAutoStart, service)
-
-		c.eventLogFormat.encounterError = call.Err
-		if c.eventLogFormat.encounterError == nil {
-			c.eventLogFormat.Format = RemovePermanentResourceSuccessFormat
+	c.printPath(api2.ZONE_GETSERVICES)
+	call := obj.Call(api2.ZONE_GETSERVICES, dbus.FlagNoAutoStart, zone)
+	c.eventLogFormat.encounterError = call.Err
+	if c.eventLogFormat.encounterError == nil {
+		services, ok := call.Body[0].([]string)
+		if ok {
+			c.eventLogFormat.Format = ListResourceSuccessFormat
+			c.eventLogFormat.resource = services
 			c.printResourceEventLog()
-			return nil
+			return services, nil
+		} else {
+			c.eventLogFormat.encounterError = errors.New("reflect resource failed")
 		}
-
 	}
 
-	c.eventLogFormat.Format = RemovePermanentResourceFailedFormat
+	c.eventLogFormat.Format = ListResourceFailedFormat
 	c.printResourceEventLog()
-	return c.eventLogFormat.encounterError
+	return nil, c.eventLogFormat.encounterError
 }

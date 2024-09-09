@@ -1,3 +1,6 @@
+//go:build !swagger
+// +build !swagger
+
 package firewalld
 
 import (

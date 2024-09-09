@@ -75,7 +75,7 @@ func (e *Event) processEvent() error {
 		incurredError = dbusClient.AddForwardPort(defaultZone, query.Timeout, query.Forward)
 	case CREATE_SERVICE:
 		query := e.Task.(query.ServiceQuery)
-		incurredError = dbusClient.AddService(query.Zone, query.Service, query.Timeout)
+		incurredError = dbusClient.AddServiceRuntime(query.Zone, query.Service, query.Timeout)
 	case ENABLE_MASQUERADE:
 		query := e.Task.(string)
 		incurredError = dbusClient.EnableMasquerade(query, 0)

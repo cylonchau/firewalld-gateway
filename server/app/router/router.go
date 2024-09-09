@@ -1,6 +1,9 @@
 package router
 
 import (
+	"embed"
+
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -22,13 +25,12 @@ import (
 	_ "github.com/cylonchau/firewalld-gateway/docs"
 )
 
+//go:embed dist/*
+var distFileSystem embed.FS
+
 func RegisteredRouter(e *gin.Engine) {
-
-	e.Handle("GET", "/swagger/*any",
-		ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
-
-	e.Handle("GET", "ping", ping)
-
+	e.Use(static.Serve("/", static.EmbedFolder(distFileSystem, "dist")))
+	e.Handle("GET", "/ping", ping)
 	ssoGroup := e.Group("/sso")
 	securityAPIGroup := e.Group("/security")
 	firewallAPIGroup := e.Group("/fw")
@@ -127,4 +129,8 @@ func RegisteredRouter(e *gin.Engine) {
 		auditRouter := &audit.Audit{}
 		auditRouter.RegisterAuditAPI(auditAPI)
 	}
+
+	e.Handle("GET", "/swagger/*any",
+		ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
+
 }

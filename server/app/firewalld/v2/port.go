@@ -92,11 +92,9 @@ func (this *PortV2Router) addOnPermanent(c *gin.Context) {
 	defer dbusClient.Destroy()
 
 	if err = dbusClient.PermanentAddPort(fmt.Sprintf("%s/%s", query.Port.Port, query.Port.Protocol), query.Zone); err != nil {
-		fmt.Println(11)
 		api_query.APIResponse(c, err, nil)
 		return
 	}
-	fmt.Println(222)
 	api_query.SuccessResponse(c, api_query.OK, query)
 }
 
@@ -135,6 +133,5 @@ func (this *PortV2Router) removeOnPermanent(c *gin.Context) {
 		api_query.APIResponse(c, err, nil)
 		return
 	}
-	fmt.Println(err)
 	api_query.SuccessResponse(c, api_query.OK, query)
 }

@@ -47,7 +47,6 @@ const (
 	ZONE_ADDPROTOCOL       = ZONE + ".addProtocol"
 	ZONE_ADDRICHRULE       = ZONE + ".addRichRule"
 	ZONE_ADDSERVICE        = ZONE + ".addService"
-	ZONE_GETSERVICES       = ZONE + ".getServices"
 	ZONE_ADDSOURCE         = ZONE + ".addSource"
 	ZONE_ADDINTERFACE      = ZONE + ".addInterface"
 	ZONE_QUERYINTERFACE    = ZONE + ".queryInterface"
@@ -66,6 +65,7 @@ const (
 	ZONE_QUERYRICHRULE      = ZONE + ".queryRichRule"
 	ZONE_QUERYSERVICE       = ZONE + ".queryService"
 	ZONE_REMOVESERVICE      = ZONE + ".removeService"
+	ZONE_GETSERVICES        = ZONE + ".getServices"
 
 	// org.fedoraproject.FirewallD1.config
 	CONFIG_ADDZONE = CONFIG_INTERFACE + ".addZone"

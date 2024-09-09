@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// swagger_annotations.go
+
 type MasqueradeRouter struct{}
 
 func (this *MasqueradeRouter) RegisterPortAPI(g *gin.RouterGroup) {
