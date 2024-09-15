@@ -80,3 +80,13 @@ type BatchServiceQuery struct {
 	Delay    uint32         `form:"delay,default=0" json:"delay,omitempty"`
 	Services []ServiceQuery `form:"services" json:"services,omitempty"`
 }
+
+type BatchRichQuery struct {
+	Delay uint32      `form:"delay,default=0" json:"delay,omitempty"`
+	Richs []RichQuery `form:"richs" json:"richs,omitempty"`
+}
+
+type BatchForwardQuery struct {
+	Delay    uint32         `form:"delay,default=0" json:"delay,omitempty"`
+	Forwards []ForwardQuery `form:"forwards" json:"forwards,omitempty"`
+}

@@ -73,6 +73,7 @@ func RegisteredRouter(e *gin.Engine) {
 
 	richRuleRouterV1 := &fv1.RichRuleV1Router{}
 	richRuleRouterV2 := &fv2.RichRuleV2Router{}
+
 	richRuleRouterV1.RegisterPortAPI(fv1Group)
 	richRuleRouterV2.RegisterPortAPI(fv2Group)
 
@@ -94,11 +95,17 @@ func RegisteredRouter(e *gin.Engine) {
 		batchSettingRouter := fv3.SettingRouter{}
 		batchSettingRouter.RegisterBatchAPI(fv3Group)
 
-		batchNATRouter := fv3.MasqueradeRouter{}
-		batchNATRouter.RegisterBatchAPI(fv3Group)
+		batchMasqueradeRouterRouter := fv3.MasqueradeRouterV3{}
+		batchMasqueradeRouterRouter.RegisterBatchAPI(fv3Group)
+
+		batchNATRouterRouter := fv3.NATRuleRouterV3{}
+		batchNATRouterRouter.RegisterBatchAPI(fv3Group)
 
 		batchServiceRouter := fv3.ServiceRouter{}
 		batchServiceRouter.RegisterBatchAPI(fv3Group)
+
+		richRuleRouterV3 := &fv3.RichRuleRouterV3{}
+		richRuleRouterV3.RegisterBatchAPI(fv3Group)
 	}
 
 	if !config.CONFIG.MySQL.IsEmpty() || !config.CONFIG.SQLite.IsEmpty() {

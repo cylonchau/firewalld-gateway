@@ -72,11 +72,6 @@ func Migration(driver string) error {
 }
 
 func initialData(db *gorm.DB) {
-	db.Create(&model.User{
-		Username: "admin",
-		Password: model.EncryptPassword("111"),
-	})
-
 	// inital roles
 	var (
 		user_w_router_ids, user_r_router_ids             []model.Router

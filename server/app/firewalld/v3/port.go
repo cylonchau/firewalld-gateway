@@ -12,8 +12,8 @@ import (
 type PortRouter struct{}
 
 func (this *PortRouter) RegisterBatchAPI(g *gin.RouterGroup) {
-	portGroup := g.Group("/port")
-	portGroup.PUT("/runtime", this.batchAddPortRuntime)
+	portGroup := g.Group("/ports")
+	portGroup.PUT("/", this.batchAddPortRuntime)
 	portGroup.PUT("/permanent", this.batchAddPortPerment)
 }
 
@@ -26,7 +26,7 @@ func (this *PortRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Param  query body  query.BatchPortQuery  false "body"
 // @securityDefinitions.apikey BearerAuth
 // @Success 200 {object} interface{}
-// @Router /fw/v3/port/runtime [put]
+// @Router /fw/v3/ports [put]
 func (this *PortRouter) batchAddPortRuntime(c *gin.Context) {
 	var query = &api_query.BatchPortQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {
@@ -54,7 +54,7 @@ func (this *PortRouter) batchAddPortRuntime(c *gin.Context) {
 // @Param  query body  query.BatchPortQuery  false "body"
 // @securityDefinitions.apikey BearerAuth
 // @Success 200 {object} interface{}
-// @Router /fw/v3/port/permanent [put]
+// @Router /fw/v3/ports/permanent [put]
 func (this *PortRouter) batchAddPortPerment(c *gin.Context) {
 	var query = &api_query.BatchPortQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {

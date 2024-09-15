@@ -13,7 +13,7 @@ type ServiceRouter struct{}
 
 func (this *ServiceRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 	portGroup := g.Group("/service")
-	portGroup.POST("/", this.batchAddServiceRuntime)
+	portGroup.PUT("/", this.batchAddServiceRuntime)
 }
 
 // batchAddServiceRuntime godoc
@@ -25,7 +25,7 @@ func (this *ServiceRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Param query body query.BatchServiceQuery  false "body"
 // @securityDefinitions.apikey BearerAuth
 // @Success 200 {object} interface{}
-// @Router /fw/v3/service/runtime [put]
+// @Router /fw/v3/service [put]
 func (this *ServiceRouter) batchAddServiceRuntime(c *gin.Context) {
 	var query = &api_query.BatchServiceQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {

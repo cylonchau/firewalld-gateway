@@ -37,14 +37,38 @@ func batchFunction(c context.Context) {
 			batch_processor.P.Add(tName, event)
 		}
 	case query.PortQuery:
-		port := b.(query.PortQuery)
-		delayTime := b.(int)
-		eventName := b.(string)
+		portRule := b.(query.PortQuery)
 		event := batch_processor.Event{
 			EventName: eventName,
-			Host:      port.Ip,
+			Host:      portRule.Ip,
 			TaskName:  tName,
-			Task:      port,
+			Task:      portRule,
+		}
+		if delayTime > 0 {
+			batch_processor.P.AddAfter(tName, time.Duration(delayTime)*time.Second, event)
+		} else {
+			batch_processor.P.Add(tName, event)
+		}
+	case query.ForwardQuery:
+		forwardRule := b.(query.ForwardQuery)
+		event := batch_processor.Event{
+			EventName: eventName,
+			Host:      forwardRule.Ip,
+			TaskName:  tName,
+			Task:      forwardRule,
+		}
+		if delayTime > 0 {
+			batch_processor.P.AddAfter(tName, time.Duration(delayTime)*time.Second, event)
+		} else {
+			batch_processor.P.Add(tName, event)
+		}
+	case query.RichQuery:
+		richRule := b.(query.RichQuery)
+		event := batch_processor.Event{
+			EventName: eventName,
+			Host:      richRule.Ip,
+			TaskName:  tName,
+			Task:      richRule,
 		}
 		if delayTime > 0 {
 			batch_processor.P.AddAfter(tName, time.Duration(delayTime)*time.Second, event)
@@ -82,4 +106,5 @@ func batchFunction(c context.Context) {
 			batch_processor.P.Add(tName, event)
 		}
 	}
+
 }

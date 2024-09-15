@@ -9,10 +9,10 @@ import (
 	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
-type MasqueradeRouter struct{}
+type MasqueradeRouterV3 struct{}
 
-func (this *MasqueradeRouter) RegisterBatchAPI(g *gin.RouterGroup) {
-	portGroup := g.Group("/nat")
+func (this *MasqueradeRouterV3) RegisterBatchAPI(g *gin.RouterGroup) {
+	portGroup := g.Group("/masquerade")
 	portGroup.PUT("/", this.batchEnableMasquerade)
 	portGroup.DELETE("/", this.batchDisableMasquerade)
 }
@@ -27,7 +27,7 @@ func (this *MasqueradeRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 // @securityDefinitions.apikey BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/masquerade [put]
-func (this *MasqueradeRouter) batchEnableMasquerade(c *gin.Context) {
+func (this *MasqueradeRouterV3) batchEnableMasquerade(c *gin.Context) {
 	var query = &api_query.BatchZoneQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {
 		api_query.APIResponse(c, err, nil)
@@ -56,7 +56,7 @@ func (this *MasqueradeRouter) batchEnableMasquerade(c *gin.Context) {
 // @securityDefinitions.apikey BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/masquerade [delete]
-func (this *MasqueradeRouter) batchDisableMasquerade(c *gin.Context) {
+func (this *MasqueradeRouterV3) batchDisableMasquerade(c *gin.Context) {
 	var query = &api_query.BatchZoneQuery{}
 	if err := c.ShouldBindJSON(query); err != nil {
 		api_query.APIResponse(c, err, nil)
