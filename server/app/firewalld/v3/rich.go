@@ -23,7 +23,7 @@ func (this *RichRuleRouterV3) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param query body query.BatchRichQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/rich [put]
 func (this *RichRuleRouterV3) batchAddRichRuntime(c *gin.Context) {

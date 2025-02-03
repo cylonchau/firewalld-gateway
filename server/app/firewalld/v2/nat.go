@@ -24,7 +24,7 @@ func (this *NATRouter) RegisterNATV2API(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param query  body  query.ForwardQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/nat [put]
 func (this *NATRouter) addForwardInPermanent(c *gin.Context) {
@@ -60,7 +60,7 @@ func (this *NATRouter) addForwardInPermanent(c *gin.Context) {
 // @Produce json
 // @Param ip query string true "ip"
 // @Param zone query string false "zone"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/nat [get]
 func (this *NATRouter) getForwardInPermanent(c *gin.Context) {
@@ -97,7 +97,7 @@ func (this *NATRouter) getForwardInPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query  body  query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/nat [delete]
 func (this *NATRouter) delForwardInPermanent(c *gin.Context) {

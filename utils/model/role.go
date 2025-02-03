@@ -51,16 +51,25 @@ func (*UserRoles) TableName() string {
 }
 
 // Get all roles
-func GetRoles(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetRoles(title string, offset, limit int, sort string) (map[string]interface{}, error) {
 	roles := []*RoleList{}
 	response := make(map[string]interface{})
 	var count int64
-	result := DB.Select([]string{"id", "name", "description"}).
-		Limit(limit).
-		Offset(offset).
-		Order("id "+sort).
-		Where(role_table_name+".deleted_at is ?", nil).
+
+	query := DB.Select([]string{"id", "name", "description"}).Limit(limit).Offset((offset - 1) * limit)
+
+	if title != "" {
+		query = query.Where("name LIKE ?", title+"%")
+	}
+	result := query.Order("id "+sort).Where(role_table_name+".deleted_at is ?", nil).
 		Find(&roles)
+
+	totalQuery := DB.Model(&Role{}).Where("deleted_at IS ?", nil)
+	if title != "" {
+		totalQuery = totalQuery.Where("name LIKE ?", title+"%")
+	}
+	totalQuery.Distinct("id").Count(&count)
+
 	DB.Model(&Role{}).Distinct("id").Count(&count)
 	if result.Error != gorm.ErrRecordNotFound {
 		response["list"] = roles
@@ -68,6 +77,18 @@ func GetRoles(offset, limit int, sort string) (map[string]interface{}, error) {
 		return response, nil
 	}
 	return nil, result.Error
+}
+
+func GetRolesByUID(userID uint) ([]RoleList, error) {
+	var roles []RoleList
+	err := DB.Table("roles").
+		Joins("JOIN user_roles ON user_roles.role_id = roles.id").
+		Where("user_roles.user_id = ?", userID).
+		Find(&roles).Error
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
 }
 
 // Create role

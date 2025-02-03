@@ -53,6 +53,15 @@ func APIResponse(ctx *gin.Context, err error, data interface{}) {
 	})
 }
 
+// 400Response
+func API400Response(ctx *gin.Context, err error) {
+	returnCode, message := DecodeErr(err)
+	ctx.JSON(http.StatusBadRequest, Response{
+		Code: returnCode,
+		Msg:  message,
+	})
+}
+
 // 404Response
 func API404Response(ctx *gin.Context, err error) {
 	returnCode, message := DecodeErr(err)

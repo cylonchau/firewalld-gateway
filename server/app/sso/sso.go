@@ -20,7 +20,7 @@ type SSO struct{}
 // @Accept  json
 // @Produce json
 // @Param   query  body  query.UserQuery   false "signup body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /sso/signin [post]
 func (s *SSO) signinHandler(c *gin.Context) {
@@ -91,7 +91,7 @@ func (s *SSO) signinHandler(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param   query  body  query.UserQuery   false "user body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /sso/signup [post]
 func (s *SSO) signupHandler(c *gin.Context) {

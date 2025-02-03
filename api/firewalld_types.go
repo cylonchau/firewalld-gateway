@@ -173,63 +173,213 @@ type Settings struct {
 }
 
 func (s *Source) IsEmpty() bool {
-	return s == nil
+	if s == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(s).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Destination) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Port) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Protocol) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *IcmpBlock) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *IcmpType) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Log) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *ForwardPort) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Audit) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Accept) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Reject) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Drop) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Mark) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Limit) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Value) IsEmpty() bool {
-	return this == nil
+	if this == nil {
+		return true // 判断指针是否为 nil
+	}
+
+	v := reflect.ValueOf(this).Elem() // 获取指针指向的值
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() { // 检查字段是否为零值
+			return false
+		}
+	}
+	return true
 }
 
 func (this *Source) ToString() string {

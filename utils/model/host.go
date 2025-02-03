@@ -39,6 +39,19 @@ func (*Classify) TableName() string {
 	return host_table_name
 }
 
+func GetHostsByTagName(tagName string) ([]Host, error) {
+	var hosts []Host
+	// 查询指定名称的 Tag，并预加载 Hosts
+	if err := DB.Table(host_table_name).Joins("JOIN tags ON tags.id = hosts.tag_id").
+		Where("tags.name = ?", tagName).
+		Find(&hosts).Error; err != nil {
+		return nil, err
+	}
+
+	// 返回与该 Tag 相关的 Hosts
+	return hosts, nil
+}
+
 func QueryHostWithName(hostname string) (*Host, error) {
 	host := &Host{}
 	result := DB.Select("id", "hostname", "ip").Where("hostname = ?", hostname).Find(host)

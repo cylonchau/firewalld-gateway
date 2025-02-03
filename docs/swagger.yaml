@@ -1,4 +1,4 @@
-basePath: /server
+basePath: /
 definitions:
   api.Accept:
     properties:
@@ -318,6 +318,70 @@ definitions:
     - forward
     - ip
     type: object
+  query.HostQuery:
+    properties:
+      hostname:
+        type: string
+      id:
+        type: integer
+      ip:
+        type: string
+      limit:
+        type: integer
+      offset:
+        type: integer
+      tag_id:
+        type: integer
+    required:
+    - ip
+    - tag_id
+    type: object
+  query.IDQuery:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+  query.ListHostQuery:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+      sort:
+        type: string
+    type: object
+  query.ListQuery:
+    properties:
+      id:
+        type: integer
+      limit:
+        type: integer
+      offset:
+        type: integer
+      simple:
+        type: integer
+      sort:
+        type: string
+      title:
+        type: string
+    type: object
+  query.PortEditQuery:
+    properties:
+      id:
+        type: integer
+      port:
+        type: integer
+      protocol:
+        type: string
+      template_id:
+        type: integer
+    required:
+    - port
+    - protocol
+    - template_id
+    type: object
   query.PortQuery:
     properties:
       ip:
@@ -360,6 +424,32 @@ definitions:
     required:
     - ip
     - name
+    type: object
+  query.RichEditQuery:
+    properties:
+      action:
+        type: string
+      destination:
+        type: string
+      family:
+        type: string
+      id:
+        type: integer
+      limit:
+        type: integer
+      limit_unit:
+        type: string
+      port:
+        type: string
+      protocol:
+        type: string
+      source:
+        type: string
+      template_id:
+        type: integer
+    required:
+    - action
+    - template_id
     type: object
   query.RichQuery:
     properties:
@@ -416,6 +506,30 @@ definitions:
     - host
     - service_name
     - setting
+    type: object
+  query.TagEditQuery:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  query.TemplateEditQuery:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      target:
+        type: string
+    required:
+    - name
     type: object
   query.TokenEditQuery:
     properties:
@@ -478,8 +592,477 @@ info:
   contact: {}
   description: Uranus, distrubed firewall gateway.
   title: Uranus API
-  version: "1.0"
+  version: 0.0.9
 paths:
+  /fw/host:
+    delete:
+      consumes:
+      - application/json
+      description: Delete host with host id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.IDQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete host with host id.
+      tags:
+      - Hosts
+    get:
+      consumes:
+      - application/json
+      description: Get host from uranus
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.ListHostQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get host from uranus
+      tags:
+      - Hosts
+    post:
+      consumes:
+      - application/json
+      description: Update host information with host id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.HostQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update host information with host id.
+      tags:
+      - Hosts
+    put:
+      consumes:
+      - application/json
+      description: Add a new host into uranus.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.HostQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a new host into uranus.
+      tags:
+      - Hosts
+  /fw/tag:
+    delete:
+      consumes:
+      - application/json
+      description: Delete tag with tag id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.IDQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete tag with tag id.
+      tags:
+      - Tags
+    get:
+      consumes:
+      - application/json
+      description: Get tag list from uranus.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.ListQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get tag list from uranus.
+      tags:
+      - Tags
+    post:
+      consumes:
+      - application/json
+      description: Update tag information with tag id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.TagEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update tag information with tag id.
+      tags:
+      - Tags
+    put:
+      consumes:
+      - application/json
+      description: Add a new tag into uranus.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.TagEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a new tag into uranus.
+      tags:
+      - Tags
+  /fw/template:
+    delete:
+      consumes:
+      - application/json
+      description: Delete template with template id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.IDQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete template with template id.
+      tags:
+      - Template
+    get:
+      consumes:
+      - application/json
+      description: List template.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.ListQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List template.
+      tags:
+      - Template
+    post:
+      consumes:
+      - application/json
+      description: Update template information with template id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.TemplateEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update template information with template id.
+      tags:
+      - Template
+    put:
+      consumes:
+      - application/json
+      description: Create a new firewalld template.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.TemplateEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new firewalld template.
+      tags:
+      - Template
+  /fw/template/{id}:
+    post:
+      consumes:
+      - application/json
+      description: List template rules by template ID.
+      parameters:
+      - description: Template ID
+        in: path
+        name: template_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List template rules.
+      tags:
+      - Template
+  /fw/template/port:
+    delete:
+      consumes:
+      - application/json
+      description: Delete port rule with rule id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.IDQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete port rule with rule id.
+      tags:
+      - Template
+    get:
+      consumes:
+      - application/json
+      description: List port rules.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.ListQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List port rules.
+      tags:
+      - Template
+    post:
+      consumes:
+      - application/json
+      description: Update port rule information with port rule id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.PortEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update port rule information with port rule id.
+      tags:
+      - Template
+    put:
+      consumes:
+      - application/json
+      description: Create a new port rule to template.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.PortEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new port rule to template.
+      tags:
+      - Template
+  /fw/template/rich:
+    delete:
+      consumes:
+      - application/json
+      description: Delete rich rule with rule id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.IDQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete rich rule with rule id.
+      tags:
+      - Template
+    get:
+      consumes:
+      - application/json
+      description: List rich rules.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.ListQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List rich rules.
+      tags:
+      - Template
+    post:
+      consumes:
+      - application/json
+      description: Update rich rule information with rich rule id.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.RichEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update rich rule information with rich rule id.
+      tags:
+      - Template
+    put:
+      consumes:
+      - application/json
+      description: Create a new rich rule to template.
+      parameters:
+      - description: body
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/query.RichEditQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new rich rule to template.
+      tags:
+      - Template
   /fw/v1/masquerade:
     delete:
       consumes:
@@ -498,6 +1081,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Disable masqerade on firewalld runtime.
       tags:
       - firewalld masquerade
@@ -520,6 +1105,8 @@ paths:
             items:
               type: object
             type: array
+      security:
+      - BearerAuth: []
       summary: Get nat rule list on firewalld runtime.
       tags:
       - firewalld masquerade
@@ -540,6 +1127,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Enable masqerade on firewalld runtime.
       tags:
       - firewalld masquerade
@@ -561,6 +1150,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove a nat rule at firewalld runtime.
       tags:
       - firewalld NAT
@@ -581,6 +1172,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Get nat rules at firewalld runtime.
       tags:
       - firewalld NAT
@@ -601,6 +1194,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a nat rule at firewall runtime.
       tags:
       - firewalld NAT
@@ -623,6 +1218,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete a firewalld port rule in runtime.
       tags:
       - firewalld port
@@ -645,6 +1242,8 @@ paths:
             items:
               type: object
             type: array
+      security:
+      - BearerAuth: []
       summary: Get port rule at firewalld runtime.
       tags:
       - firewalld port
@@ -665,6 +1264,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add port rule at firewalld runtime.
       tags:
       - firewalld port
@@ -686,6 +1287,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove rich rule at firewalld runtimes.
       tags:
       - firewalld rich
@@ -708,6 +1311,8 @@ paths:
             items:
               type: object
             type: array
+      security:
+      - BearerAuth: []
       summary: Get rich rule list at firewalld runtimes.
       tags:
       - firewalld rich
@@ -728,6 +1333,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add rich rule at firewalld runtimes.
       tags:
       - firewalld rich
@@ -749,6 +1356,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove a service rule on firewalld runtime.
       tags:
       - firewalld service
@@ -769,6 +1378,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: List available service type on firewalld runtime.
       tags:
       - firewalld service
@@ -789,6 +1400,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a service rule on firewalld runtime.
       tags:
       - firewalld service
@@ -810,6 +1423,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Disable masqerade at firewall permanent.
       tags:
       - firewalld masquerade
@@ -832,6 +1447,8 @@ paths:
             items:
               type: object
             type: array
+      security:
+      - BearerAuth: []
       summary: Get status of masqurade at firewalld permanent.
       tags:
       - firewalld masquerade
@@ -852,6 +1469,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Enable masqerade at firewall permanent.
       tags:
       - firewalld masquerade
@@ -873,6 +1492,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove a nat rule at firewalld permanent.
       tags:
       - firewalld NAT
@@ -897,6 +1518,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Get nat rules at firewalld permanent.
       tags:
       - firewalld NAT
@@ -917,6 +1540,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a nat rule at firewall permanent.
       tags:
       - firewalld NAT
@@ -939,6 +1564,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete a firewalld port rule on permanent.
       tags:
       - firewalld port
@@ -961,6 +1588,8 @@ paths:
             items:
               type: object
             type: array
+      security:
+      - BearerAuth: []
       summary: Get port rule on firewalld permanent.
       tags:
       - firewalld port
@@ -981,6 +1610,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add port rule on firewalld permanent.
       tags:
       - firewalld port
@@ -1002,6 +1633,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove rich rule on firewalld permanent.
       tags:
       - firewalld rich
@@ -1024,6 +1657,8 @@ paths:
             items:
               type: object
             type: array
+      security:
+      - BearerAuth: []
       summary: Get rich rule list on firewalld permanent.
       tags:
       - firewalld rich
@@ -1044,6 +1679,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add rich rule on firewalld permanent.
       tags:
       - firewalld rich
@@ -1065,6 +1702,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove a service rule on firewalld premanent.
       tags:
       - firewalld service
@@ -1085,6 +1724,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: List available service type on firewalld permanent.
       tags:
       - firewalld service
@@ -1105,6 +1746,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Permanently add service to list of services used in zone.
       tags:
       - firewalld service
@@ -1126,6 +1769,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Return list of service names (s) in runtime configuration.
       tags:
       - firewalld service
@@ -1145,6 +1790,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       tags:
       - firewalld service
   /fw/v2/setting:
@@ -1166,6 +1813,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Remove a setting rules in firewalld.
       tags:
       - firewalld setting
@@ -1186,6 +1835,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: List zone.
       tags:
       - firewalld setting
@@ -1206,6 +1857,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add setting rule in firewalld.
       tags:
       - firewalld setting
@@ -1227,6 +1880,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Get default policy.
       tags:
       - firewalld setting
@@ -1248,6 +1903,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Get default zone.
       tags:
       - firewalld setting
@@ -1269,6 +1926,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Flush all firewalld rules to default.
       tags:
       - firewalld setting
@@ -1290,6 +1949,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Reload firewalld.
       tags:
       - firewalld setting
@@ -1311,6 +1972,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Set default zone in firewalld.
       tags:
       - firewalld setting
@@ -1332,6 +1995,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Disable masqerade on firewalld runtime with delay timer.
       tags:
       - firewalld masquerade
@@ -1352,6 +2017,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Enable masqerade on firewalld runtime with delay timer.
       tags:
       - firewalld masquerade
@@ -1373,6 +2040,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a NAT rule on firewalld runtime with delay timer.
       tags:
       - firewalld NAT
@@ -1394,6 +2063,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a port rule on firewalld runtime with delay timer.
       tags:
       - firewalld port
@@ -1415,6 +2086,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a port rule on firewalld permanent with delay timer.
       tags:
       - firewalld port
@@ -1436,6 +2109,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a rich rules on firewalld runtime with delay timer.
       tags:
       - firewalld rich
@@ -1457,6 +2132,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Add a service rule on firewalld runtime with delay timer.
       tags:
       - firewalld service
@@ -1478,6 +2155,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Reload firewalld runtime with delay timer.
       tags:
       - firewalld setting
@@ -1500,6 +2179,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Set default zone on firewalld with delay timer, this is a runtime and
         permanent change.
       tags:
@@ -1541,6 +2222,10 @@ paths:
         in: query
         name: sort
         type: string
+      - description: sort
+        in: query
+        name: title
+        type: string
       produces:
       - application/json
       responses:
@@ -1549,6 +2234,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all tokens.
       tags:
       - Audit
@@ -1564,6 +2251,8 @@ paths:
           description: OK
           schema:
             type: object
+      security:
+      - BearerAuth: []
       summary: Get client login ip.
       tags:
       - Auth
@@ -1586,6 +2275,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all routers of role.
       tags:
       - Auth
@@ -1633,6 +2324,10 @@ paths:
         in: query
         name: sort
         type: string
+      - description: sort
+        in: query
+        name: title
+        type: string
       produces:
       - application/json
       responses:
@@ -1641,6 +2336,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all roles.
       tags:
       - Auth
@@ -1692,6 +2389,30 @@ paths:
       summary: Create a role.
       tags:
       - Auth
+  /security/auth/roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return roles associated with a specific user ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Return roles by user ID.
+      tags:
+      - Auth
   /security/auth/roles/allocate:
     post:
       consumes:
@@ -1700,7 +2421,7 @@ paths:
       parameters:
       - description: Input parameter
         in: body
-        name: userinput
+        name: user
         required: true
         schema:
           $ref: '#/definitions/query.RoleEditQuery'
@@ -1723,10 +2444,6 @@ paths:
       - application/json
       description: Return all routers.
       parameters:
-      - description: token id
-        in: query
-        name: id
-        type: integer
       - description: limit
         in: query
         name: limit
@@ -1739,6 +2456,10 @@ paths:
         in: query
         name: sort
         type: string
+      - description: sort
+        in: query
+        name: title
+        type: string
       produces:
       - application/json
       responses:
@@ -1747,7 +2468,33 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all routers.
+      tags:
+      - Auth
+  /security/auth/routers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return routers associated with a specific role ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Return routers by role ID.
       tags:
       - Auth
   /security/auth/userRoles:
@@ -1780,6 +2527,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all routers.
       tags:
       - Auth
@@ -1801,6 +2550,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return userinfo.
       tags:
       - Auth
@@ -1856,6 +2607,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all tokens.
       tags:
       - Token
@@ -1934,6 +2687,23 @@ paths:
       consumes:
       - application/json
       description: Return all users。
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      - description: sort
+        in: query
+        name: sort
+        type: string
+      - description: sort
+        in: query
+        name: title
+        type: string
       produces:
       - application/json
       responses:
@@ -1942,6 +2712,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Return all users.
       tags:
       - Users
@@ -2037,6 +2809,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: login.
       tags:
       - SSO
@@ -2059,6 +2833,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: register.
       tags:
       - SSO
@@ -2066,7 +2842,7 @@ schemes:
 - http
 securityDefinitions:
   Bearer:
-    description: Type "Bearer" followed by a space and JWT token.
+    description: 'Enter the token with the `Bearer: ` prefix, e.g. "Bearer abcde12345".'
     in: header
     name: Authorization
     type: apiKey

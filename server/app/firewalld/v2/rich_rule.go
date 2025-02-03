@@ -23,7 +23,7 @@ func (this *RichRuleV2Router) RegisterPortAPI(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param  ip  query  string true "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} []interface{}
 // @Router /fw/v2/rich [get]
 func (this *RichRuleV2Router) getRichRulesOnPermanent(c *gin.Context) {
@@ -58,7 +58,7 @@ func (this *RichRuleV2Router) getRichRulesOnPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param  query  body  query.RichQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/rich [put]
 func (this *RichRuleV2Router) addRichRuleOnPermanent(c *gin.Context) {
@@ -94,7 +94,7 @@ func (this *RichRuleV2Router) addRichRuleOnPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param  query body query.RichQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/rich [delete]
 func (this *RichRuleV2Router) delRichRuleOnPermanent(c *gin.Context) {

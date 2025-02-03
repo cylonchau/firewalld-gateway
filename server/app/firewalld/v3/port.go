@@ -24,7 +24,7 @@ func (this *PortRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchPortQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/ports [put]
 func (this *PortRouter) batchAddPortRuntime(c *gin.Context) {
@@ -52,7 +52,7 @@ func (this *PortRouter) batchAddPortRuntime(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchPortQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/ports/permanent [put]
 func (this *PortRouter) batchAddPortPerment(c *gin.Context) {

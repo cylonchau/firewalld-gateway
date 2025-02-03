@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	query2 "github.com/cylonchau/firewalld-gateway/utils/apis/query"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
@@ -31,23 +31,23 @@ func (t *Token) RegisterTokenAPI(g *gin.RouterGroup) {
 func (t *Token) createToken(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.TokenEditQuery{}
-	enconterError = c.ShouldBindJSON(&query)
+	tokenQuery := &query.TokenEditQuery{}
+	enconterError = c.ShouldBindJSON(&tokenQuery)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
-	if query != nil {
-		if enconterError = model.CreateToken(query.SignedTo, query.Description); enconterError != nil {
-			query2.APIResponse(c, enconterError, nil)
+	if tokenQuery != nil {
+		if enconterError = model.CreateToken(tokenQuery.SignedTo, tokenQuery.Description); enconterError != nil {
+			query.APIResponse(c, enconterError, nil)
 			return
 		}
 	} else {
-		query2.SuccessResponse(c, query2.QUERY_NULL, nil)
+		query.SuccessResponse(c, query.QUERY_NULL, nil)
 	}
-	query2.SuccessResponse(c, query2.OK, nil)
+	query.SuccessResponse(c, query.OK, nil)
 }
 
 // listToken godoc
@@ -60,26 +60,26 @@ func (t *Token) createToken(c *gin.Context) {
 // @Param limit query  int false "limit"
 // @Param offset query  int false "offset"
 // @Param sort query  string false "sort"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /security/tokens [get]
 func (t *Token) listToken(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.ListQuery{}
-	enconterError = c.Bind(&query)
+	tokenQuery := &query.ListQuery{}
+	enconterError = c.Bind(&tokenQuery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 	var list map[string]interface{}
 
-	if list, enconterError = model.GetTokens(int(query.Offset), int(query.Limit), query.Sort); enconterError != nil {
-		query2.API500Response(c, enconterError)
+	if list, enconterError = model.GetTokens(tokenQuery.Title, int(tokenQuery.Offset), int(tokenQuery.Limit), tokenQuery.Sort); enconterError != nil {
+		query.API500Response(c, enconterError)
 		return
 	}
-	query2.SuccessResponse(c, query2.OK, list)
+	query.SuccessResponse(c, query.OK, list)
 }
 
 // deleteTokenWithID godoc
@@ -95,19 +95,19 @@ func (t *Token) listToken(c *gin.Context) {
 func (t *Token) deleteTokenWithID(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.IDQuery{}
-	enconterError = c.Bind(&query)
+	tokenQuery := &query.IDQuery{}
+	enconterError = c.Bind(&tokenQuery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
-	enconterError = model.DeleteTokenWithID(query.ID)
+	enconterError = model.DeleteTokenWithID(tokenQuery.ID)
 	if enconterError != nil {
-		query2.API500Response(c, enconterError)
+		query.API500Response(c, enconterError)
 		return
 	}
-	query2.SuccessResponse(c, query2.OK, nil)
+	query.SuccessResponse(c, query.OK, nil)
 }
 
 // updateTokenWithID godoc
@@ -123,23 +123,23 @@ func (t *Token) deleteTokenWithID(c *gin.Context) {
 func (t *Token) updateTokenWithID(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.TokenEditQuery{}
-	enconterError = c.ShouldBindJSON(&query)
+	tokenQuery := &query.TokenEditQuery{}
+	enconterError = c.ShouldBindJSON(&tokenQuery)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if query.ID > 0 {
-		if enconterError = model.UpdateTokenWithID(query.ID, query.SignedTo, query.Description, query.IsUpdate); enconterError != nil {
-			query2.API409Response(c, enconterError)
+	if tokenQuery.ID > 0 {
+		if enconterError = model.UpdateTokenWithID(tokenQuery.ID, tokenQuery.SignedTo, tokenQuery.Description, tokenQuery.IsUpdate); enconterError != nil {
+			query.API409Response(c, enconterError)
 			return
 		}
 
-		query2.SuccessResponse(c, query2.OK, nil)
+		query.SuccessResponse(c, query.OK, nil)
 		return
 	}
-	query2.APIResponse(c, errors.New("invaild id"), nil)
+	query.APIResponse(c, errors.New("invaild id"), nil)
 }

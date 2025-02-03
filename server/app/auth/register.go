@@ -2,7 +2,7 @@ package auth
 
 import "github.com/gin-gonic/gin"
 
-func (a *Auth) RegisterUserAPI(g *gin.RouterGroup) {
+func (a *Auth) RegisterAuthAPI(g *gin.RouterGroup) {
 	// user
 	authGroup := g.Group("/")
 	authGroup.GET("/userinfo", a.userInfoHandler)
@@ -10,8 +10,10 @@ func (a *Auth) RegisterUserAPI(g *gin.RouterGroup) {
 
 	// router handler
 	authGroup.GET("/routers", a.getRouters)
+	authGroup.GET("/routers/:id", a.getRoutersByRoleID)
 	// role
 	authGroup.GET("/roles", a.getRoles)
+	authGroup.GET("/roles/:id", a.getRoleByUserId)
 	authGroup.PUT("/roles", a.createRole)
 	authGroup.POST("/roles", a.updateRole)
 	authGroup.DELETE("/roles", a.deleteRoleWithID)
@@ -19,4 +21,5 @@ func (a *Auth) RegisterUserAPI(g *gin.RouterGroup) {
 	// user
 	authGroup.GET("/userRoles", a.getUserRoles)
 	authGroup.GET("/roleRouters", a.getRoleRouters)
+
 }

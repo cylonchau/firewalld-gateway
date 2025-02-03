@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	api_query "github.com/cylonchau/firewalld-gateway/utils/apis/query"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
@@ -16,33 +16,67 @@ import (
 // @Tags Auth
 // @Accept  json
 // @Produce json
-// @Param   id  query  int   false "token id"
-// @Param   limit  query  int   false "limit"
-// @Param   offset  query  int   false "offset"
-// @Param   sort  query  string   false "sort"
-// @securityDefinitions.apikey BearerAuth
+// @Param   id  	query  int  false "token id"
+// @Param   limit  	query  int  false "limit"
+// @Param   offset  query  int  false "offset"
+// @Param   sort  	query  string  false "sort"
+// @Param   title  	query  string  false "sort"
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /security/auth/roles [get]
 func (u *Auth) getRoles(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &api_query.ListQuery{}
-	enconterError = c.Bind(&query)
+	rolesQuery := &query.ListQuery{}
+	enconterError = c.Bind(&rolesQuery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		api_query.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if roles, enconterError := model.GetRoles(int(query.Offset), int(query.Limit), query.Sort); enconterError == nil {
+	if roles, enconterError := model.GetRoles(rolesQuery.Title, int(rolesQuery.Offset), int(rolesQuery.Limit), rolesQuery.Sort); enconterError == nil {
 		if len(roles) > 0 {
-			api_query.SuccessResponse(c, nil, roles)
+			query.SuccessResponse(c, nil, roles)
 			return
 		}
-		enconterError = errors.New(api_query.ErrRouterIsEmpty.Error())
+		enconterError = errors.New(query.ErrRouterIsEmpty.Error())
 
 	}
-	api_query.SuccessResponse(c, enconterError, nil)
+	query.SuccessResponse(c, enconterError, nil)
+}
+
+// getRoleByUserId godoc
+// @Summary Return roles by user ID.
+// @Description Return roles associated with a specific user ID.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Router /security/auth/roles/{id} [get]
+func (u *Auth) getRoleByUserId(c *gin.Context) {
+	var enconterError error
+	rolesQuery := &query.QueryWithID{}
+	if enconterError = c.ShouldBindUri(rolesQuery); enconterError != nil {
+		query.API400Response(c, enconterError)
+		return
+	}
+	// 3. 获取用户角色信息
+	roles, err := model.GetRolesByUID(rolesQuery.ID)
+	if err != nil {
+		query.APIResponse(c, err, nil)
+		return
+	}
+
+	// 4. 返回角色信息
+	if len(roles) == 0 {
+		query.SuccessResponse(c, nil, "No roles found for the user")
+		return
+	}
+
+	query.SuccessResponse(c, nil, roles)
 }
 
 // createRole godoc
@@ -58,22 +92,22 @@ func (u *Auth) getRoles(c *gin.Context) {
 func (a *Auth) createRole(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	roleQuery := &api_query.RoleEditQuery{}
+	roleQuery := &query.RoleEditQuery{}
 	enconterError = c.ShouldBindJSON(&roleQuery)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		api_query.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
 	routers := model.GenerateRouterWithID(roleQuery.RouterIDs)
 
 	if enconterError = model.CreateRole(roleQuery, routers); enconterError != nil {
-		api_query.SuccessResponse(c, enconterError, nil)
+		query.SuccessResponse(c, enconterError, nil)
 		return
 	}
-	api_query.SuccessResponse(c, api_query.OK, nil)
+	query.SuccessResponse(c, query.OK, nil)
 }
 
 // updateRole godoc
@@ -89,25 +123,25 @@ func (a *Auth) createRole(c *gin.Context) {
 func (a *Auth) updateRole(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &api_query.RoleEditQuery{}
-	enconterError = c.ShouldBindJSON(&query)
+	roleQuery := &query.RoleEditQuery{}
+	enconterError = c.ShouldBindJSON(&roleQuery)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		api_query.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if query.ID > 0 {
-		if enconterError = model.UpdateRoleWithID(query); enconterError != nil {
-			api_query.API409Response(c, enconterError)
+	if roleQuery.ID > 0 {
+		if enconterError = model.UpdateRoleWithID(roleQuery); enconterError != nil {
+			query.API409Response(c, enconterError)
 			return
 		}
 
-		api_query.SuccessResponse(c, api_query.OK, nil)
+		query.SuccessResponse(c, query.OK, nil)
 		return
 	}
-	api_query.APIResponse(c, errors.New("invaild id"), nil)
+	query.APIResponse(c, errors.New("invaild id"), nil)
 }
 
 // deleteRoleWithID godoc
@@ -115,7 +149,7 @@ func (a *Auth) updateRole(c *gin.Context) {
 // @Description Delete a role with role_id.
 // @Tags Auth
 // @Produce json
-// @Accept  x-www-form-urlencoded
+// @Accept x-www-form-urlencoded
 // @Param id query query.IDQuery true "role id"
 // @Security Bearer
 // @Success 200 {object} map[string]interface{}
@@ -123,19 +157,19 @@ func (a *Auth) updateRole(c *gin.Context) {
 func (a *Auth) deleteRoleWithID(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &api_query.IDQuery{}
-	enconterError = c.Bind(&query)
+	roleQuery := &query.IDQuery{}
+	enconterError = c.Bind(&roleQuery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		api_query.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
-	enconterError = model.DeleteRoleWithID(query.ID)
+	enconterError = model.DeleteRoleWithID(roleQuery.ID)
 	if enconterError != nil {
-		api_query.API500Response(c, enconterError)
+		query.API500Response(c, enconterError)
 		return
 	}
-	api_query.SuccessResponse(c, api_query.OK, nil)
+	query.SuccessResponse(c, query.OK, nil)
 }
 
 // getRouters godoc
@@ -148,25 +182,25 @@ func (a *Auth) deleteRoleWithID(c *gin.Context) {
 // @Param   limit  query  int   false "limit"
 // @Param   offset  query  int   false "offset"
 // @Param   sort  query  string   false "sort"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /security/auth/userRoles [get]
 func (a *Auth) getUserRoles(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &api_query.ListQuery{}
-	enconterError = c.Bind(&query)
+	roleQuery := &query.ListQuery{}
+	enconterError = c.Bind(&roleQuery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		api_query.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if user, enconterError := model.GetRolesWithUID(query.ID); enconterError == nil {
-		api_query.SuccessResponse(c, nil, user)
+	if user, enconterError := model.GetRolesWithUID(roleQuery.ID); enconterError == nil {
+		query.SuccessResponse(c, nil, user)
 		return
 	}
-	api_query.SuccessResponse(c, enconterError, nil)
+	query.SuccessResponse(c, enconterError, nil)
 }
 
 // getRoleRouters godoc
@@ -176,7 +210,7 @@ func (a *Auth) getUserRoles(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param id query int true "Input parameter"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /security/auth/roleRouters [get]
 func (u *Auth) getRoleRouters(c *gin.Context) {
@@ -186,8 +220,8 @@ func (u *Auth) getRoleRouters(c *gin.Context) {
 	// 手动对请求参数进行详细的业务规则校验
 
 	if routers, enconterError := model.GetRoutersWithRID(ids); enconterError == nil {
-		api_query.SuccessResponse(c, nil, routers)
+		query.SuccessResponse(c, nil, routers)
 		return
 	}
-	api_query.SuccessResponse(c, enconterError, nil)
+	query.SuccessResponse(c, enconterError, nil)
 }

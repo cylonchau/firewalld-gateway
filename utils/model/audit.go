@@ -33,26 +33,44 @@ func (*AuditList) TableName() string {
 	return audit_table_name
 }
 
-func GetAuditLogs(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetAuditLogs(title string, offset, limit int, sort string) (map[string]interface{}, error) {
 	logs := []*AuditList{}
 	response := make(map[string]interface{})
 	var count int64
-	result := DB.Table(audit_table_name).
+
+	// 查询审计日志
+	query := DB.Table(audit_table_name).
 		Select([]string{
-			"ip",
-			"path",
-			"method",
-			"browser",
-			"system",
+			audit_table_name + ".ip",
+			audit_table_name + ".path",
+			audit_table_name + ".method",
+			audit_table_name + ".browser",
+			audit_table_name + ".system",
 			user_table_name + ".username",
 		}).
-		Joins("join users on "+user_table_name+".id ="+audit_table_name+".user_id").
+		Joins("join "+user_table_name+" on "+user_table_name+".id = "+audit_table_name+".user_id").
+		Where(audit_table_name+".deleted_at IS ?", nil).
 		Limit(limit).
-		Offset((offset-1)*limit).
-		Where(audit_table_name+".deleted_at is ?", nil).
-		Order(audit_table_name + ".id " + sort).
-		Scan(&logs)
-	DB.Model(&Audit{}).Distinct("id").Count(&count)
+		Offset((offset - 1) * limit)
+
+	if title != "" {
+		query = query.Where(user_table_name+".username LIKE ?", "%"+title+"%")
+	}
+
+	result := query.Order(audit_table_name + ".id " + sort).Scan(&logs)
+
+	// 查询总数
+	totalQuery := DB.Table(audit_table_name).
+		Where(audit_table_name+".deleted_at IS ?", nil)
+
+	if title != "" {
+		totalQuery = totalQuery.Joins("join "+user_table_name+" on "+user_table_name+".id = "+audit_table_name+".user_id").
+			Where(user_table_name+".username LIKE ?", "%"+title+"%")
+	}
+
+	// 获取内容的总数
+	totalQuery.Count(&count)
+
 	if result.Error != gorm.ErrRecordNotFound {
 		response["list"] = logs
 		response["total"] = count

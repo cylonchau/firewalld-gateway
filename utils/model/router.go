@@ -31,19 +31,42 @@ func (*RouterList) TableName() string {
 	return router_table_name
 }
 
+func GetRoutersByRoleID(roleID uint) (map[string]interface{}, error) {
+	var (
+		routers  []RouterList
+		response = make(map[string]interface{})
+	)
+	err := DB.Table("routers").
+		Joins("JOIN role_routers ON role_routers.router_id = routers.id").
+		Where("role_routers.role_id = ?", roleID).
+		Find(&routers).Error
+	if err == nil && err != gorm.ErrRecordNotFound {
+		response["list"] = routers
+		return response, nil
+	}
+	return nil, err
+}
+
 // Get all roles
-func GetRouters(offset, limit int, sort string) (map[string]interface{}, error) {
-	roles := []*RouterList{}
+func GetRouters(title string, offset, limit int, sort string) (map[string]interface{}, error) {
+	routers := []*RouterList{}
 	response := make(map[string]interface{})
 	var count int64
-	result := DB.Select([]string{"id", "path", "method"}).
-		Limit(limit).
-		Offset((offset - 1) * limit).
-		Order("id " + sort).
-		Find(&roles)
-	DB.Model(&Router{}).Distinct("id").Count(&count)
+
+	query := DB.Select([]string{"id", "path", "method"}).Limit(limit).Offset((offset - 1) * limit)
+	if title != "" {
+		query = query.Where("path LIKE ?", "%"+title+"%")
+	}
+
+	result := query.Order("id " + sort).Find(&routers)
+
+	totalQuery := DB.Model(&Router{}).Where("deleted_at IS ?", nil)
+	if title != "" {
+		totalQuery = totalQuery.Where("path LIKE ?", "%"+title+"%")
+	}
+	totalQuery.Distinct("id").Count(&count)
 	if result.Error != gorm.ErrRecordNotFound {
-		response["list"] = roles
+		response["list"] = routers
 		response["total"] = count
 		return response, nil
 	}

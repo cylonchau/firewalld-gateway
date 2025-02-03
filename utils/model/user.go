@@ -18,7 +18,7 @@ import (
 
 const Secret = "com.github.cylonchau"
 
-var user_table_name = "users"
+const user_table_name = "users"
 
 type User struct {
 	gorm.Model
@@ -160,17 +160,28 @@ func GetRequestIP(r *http.Request) (uint32, error) {
 	return 0, errors.New("no valid ip found")
 }
 
-func GetUsers(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetUsers(queryString string, offset, limit int, sort string) (map[string]interface{}, error) {
 	users := []*UserList{}
 	response := make(map[string]interface{})
 	var count int64
-	result := DB.
-		Limit(limit).
-		Offset(offset).
-		Where("deleted_at is ?", nil).
-		Order("id " + sort).
-		Find(&users)
-	DB.Model(&User{}).Distinct("id").Count(&count)
+
+	// 构建查询条件
+	query := DB.Limit(limit).Offset(offset).Where("deleted_at IS ?", nil)
+
+	if queryString != "" {
+		query = query.Where("username LIKE ?", "%"+queryString+"%")
+	}
+
+	// 执行查询
+	result := query.Order("id " + sort).Find(&users)
+
+	// 获取总数
+	totalQuery := DB.Model(&User{}).Where("deleted_at IS ?", nil)
+	if queryString != "" {
+		totalQuery = totalQuery.Where("username LIKE ?", "%"+queryString+"%")
+	}
+	totalQuery.Distinct("id").Count(&count)
+
 	if result.Error != gorm.ErrRecordNotFound {
 		response["list"] = users
 		response["total"] = count

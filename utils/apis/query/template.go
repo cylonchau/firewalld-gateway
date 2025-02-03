@@ -15,14 +15,14 @@ type PortEditQuery struct {
 }
 
 type RichEditQuery struct {
-	Family      string   `form:"family" json:"family,omitempty" binding:"omitempty"`
-	Source      string   `form:"source" json:"source,omitempty" binding:"omitempty"`
-	Destination string   `form:"destination" json:"destination,omitempty" binding:"omitempty"`
-	Port        []string `form:"port" json:"port,omitempty" binding:"omitempty"`
-	Protocol    string   `form:"protocol" json:"protocol,omitempty" binding:"omitempty"`
-	Action      string   `form:"action" json:"action,omitempty" binding:"required"`
-	Limit       uint16   `form:"limit" json:"limit,omitempty" binding:"omitempty"`
-	LimitUnit   string   `form:"limit_unit" json:"limit_unit,omitempty" binding:"omitempty"`
-	TemplateId  int      `form:"template_id" json:"template_id" binding:"required"`
-	ID          uint64   `form:"id" json:"id,omitempty" binding:"omitempty"`
+	Family      string `form:"family" json:"family,omitempty" binding:"omitempty"`
+	Source      string `form:"source" json:"source,omitempty" binding:"omitempty"`
+	Destination string `form:"destination" json:"destination,omitempty" binding:"omitempty"`
+	Port        string `form:"port" json:"port,omitempty" binding:"omitempty"`
+	Protocol    string `form:"protocol" json:"protocol,omitempty" binding:"omitempty"`
+	Action      string `form:"action" json:"action,omitempty" binding:"required"`
+	Limit       uint16 `form:"limit" json:"limit,omitempty" binding:"omitempty"`
+	LimitUnit   string `form:"limit_unit" json:"limit_unit,omitempty" binding:"omitempty"`
+	TemplateId  int    `form:"template_id" json:"template_id" binding:"required"`
+	ID          uint64 `form:"id" json:"id,omitempty" binding:"omitempty"`
 }

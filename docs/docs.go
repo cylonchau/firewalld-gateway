@@ -15,8 +15,781 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/fw/host": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get host from uranus",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hosts"
+                ],
+                "summary": "Get host from uranus",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.ListHostQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new host into uranus.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hosts"
+                ],
+                "summary": "Add a new host into uranus.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.HostQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update host information with host id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hosts"
+                ],
+                "summary": "Update host information with host id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.HostQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete host with host id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hosts"
+                ],
+                "summary": "Delete host with host id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.IDQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/fw/tag": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get tag list from uranus.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Get tag list from uranus.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.ListQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new tag into uranus.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Add a new tag into uranus.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.TagEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update tag information with tag id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Update tag information with tag id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.TagEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete tag with tag id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Delete tag with tag id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.IDQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/fw/template": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List template.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "List template.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.ListQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new firewalld template.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Create a new firewalld template.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.TemplateEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update template information with template id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Update template information with template id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.TemplateEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete template with template id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Delete template with template id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.IDQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/fw/template/port": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List port rules.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "List port rules.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.ListQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new port rule to template.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Create a new port rule to template.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.PortEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update port rule information with port rule id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Update port rule information with port rule id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.PortEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete port rule with rule id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Delete port rule with rule id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.IDQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/fw/template/rich": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List rich rules.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "List rich rules.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.ListQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new rich rule to template.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Create a new rich rule to template.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.RichEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update rich rule information with rich rule id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Update rich rule information with rich rule id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.RichEditQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete rich rule with rule id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "Delete rich rule with rule id.",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/query.IDQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/fw/template/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List template rules by template ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Template"
+                ],
+                "summary": "List template rules.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "template_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "/fw/v1/masquerade": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get nat rule list on firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -50,6 +823,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Enable masqerade on firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -81,6 +859,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Disable masqerade on firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -114,6 +897,11 @@ const docTemplate = `{
         },
         "/fw/v1/nat": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get nat rules at firewalld runtime",
                 "consumes": [
                     "application/json"
@@ -145,6 +933,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a nat rule at firewall runtime.",
                 "consumes": [
                     "application/json"
@@ -176,6 +969,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a nat rule at firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -209,6 +1007,11 @@ const docTemplate = `{
         },
         "/fw/v1/ports": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get port rule at firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -242,6 +1045,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add port rule at firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -273,6 +1081,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a firewalld port rule in runtime.",
                 "consumes": [
                     "application/json"
@@ -307,6 +1120,11 @@ const docTemplate = `{
         },
         "/fw/v1/rich": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get rich rule list at firewalld runtimes.",
                 "consumes": [
                     "application/json"
@@ -340,6 +1158,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add rich rule at firewalld runtimes.",
                 "consumes": [
                     "application/json"
@@ -371,6 +1194,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove rich rule at firewalld runtimes.",
                 "consumes": [
                     "application/json"
@@ -404,6 +1232,11 @@ const docTemplate = `{
         },
         "/fw/v1/service": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "List all service rule on firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -435,6 +1268,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a service rule on firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -466,6 +1304,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a service rule on firewalld runtime.",
                 "consumes": [
                     "application/json"
@@ -499,6 +1342,11 @@ const docTemplate = `{
         },
         "/fw/v2/masquerade": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get status of masqurade at firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -532,6 +1380,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Enable masqerade at firewall permanent.",
                 "consumes": [
                     "application/json"
@@ -563,6 +1416,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Disable masqerade at firewall permanent.",
                 "consumes": [
                     "application/json"
@@ -596,6 +1454,11 @@ const docTemplate = `{
         },
         "/fw/v2/nat": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get nat rules at firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -632,6 +1495,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a nat rule at firewall permanent.",
                 "consumes": [
                     "application/json"
@@ -663,6 +1531,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a nat rule at firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -696,6 +1569,11 @@ const docTemplate = `{
         },
         "/fw/v2/ports": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get port rule on firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -729,6 +1607,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add port rule on firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -760,6 +1643,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a firewalld port rule on permanent.",
                 "consumes": [
                     "application/json"
@@ -794,6 +1682,11 @@ const docTemplate = `{
         },
         "/fw/v2/rich": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get rich rule list on firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -827,6 +1720,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add rich on firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -858,6 +1756,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove rich rule on firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -891,6 +1794,11 @@ const docTemplate = `{
         },
         "/fw/v2/service": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "List all service rule on firewalld permanent.",
                 "consumes": [
                     "application/json"
@@ -922,6 +1830,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Permanently add service to list of services used in zone.",
                 "consumes": [
                     "application/json"
@@ -953,6 +1866,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a service rule on firewalld premanent.",
                 "consumes": [
                     "application/json"
@@ -986,6 +1904,11 @@ const docTemplate = `{
         },
         "/fw/v2/service/config": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return list of service names (s) in runtime configuration.",
                 "consumes": [
                     "application/json"
@@ -1017,6 +1940,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -1048,6 +1976,11 @@ const docTemplate = `{
         },
         "/fw/v2/setting": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "List zone.",
                 "consumes": [
                     "application/json"
@@ -1079,6 +2012,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add setting rule in firewalld.",
                 "consumes": [
                     "application/json"
@@ -1110,6 +2048,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a setting rules in firewalld.",
                 "consumes": [
                     "application/json"
@@ -1144,6 +2087,11 @@ const docTemplate = `{
         },
         "/fw/v2/setting/dp": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get default policy.",
                 "consumes": [
                     "application/json"
@@ -1177,6 +2125,11 @@ const docTemplate = `{
         },
         "/fw/v2/setting/dz": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get default zone.",
                 "consumes": [
                     "application/json"
@@ -1210,6 +2163,11 @@ const docTemplate = `{
         },
         "/fw/v2/setting/flush": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Flush all firewalld rules to default.",
                 "consumes": [
                     "application/json"
@@ -1243,6 +2201,11 @@ const docTemplate = `{
         },
         "/fw/v2/setting/reload": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Reload firewalld.",
                 "consumes": [
                     "application/json"
@@ -1275,6 +2238,11 @@ const docTemplate = `{
         },
         "/fw/v2/setting/sdz": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Set default zone in firewalld.",
                 "consumes": [
                     "application/json"
@@ -1307,6 +2275,11 @@ const docTemplate = `{
         },
         "/fw/v3/masquerade": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Enable masqerade on firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1338,6 +2311,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Disable masqerade on firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1371,6 +2349,11 @@ const docTemplate = `{
         },
         "/fw/v3/nat": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a NAT rule on firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1404,6 +2387,11 @@ const docTemplate = `{
         },
         "/fw/v3/ports": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a port rule on firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1437,6 +2425,11 @@ const docTemplate = `{
         },
         "/fw/v3/ports/permanent": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a port rule on firewalld permanent with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1470,6 +2463,11 @@ const docTemplate = `{
         },
         "/fw/v3/rich": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a rich rules on firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1503,6 +2501,11 @@ const docTemplate = `{
         },
         "/fw/v3/service": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add a service rule on firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1536,6 +2539,11 @@ const docTemplate = `{
         },
         "/fw/v3/setting/reload/runtime": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Reload firewalld runtime with delay timer.",
                 "consumes": [
                     "application/json"
@@ -1569,6 +2577,11 @@ const docTemplate = `{
         },
         "/fw/v3/setting/sdzone": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Set default zone on firewalld with delay timer, this is a runtime and permanent change.",
                 "consumes": [
                     "application/json"
@@ -1625,6 +2638,11 @@ const docTemplate = `{
         },
         "/security/audit": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all tokens.",
                 "consumes": [
                     "application/json"
@@ -1660,6 +2678,12 @@ const docTemplate = `{
                         "description": "sort",
                         "name": "sort",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort",
+                        "name": "title",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1675,6 +2699,11 @@ const docTemplate = `{
         },
         "/security/auth/cip": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get client login ip.",
                 "consumes": [
                     "application/json"
@@ -1698,6 +2727,11 @@ const docTemplate = `{
         },
         "/security/auth/roleRouters": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all routers of role。",
                 "consumes": [
                     "application/json"
@@ -1731,6 +2765,11 @@ const docTemplate = `{
         },
         "/security/auth/roles": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all roles.",
                 "consumes": [
                     "application/json"
@@ -1765,6 +2804,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "sort",
                         "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort",
+                        "name": "title",
                         "in": "query"
                     }
                 ],
@@ -1911,7 +2956,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Input parameter",
-                        "name": "userinput",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -1930,8 +2975,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/security/auth/roles/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Return roles associated with a specific user ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Return roles by user ID.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/security/auth/routers": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all routers.",
                 "consumes": [
                     "application/json"
@@ -1944,12 +3032,6 @@ const docTemplate = `{
                 ],
                 "summary": "Return all routers.",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "token id",
-                        "name": "id",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "limit",
@@ -1967,6 +3049,50 @@ const docTemplate = `{
                         "description": "sort",
                         "name": "sort",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort",
+                        "name": "title",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/security/auth/routers/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Return routers associated with a specific role ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Return routers by role ID.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1982,6 +3108,11 @@ const docTemplate = `{
         },
         "/security/auth/userRoles": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all routers.",
                 "consumes": [
                     "application/json"
@@ -2032,6 +3163,11 @@ const docTemplate = `{
         },
         "/security/auth/userinfo": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return userinfo.",
                 "consumes": [
                     "application/json"
@@ -2064,6 +3200,11 @@ const docTemplate = `{
         },
         "/security/tokens": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all tokens.",
                 "consumes": [
                     "application/json"
@@ -2225,6 +3366,11 @@ const docTemplate = `{
         },
         "/security/users": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Return all users。",
                 "consumes": [
                     "application/json"
@@ -2236,6 +3382,32 @@ const docTemplate = `{
                     "Users"
                 ],
                 "summary": "Return all users.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort",
+                        "name": "title",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2400,6 +3572,11 @@ const docTemplate = `{
         },
         "/sso/signin": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "login.",
                 "consumes": [
                     "application/json"
@@ -2434,6 +3611,11 @@ const docTemplate = `{
         },
         "/sso/signup": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "register.",
                 "consumes": [
                     "application/json"
@@ -2957,6 +4139,103 @@ const docTemplate = `{
                 }
             }
         },
+        "query.HostQuery": {
+            "type": "object",
+            "required": [
+                "ip",
+                "tag_id"
+            ],
+            "properties": {
+                "hostname": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ip": {
+                    "type": "string"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "tag_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "query.IDQuery": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "query.ListHostQuery": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "string"
+                }
+            }
+        },
+        "query.ListQuery": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "simple": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "query.PortEditQuery": {
+            "type": "object",
+            "required": [
+                "port",
+                "protocol",
+                "template_id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "template_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "query.PortQuery": {
             "type": "object",
             "required": [
@@ -3019,6 +4298,45 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "query.RichEditQuery": {
+            "type": "object",
+            "required": [
+                "action",
+                "template_id"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "destination": {
+                    "type": "string"
+                },
+                "family": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "limit_unit": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "template_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -3103,6 +4421,43 @@ const docTemplate = `{
                 },
                 "setting": {
                     "$ref": "#/definitions/api.ServiceSetting"
+                }
+            }
+        },
+        "query.TagEditQuery": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "query.TemplateEditQuery": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
                 }
             }
         },
@@ -3194,7 +4549,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "Bearer": {
-            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "description": "Enter the token with the ` + "`" + `Bearer: ` + "`" + ` prefix, e.g. \"Bearer abcde12345\".",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -3204,9 +4559,9 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "0.0.9",
 	Host:             "localhost:2952",
-	BasePath:         "/server",
+	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "Uranus API",
 	Description:      "Uranus, distrubed firewall gateway.",

@@ -9,7 +9,7 @@ import (
 var CONFIG *Config
 
 type MySQLConfig struct {
-	Ip                string //公有访问
+	IP                string //公有访问
 	Port              string
 	User              string
 	Password          string
@@ -33,7 +33,7 @@ func (this *SQLiteConfig) IsEmpty() bool {
 	return reflect.DeepEqual(this, SQLiteConfig{})
 }
 
-//Config对象和config.toml文件保持一致
+// Config对象和config.toml文件保持一致
 type Config struct {
 	AppName            string
 	Address            string

@@ -24,7 +24,7 @@ func (this *MasqueradeRouterV3) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchZoneQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/masquerade [put]
 func (this *MasqueradeRouterV3) batchEnableMasquerade(c *gin.Context) {
@@ -53,7 +53,7 @@ func (this *MasqueradeRouterV3) batchEnableMasquerade(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchZoneQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/masquerade [delete]
 func (this *MasqueradeRouterV3) batchDisableMasquerade(c *gin.Context) {

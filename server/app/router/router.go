@@ -113,7 +113,7 @@ func RegisteredRouter(e *gin.Engine) {
 		ssoRouter.RegisterUserAPI(ssoGroup)
 		// auth route
 		authRouter := &auth.Auth{}
-		authRouter.RegisterUserAPI(authAPI)
+		authRouter.RegisterAuthAPI(authAPI)
 
 		usersRouter := &user.User{}
 		usersRouter.RegisterUserAPI(userAPI)
@@ -137,7 +137,11 @@ func RegisteredRouter(e *gin.Engine) {
 		auditRouter.RegisterAuditAPI(auditAPI)
 	}
 
-	e.Handle("GET", "/swagger/*any",
-		ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
+	e.Handle("GET", "/doc/*any",
+		ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/doc/doc.json")))
+
+	e.GET("/doc", func(c *gin.Context) {
+		c.Redirect(302, "/doc/index.html")
+	})
 
 }

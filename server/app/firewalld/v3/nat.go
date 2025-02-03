@@ -24,7 +24,7 @@ func (this *NATRuleRouterV3) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchForwardQuery false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/nat [put]
 func (this *NATRuleRouterV3) batchAddNATRuntime(c *gin.Context) {

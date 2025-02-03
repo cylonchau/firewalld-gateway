@@ -13,16 +13,16 @@ import (
 )
 
 // @title Uranus API
-// @version 1.0
+// @version 0.0.9
 // @description Uranus, distrubed firewall gateway.
 
 // @securityDefinitions.apikey Bearer
 // @in header
 // @name Authorization
-// @description Type "Bearer" followed by a space and JWT token.
+// @description Enter the token with the `Bearer: ` prefix, e.g. "Bearer abcde12345".
 
 // @host localhost:2952
-// @BasePath /server
+// @BasePath /
 // @schemes http
 func main() {
 	command := server.NewProxyCommand()

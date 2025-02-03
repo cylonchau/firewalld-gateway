@@ -6,6 +6,7 @@ type ListQuery struct {
 	Limit  uint16 `form:"limit,default=10" json:"limit"`
 	Offset uint16 `form:"offset,default=0" json:"offset"`
 	Sort   string `form:"sort,default=desc" json:"sort"`
+	Title  string `form:"title,omitempty" json:"title,omitempty"`
 }
 
 type LsQuery struct {
@@ -14,4 +15,8 @@ type LsQuery struct {
 	Limit  uint16 `form:"limit,default=10" json:"limit"`
 	Offset uint16 `form:"offset,default=0" json:"offset"`
 	Sort   string `form:"sort,default=desc" json:"sort"`
+}
+
+type QueryWithID struct {
+	ID uint `uri:"id" json:"id" yaml:"id" form:"id" binding:"required"`
 }

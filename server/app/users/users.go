@@ -29,21 +29,25 @@ func (u *User) RegisterUserAPI(g *gin.RouterGroup) {
 // @Tags Users
 // @Accept json
 // @Produce json
-// @securityDefinitions.apikey BearerAuth
+// @Param   limit  	query  int   	false "limit"
+// @Param   offset  query  int   	false "offset"
+// @Param   sort  	query  string   false "sort"
+// @Param   title  	query  string   false "sort"
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /security/users [get]
 func (u *User) getUsers(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	q := &query.ListQuery{}
-	enconterError = c.Bind(&q)
+	userQuery := &query.ListQuery{}
+	enconterError = c.Bind(&userQuery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
 		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if roles, enconterError := model.GetUsers(int(q.Offset), int(q.Limit), q.Sort); enconterError == nil {
+	if roles, enconterError := model.GetUsers(userQuery.Title, int(userQuery.Offset), int(userQuery.Limit), userQuery.Sort); enconterError == nil {
 		if len(roles) > 0 {
 			query.SuccessResponse(c, nil, roles)
 			return

@@ -23,7 +23,7 @@ func (this *ServiceRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param query body query.BatchServiceQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/service [put]
 func (this *ServiceRouter) batchAddServiceRuntime(c *gin.Context) {

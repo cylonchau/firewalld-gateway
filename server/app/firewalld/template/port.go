@@ -5,87 +5,127 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	query2 "github.com/cylonchau/firewalld-gateway/utils/apis/query"
-	Model "github.com/cylonchau/firewalld-gateway/utils/model"
+	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
+	"github.com/cylonchau/firewalld-gateway/utils/model"
 )
 
+// createPort godoc
+// @Summary Create a new port rule to template.
+// @Description Create a new port rule to template.
+// @Tags Template
+// @Accept json
+// @Produce json
+// @Param query body query.PortEditQuery false "body"
+// @Security BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/template/port [PUT]
 func (t *Template) createPort(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.PortEditQuery{}
-	enconterError = c.ShouldBindJSON(&query)
+	templatePortquery := &query.PortEditQuery{}
+	enconterError = c.ShouldBindJSON(&templatePortquery)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if enconterError = Model.CreatePort(query.Port, query.Protocol, query.TemplateId); enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+	if enconterError = model.CreatePort(templatePortquery.Port, templatePortquery.Protocol, templatePortquery.TemplateId); enconterError != nil {
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	query2.SuccessResponse(c, query2.OK, nil)
+	query.SuccessResponse(c, query.OK, nil)
 }
 
+// listPort godoc
+// @Summary List port rules.
+// @Description List port rules.
+// @Tags Template
+// @Accept json
+// @Produce json
+// @Param query body query.ListQuery false "body"
+// @Security BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/template/port [GET]
 func (t *Template) listPort(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.ListQuery{}
-	enconterError = c.Bind(&query)
+	templatePortquery := &query.ListQuery{}
+	enconterError = c.Bind(&templatePortquery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
-	list, enconterError := Model.GetPorts(int(query.Offset), int(query.Limit), query.Sort)
+	list, enconterError := model.GetPorts(templatePortquery.Title, int(templatePortquery.Offset), int(templatePortquery.Limit), templatePortquery.Sort)
 	if enconterError != nil {
-		query2.API500Response(c, enconterError)
+		query.API500Response(c, enconterError)
 		return
 	}
-	query2.SuccessResponse(c, query2.OK, list)
+	query.SuccessResponse(c, query.OK, list)
 }
 
+// deletePortWithID godoc
+// @Summary Delete port rule with rule id.
+// @Description Delete port rule with rule id.
+// @Tags Template
+// @Accept json
+// @Produce json
+// @Param query body query.IDQuery false "body"
+// @Security BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/template/port [DELETE]
 func (t *Template) deletePortWithID(c *gin.Context) {
 
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.IDQuery{}
-	enconterError = c.Bind(&query)
+	templatePortquery := &query.IDQuery{}
+	enconterError = c.Bind(&templatePortquery)
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
-	enconterError = Model.DeletePortWithID(query.ID)
+	enconterError = model.DeletePortWithID(templatePortquery.ID)
 	if enconterError != nil {
-		query2.API500Response(c, enconterError)
+		query.API500Response(c, enconterError)
 		return
 	}
-	query2.SuccessResponse(c, query2.OK, nil)
+	query.SuccessResponse(c, query.OK, nil)
 }
 
+// updatePortWithID godoc
+// @Summary Update port rule information with port rule id.
+// @Description Update port rule information with port rule id.
+// @Tags Template
+// @Accept json
+// @Produce json
+// @Param query body query.PortEditQuery false "body"
+// @Security BearerAuth
+// @Success 200 {object} interface{}
+// @Router /fw/template/port [POST]
 func (t *Template) updatePortWithID(c *gin.Context) {
 	// 1. 获取参数和参数校验
 	var enconterError error
-	query := &query2.PortEditQuery{}
-	enconterError = c.ShouldBindJSON(&query)
+	templatePortquery := &query.PortEditQuery{}
+	enconterError = c.ShouldBindJSON(&templatePortquery)
 
 	// 手动对请求参数进行详细的业务规则校验
 	if enconterError != nil {
-		query2.APIResponse(c, enconterError, nil)
+		query.APIResponse(c, enconterError, nil)
 		return
 	}
 
-	if query.ID > 0 {
-		if enconterError = Model.UpdatePortWithID(query.ID, query.Port, query.Protocol, query.TemplateId); enconterError != nil {
-			query2.API409Response(c, enconterError)
+	if templatePortquery.ID > 0 {
+		if enconterError = model.UpdatePortWithID(templatePortquery.ID, templatePortquery.Port, templatePortquery.Protocol, templatePortquery.TemplateId); enconterError != nil {
+			query.API409Response(c, enconterError)
 			return
 		}
 
-		query2.SuccessResponse(c, query2.OK, nil)
+		query.SuccessResponse(c, query.OK, nil)
 		return
 	}
-	query2.APIResponse(c, errors.New("invaild id"), nil)
+	query.APIResponse(c, errors.New("invaild id"), nil)
 }

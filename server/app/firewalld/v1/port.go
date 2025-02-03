@@ -23,7 +23,7 @@ func (this *PortV1Router) RegisterPortV1API(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param   ip  query  string true "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} []interface{}
 // @Router /fw/v1/ports [get]
 func (this *PortV1Router) getInRuntime(c *gin.Context) {
@@ -65,7 +65,7 @@ func (this *PortV1Router) getInRuntime(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query  body  query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v1/ports [put]
 func (this *PortV1Router) addInRuntime(c *gin.Context) {
@@ -103,7 +103,7 @@ func (this *PortV1Router) addInRuntime(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query  body  query.PortQuery   false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /fw/v1/ports [delete]
 func (this *PortV1Router) removeInRuntime(c *gin.Context) {

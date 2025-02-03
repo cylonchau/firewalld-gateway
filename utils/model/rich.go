@@ -14,14 +14,14 @@ import (
 	queryapi "github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
-var rich_table_name = "riches"
+const rich_table_name = "riches"
 
 type Rich struct {
 	gorm.Model
 	Family      string           `form:"family" json:"family,omitempty" gorm:"type:char(4)"`
 	Source      *api.Source      `form:"source" json:"source,omitempty" gorm:"json"`
 	Destination *api.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
-	Port        []*api.Port      `form:"port" json:"port,omitempty" gorm:"json"`
+	Port        *api.Port        `form:"port" json:"port,omitempty" gorm:"json"`
 	Protocol    *api.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
 	Action      string           `form:"action" json:"action,omitempty" gorm:"type:varchar(30)"`
 	Limit       uint16           `form:"limit" json:"limit,omitempty" gorm:"type:varchar(255)"`
@@ -34,7 +34,7 @@ type RichList struct {
 	Family      string           `form:"family" json:"family,omitempty"`
 	Source      *api.Source      `form:"source" json:"source,omitempty" gorm:"json"`
 	Destination *api.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
-	Port        []*api.Port      `form:"port" json:"port,omitempty" gorm:"json"`
+	Port        *api.Port        `form:"port" json:"port,omitempty" gorm:"json"`
 	Protocol    *api.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
 	Action      string           `form:"action" json:"action,omitempty"`
 	Limit       uint16           `form:"limit" json:"limit,omitempty"`
@@ -43,13 +43,28 @@ type RichList struct {
 	Template    string           `json:"template"`
 }
 
-func (*RichList) TableName() string {
-	return rich_table_name
+type RichListWithoutID struct {
+	Family      string           `form:"family" json:"family,omitempty"`
+	Source      *api.Source      `form:"source" json:"source,omitempty" gorm:"json"`
+	Destination *api.Destination `form:"destination" json:"destination,omitempty" gorm:"json"`
+	Port        *api.Port        `form:"port" json:"port,omitempty" gorm:"json"`
+	Protocol    *api.Protocol    `form:"protocol" json:"protocol,omitempty" gorm:"json"`
+	Action      string           `form:"action" json:"action,omitempty"`
+	Limit       uint16           `form:"limit" json:"limit,omitempty"`
+	LimitUnit   string           `form:"limit_unit" json:"limit_unit,omitempty"`
 }
 
 func (r *Rich) Scan(value interface{}) error {
 	b, _ := value.([]byte)
 	return json.Unmarshal(b, r)
+}
+
+func (*RichList) TableName() string {
+	return rich_table_name
+}
+
+func (*RichListWithoutID) TableName() string {
+	return rich_table_name
 }
 
 func (r *Rich) Value() (value driver.Value, err error) {
@@ -93,13 +108,11 @@ func (r *RichList) Value() (value driver.Value, err error) {
 }
 
 func CreateRich(query *queryapi.RichEditQuery) (enconterError error) {
-	ports := []*api.Port{}
-	if len(query.Port) > 0 {
-		for _, value := range query.Port {
-			s := strings.Split(value, "/")
-			port := &api.Port{Port: s[0], Protocol: s[1]}
-			ports = append(ports, port)
-		}
+
+	var port *api.Port
+	if query.Port != "" {
+		s := strings.Split(query.Port, "/")
+		port = &api.Port{Port: s[0], Protocol: s[1]}
 	}
 
 	rich := &Rich{
@@ -110,7 +123,7 @@ func CreateRich(query *queryapi.RichEditQuery) (enconterError error) {
 		Destination: &api.Destination{
 			Address: query.Destination,
 		},
-		Port: ports,
+		Port: port,
 		Protocol: &api.Protocol{
 			Value: query.Protocol,
 		},
@@ -127,11 +140,11 @@ func CreateRich(query *queryapi.RichEditQuery) (enconterError error) {
 	return enconterError
 }
 
-func GetRich(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetRich(title string, offset, limit int, sort string) (map[string]interface{}, error) {
 	richs := []*RichList{}
 	response := make(map[string]interface{})
 	var count int64
-	result := DB.Table(rich_table_name).
+	richQuery := DB.Table(rich_table_name).
 		Select([]string{
 			rich_table_name + ".id",
 			rich_table_name + ".family",
@@ -144,11 +157,14 @@ func GetRich(offset, limit int, sort string) (map[string]interface{}, error) {
 			rich_table_name + ".limit_unit",
 			"templates.name template",
 			"templates.id template_id"}).
-		Joins("join templates on "+rich_table_name+".template_id = templates.id").
+		Joins("JOIN templates ON "+rich_table_name+".template_id = templates.id").
+		Where(rich_table_name+".deleted_at is ?", nil)
+	if title != "" {
+		richQuery.Where(rich_table_name+".`destination` LIKE ?", "%"+title+"%")
+	}
+	result := richQuery.Order(rich_table_name + ".id " + sort).
 		Limit(limit).
-		Offset((offset-1)*limit).
-		Where(rich_table_name+".deleted_at is ?", nil).
-		Order(rich_table_name + ".id " + sort).
+		Offset((offset - 1) * limit).
 		Scan(&richs)
 	DB.Model(&Rich{}).Distinct("id").Count(&count)
 	if result.Error != gorm.ErrRecordNotFound {
@@ -186,13 +202,10 @@ func isEmptyStruct(s interface{}) bool {
 }
 
 func UpdateRichWithID(query *queryapi.RichEditQuery) (enconterError error) {
-	ports := []*api.Port{}
-	if len(query.Port) > 0 {
-		for _, value := range query.Port {
-			s := strings.Split(value, "/")
-			port := &api.Port{Port: s[0], Protocol: s[1]}
-			ports = append(ports, port)
-		}
+	var port *api.Port
+	if query.Port != "" {
+		s := strings.Split(query.Port, "/")
+		port = &api.Port{Port: s[0], Protocol: s[1]}
 	}
 
 	rich := &Rich{
@@ -203,7 +216,7 @@ func UpdateRichWithID(query *queryapi.RichEditQuery) (enconterError error) {
 		Destination: &api.Destination{
 			Address: query.Destination,
 		},
-		Port: ports,
+		Port: port,
 		Protocol: &api.Protocol{
 			Value: query.Protocol,
 		},

@@ -6,7 +6,7 @@ import (
 	"github.com/cylonchau/firewalld-gateway/utils/apis/query"
 )
 
-var tags_table_name = "tags"
+const tags_table_name = "tags"
 
 type Tag struct {
 	gorm.Model
@@ -45,7 +45,7 @@ func CreateTag(tagQuery *query.TagEditQuery) (enconterError error) {
 	return enconterError
 }
 
-func GetTags(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetTags(title string, offset, limit int, sort string) (map[string]interface{}, error) {
 	tags := []*TagInfo{}
 	response := make(map[string]interface{})
 	var count int64
@@ -53,6 +53,7 @@ func GetTags(offset, limit int, sort string) (map[string]interface{}, error) {
 		Limit(limit).
 		Offset(offset).
 		Where("deleted_at is ?", nil).
+		Where("name like ?", "%"+title+"%").
 		Order("tags.id " + sort).
 		Find(&tags)
 	DB.Model(&Tag{}).Distinct("id").Count(&count)

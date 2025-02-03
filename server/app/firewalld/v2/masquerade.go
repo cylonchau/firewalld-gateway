@@ -24,7 +24,7 @@ func (this *MasqueradeRouter) RegisterPortAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param query body query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/masquerade [put]
 func (this *MasqueradeRouter) enableInPermanent(c *gin.Context) {
@@ -60,7 +60,7 @@ func (this *MasqueradeRouter) enableInPermanent(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query  body  query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/masquerade [delete]
 func (this *MasqueradeRouter) disableInPermanent(c *gin.Context) {
@@ -96,7 +96,7 @@ func (this *MasqueradeRouter) disableInPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param ip  query  string true "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} []interface{}
 // @Router /fw/v2/masquerade [get]
 func (this *MasqueradeRouter) queryInPermanent(c *gin.Context) {

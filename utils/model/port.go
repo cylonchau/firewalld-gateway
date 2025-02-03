@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var port_table_name = "ports"
+const port_table_name = "ports"
 
 type Port struct {
 	gorm.Model
@@ -21,7 +21,16 @@ type PortList struct {
 	TemplateID int    `json:"template_id"`
 }
 
+type PortListWithoutID struct {
+	Port     string `json:"port"`
+	Protocol string `json:"protocol"`
+}
+
 func (*PortList) TableName() string {
+	return port_table_name
+}
+
+func (*PortListWithoutID) TableName() string {
 	return port_table_name
 }
 
@@ -39,21 +48,25 @@ func CreatePort(port uint16, protocol string, template_id int) (enconterError er
 	return enconterError
 }
 
-func GetPorts(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetPorts(title string, offset, limit int, sort string) (map[string]interface{}, error) {
 	ports := []*PortList{}
 	response := make(map[string]interface{})
 	var count int64
-	result := DB.Table(port_table_name).
+	portQuery := DB.Table(port_table_name).
 		Select([]string{
 			port_table_name + ".id",
 			port_table_name + ".port",
 			port_table_name + ".protocol",
 			"templates.name template",
 			"templates.id template_id"}).
-		Joins("join templates on "+port_table_name+".template_id = templates.id").
-		Limit(limit).Offset(offset).
-		Where(port_table_name+".deleted_at is ?", nil).
+		Joins("JOIN templates ON "+port_table_name+".template_id = templates.id").
+		Where(port_table_name+".deleted_at IS ?", nil)
+	if title != "" {
+		portQuery.Where("ports.`port` LIKE ?", title+"%")
+	}
+	result := portQuery.
 		Order(port_table_name + ".id " + sort).
+		Limit(limit).Offset((offset - 1) * limit).
 		Scan(&ports)
 	DB.Model(&Port{}).Distinct("id").Count(&count)
 	if result.Error != gorm.ErrRecordNotFound {

@@ -23,7 +23,7 @@ func (this *ServiceRouter) RegisterPortAPI(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param query body query.ServiceQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v1/service [put]
 func (this *ServiceRouter) addServicesAtRuntime(c *gin.Context) {
@@ -57,7 +57,7 @@ func (this *ServiceRouter) addServicesAtRuntime(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query body query.ServiceQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v1/service [delete]
 func (this *ServiceRouter) deleteServicesAtRuntime(c *gin.Context) {
@@ -91,7 +91,7 @@ func (this *ServiceRouter) deleteServicesAtRuntime(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query body query.ServiceQuery false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v1/service [get]
 func (this *ServiceRouter) getServicesAtRuntime(c *gin.Context) {

@@ -8,7 +8,7 @@ import (
 	"github.com/godbus/dbus/v5"
 	"k8s.io/klog/v2"
 
-	api2 "github.com/cylonchau/firewalld-gateway/api"
+	"github.com/cylonchau/firewalld-gateway/api"
 	"github.com/cylonchau/firewalld-gateway/config"
 )
 
@@ -52,8 +52,8 @@ func NewDbusClientService(addr string) (*DbusClientSerivce, error) {
 				klog.Warningf("You are already the owner of %s. no need to ask again.", registionName)
 			}
 			if encounterError == nil {
-				obj := conn.Object(api2.INTERFACE, api2.PATH)
-				call := obj.Call(api2.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
+				obj := conn.Object(api.INTERFACE, api.PATH)
+				call := obj.Call(api.INTERFACE_GETDEFAULTZONE, dbus.FlagNoAutoStart)
 				encounterError = call.Err
 				if encounterError == nil {
 					return &DbusClientSerivce{
@@ -97,10 +97,10 @@ func (c *DbusClientSerivce) Destroy() {
 //
 //	ALREADY_ENABLED"
 func (c *DbusClientSerivce) Reload() error {
-	obj := c.client.Object(api2.INTERFACE, api2.PATH)
-	c.printPath(api2.INTERFACE_RELOAD)
+	obj := c.client.Object(api.INTERFACE, api.PATH)
+	c.printPath(api.INTERFACE_RELOAD)
 	klog.V(4).Infof("Try to reload firewalld runtime.")
-	call := obj.Call(api2.INTERFACE_RELOAD, dbus.FlagNoAutoStart)
+	call := obj.Call(api.INTERFACE_RELOAD, dbus.FlagNoAutoStart)
 
 	if call.Err != nil {
 		klog.Errorf("Reload firewalld failed: %v", call.Err.Error())
@@ -113,7 +113,7 @@ func (c *DbusClientSerivce) Reload() error {
 /*
  * @title         flush currently zone zoneSettings to default zoneSettings.
  * @description   temporary Add rich language rule into zone.
- * @middlewares          author           2021-10-05
+ * @middlewares   author           2021-10-05
  * @return        error            error          "Possible errors:
  *                                                      ALREADY_ENABLED"
  */
@@ -122,7 +122,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 		zone = c.GetDefaultZone()
 	}
 
-	defaultZoneSetting := api2.Settings{
+	defaultZoneSetting := api.Settings{
 		Target:      "accpet",
 		Description: "reset by " + config.CONFIG.AppName,
 		Short:       "public",
@@ -131,7 +131,7 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 			"ssh",
 			"dhcpv6-client",
 		},
-		Port: []*api2.Port{
+		Port: []*api.Port{
 			{
 				Port:     config.CONFIG.DbusPort,
 				Protocol: "tcp",
@@ -140,11 +140,11 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 	}
 
 	var path dbus.ObjectPath
-	if path, encounterError = c.generatePath(zone, api2.ZONE_PATH); encounterError == nil {
-		obj := c.client.Object(api2.INTERFACE, path)
-		c.printPath(api2.CONFIG_UPDATE)
+	if path, encounterError = c.generatePath(zone, api.ZONE_PATH); encounterError == nil {
+		obj := c.client.Object(api.INTERFACE, path)
+		c.printPath(api.CONFIG_UPDATE)
 		klog.V(4).Infof("Try to flush current active zone (%s).", zone)
-		call := obj.Call(api2.CONFIG_UPDATE, dbus.FlagNoAutoStart, defaultZoneSetting)
+		call := obj.Call(api.CONFIG_UPDATE, dbus.FlagNoAutoStart, defaultZoneSetting)
 		encounterError = call.Err
 		if encounterError == nil || len(call.Body) <= 0 {
 			if encounterError = c.Reload(); encounterError == nil {
@@ -154,6 +154,28 @@ func (c *DbusClientSerivce) RuntimeFlush(zone string) (encounterError error) {
 	}
 
 	klog.Errorf("Flush current zone (%s) failed: %v", zone, encounterError)
+	return encounterError
+}
+
+func (c *DbusClientSerivce) RuntimeSet(setting api.Settings) (encounterError error) {
+	fmt.Println(setting)
+	zone := c.GetDefaultZone()
+
+	var path dbus.ObjectPath
+	if path, encounterError = c.generatePath(zone, api.ZONE_PATH); encounterError == nil {
+		obj := c.client.Object(api.INTERFACE, path)
+		c.printPath(api.CONFIG_UPDATE)
+		klog.V(4).Infof("Try to flush current active zone (%s).", zone)
+		call := obj.Call(api.CONFIG_UPDATE, dbus.FlagNoAutoStart, setting)
+		encounterError = call.Err
+		if encounterError == nil || len(call.Body) <= 0 {
+			if encounterError = c.Reload(); encounterError == nil {
+				return nil
+			}
+		}
+	}
+
+	klog.Errorf("Set current zone (%s) failed: %v", zone, encounterError)
 	return encounterError
 }
 

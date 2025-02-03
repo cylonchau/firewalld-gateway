@@ -27,7 +27,7 @@ func (this *ServiceRouter) RegisterPortAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param query body query.Query false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/service [get]
 func (this *ServiceRouter) getServicesAtPermanent(c *gin.Context) {
@@ -69,7 +69,7 @@ func (this *ServiceRouter) getServicesAtPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query body query.ServiceQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/service [delete]
 func (this *ServiceRouter) deleteServicesAtPermanent(c *gin.Context) {
@@ -103,7 +103,7 @@ func (this *ServiceRouter) deleteServicesAtPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query body query.ServiceQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/service [put]
 func (this *ServiceRouter) addServicesPermanent(c *gin.Context) {
@@ -137,7 +137,7 @@ func (this *ServiceRouter) addServicesPermanent(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query body query.Query false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/service/config [get]
 func (this *ServiceRouter) listServices(c *gin.Context) {
@@ -178,7 +178,7 @@ func (this *ServiceRouter) listServices(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query body query.ServiceSettingQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/service/config [put]
 func (this *ServiceRouter) newServiceAtPermanent(c *gin.Context) {

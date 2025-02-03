@@ -25,7 +25,7 @@ func (this *PortV2Router) RegisterPortV2API(g *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param   ip  query  string true "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} []interface{}
 // @Router /fw/v2/ports [get]
 func (this *PortV2Router) getOnPermanent(c *gin.Context) {
@@ -67,7 +67,7 @@ func (this *PortV2Router) getOnPermanent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param query body query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/ports [put]
 func (this *PortV2Router) addOnPermanent(c *gin.Context) {
@@ -105,7 +105,7 @@ func (this *PortV2Router) addOnPermanent(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query  body  query.PortQuery   false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /fw/v2/ports [delete]
 func (this *PortV2Router) removeOnPermanent(c *gin.Context) {

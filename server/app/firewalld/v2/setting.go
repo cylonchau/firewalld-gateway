@@ -33,7 +33,7 @@ func (this *SettingRouter) RegisterPortAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param  query  body  query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting [get]
 func (this *SettingRouter) listZone(c *gin.Context) {
@@ -66,7 +66,7 @@ func (this *SettingRouter) listZone(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param  query  body  query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting/dz [get]
 func (this *SettingRouter) defaultZone(c *gin.Context) {
@@ -96,7 +96,7 @@ func (this *SettingRouter) defaultZone(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param  query  body  query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting/dp [get]
 func (this *SettingRouter) defaultPolicy(c *gin.Context) {
@@ -125,7 +125,7 @@ func (this *SettingRouter) defaultPolicy(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param ip query string true "ip"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting/reload [post]
 func (this *SettingRouter) reload(c *gin.Context) {
@@ -157,7 +157,7 @@ func (this *SettingRouter) reload(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param ip query string true "ip"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting/sdz [post]
 func (this *SettingRouter) setDefaultZone(c *gin.Context) {
@@ -198,12 +198,12 @@ func (this *SettingRouter) setDefaultZone(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query body query.Query  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting/flush [post]
 func (this *SettingRouter) flush(c *gin.Context) {
 	var query = &api_query.Query{}
-	if err := c.BindQuery(query); err != nil {
+	if err := c.BindJSON(query); err != nil {
 		api_query.APIResponse(c, err, nil)
 		return
 	}
@@ -233,7 +233,7 @@ func (this *SettingRouter) flush(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param query  body  query.ZoneSettingQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v2/setting [put]
 func (this *SettingRouter) addZoneSetting(c *gin.Context) {
@@ -272,7 +272,7 @@ func (this *SettingRouter) addZoneSetting(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param  query  body  query.RemoveQuery   false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Router /fw/v2/setting [delete]
 func (this *SettingRouter) removeZone(c *gin.Context) {

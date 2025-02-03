@@ -24,7 +24,7 @@ func (this *SettingRouter) RegisterBatchAPI(g *gin.RouterGroup) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchSettingQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/setting/reload/runtime [put]
 func (this *SettingRouter) reloadRuntime(c *gin.Context) {
@@ -53,7 +53,7 @@ func (this *SettingRouter) reloadRuntime(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param  query body  query.BatchPortQuery  false "body"
-// @securityDefinitions.apikey BearerAuth
+// @Security BearerAuth
 // @Success 200 {object} interface{}
 // @Router /fw/v3/setting/sdzone [POST]
 func (this *SettingRouter) setDefautZone(c *gin.Context) {

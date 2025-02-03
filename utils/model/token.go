@@ -47,13 +47,14 @@ func CreateToken(SignedTo, description string) (enconterError error) {
 	return enconterError
 }
 
-func GetTokens(offset, limit int, sort string) (map[string]interface{}, error) {
+func GetTokens(title string, offset, limit int, sort string) (map[string]interface{}, error) {
 	templates := []*TokenList{}
 	response := make(map[string]interface{})
 	var count int64
 	result := DB.Select([]string{"id", "token", "signed_to", "signed_by", "description"}).
 		Limit(limit).Offset(offset).
 		Where("deleted_at is ?", nil).
+		Where("token like ?", "%"+title+"%").
 		Order(token_table_name + ".id " + sort).
 		Find(&templates)
 	DB.Model(&Token{}).Distinct("id").Count(&count)
